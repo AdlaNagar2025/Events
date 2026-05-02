@@ -1,0 +1,24 @@
+# Dependencies - זה יתפוס את node_modules גם ב-frontend וגם ב-backend
+**/node_modules
+/node_modules
+
+# Production builds
+**/dist
+**/build
+**/out
+
+# Environment variables (אבטחה!)
+.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db

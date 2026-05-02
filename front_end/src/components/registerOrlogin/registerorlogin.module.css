@@ -1,0 +1,115 @@
+/* מיכל ראשי שדואג שהטופס יהיה במרכז המסך */
+.form {
+  max-width: 450px;
+  margin: 60px auto;
+  padding: 40px;
+  background: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-align: center;
+  border-top: 5px solid #d4af37; /* פס זהב יוקרתי למעלה */
+}
+
+.form h2 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-size: 28px;
+}
+
+.form p {
+  color: #7f8c8d;
+  margin-bottom: 25px;
+  font-size: 14px;
+}
+
+.form h3 {
+  text-align: left;
+  color: #34495e;
+  font-size: 16px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+/* עיצוב שדות הקלט */
+.form input[type="text"],
+.form input[type="email"],
+.form input[type="tel"],
+.form input[type="password"] {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border: 1px solid #dcdde1;
+  border-radius: 8px;
+  font-size: 15px;
+  box-sizing: border-box; /* מבטיח שהפדינג לא ינפח את הרוחב */
+  transition: all 0.3s ease;
+}
+
+.form input:focus {
+  border-color: #d4af37;
+  outline: none;
+  box-shadow: 0 0 5px rgba(212, 175, 55, 0.2);
+}
+
+/* עיצוב בחירת תפקיד (Role Selection) */
+.roleSelection {
+  text-align: left;
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.roleSelection label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.radioGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 14px;
+  color: #2c3e50;
+  align-items: center;
+}
+
+.radioGroup input {
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+/* כפתורי שליחה */
+.loginBtn, .submitBtn {
+  width: 100%;
+  padding: 14px;
+  background-color: #2c3e50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s;
+  margin-top: 10px;
+}
+
+.loginBtn:hover, .submitBtn:hover {
+  background-color: #1a252f;
+  transform: translateY(-2px);
+}
+
+/* עיצוב קישורים (Link) */
+.form a {
+  color: #d4af37;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.form a:hover {
+  text-decoration: underline;
+}

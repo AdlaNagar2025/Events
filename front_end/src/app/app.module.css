@@ -1,0 +1,37 @@
+.appWrapper {
+  /* נתיב לתמונה - וודא שהוא תואם למיקום אצלך */
+  background-image: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.142)), 
+                    url('../components/assets/home_background.png');
+  
+  background-size: cover;       /* שהתמונה תכסה את כל המסך */
+  background-position: center;  /* שהתמונה תהיה במרכז */
+  background-attachment: fixed; /* שהרקע לא יזוז כשהמשתמש גולל */
+  min-height: 100vh;           /* גובה מינימלי של כל המסך */
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+.mainLayout {
+  display: flex; /* מעמיד אותם אחד ליד השני */
+  min-height: calc(100vh - 70px); /* גובה מסך מלא פחות הנאבבר */
+  align-items: stretch; /* גורם לשניהם להיות באותו גובה */
+}
+
+/* הסיידבר שלך */
+.sidebarContainer {
+  width: 250px;
+  min-width: 250px;
+  background-color: #1a2634; /* הצבע הכהה שראיתי בתמונה */
+  color: white;
+}
+
+/* אזור התוכן הראשי */
+.contentArea {
+  flex-grow: 1; /* אומר לתוכן לתפוס את כל מה שנשאר */
+  padding: 40px;
+  background-size: cover;
+  background-attachment: fixed; /* שומר על התמונה יציבה בגלילה */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* מרכז את הטבלה באמצע */
+}
