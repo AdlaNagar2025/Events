@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import classes from "./ImageUpload.module.css";
 import axios from "axios";
 import ImageItem from "./ImageItem";
@@ -32,12 +33,14 @@ export default function ImageUpload({ role, user, ok }) {
   }, [existingImages.length, ok]);
 
   const fetchAllImages = async () => {
+    if (!role) return;
     try {
       let url;
-      if (role === "Chief" || role === "Hall_Owner")
+      if (role === "Chief" || role === "Hall_Owner") {
         url = "http://localhost:3030/provider/MyImages";
-      else
-        url = `http://localhost:3030/${role.toLowerCase()}/ProviderImages/${user.id}`;
+      } else {
+        url = `http://localhost:3030/${role?.toLowerCase()}/ProviderImages/${user?.id}`;
+      }
       const response = await axios.get(url, { withCredentials: true });
       if (response.data.success) {
         setExistingImages(response.data.data || []);
@@ -50,6 +53,33 @@ export default function ImageUpload({ role, user, ok }) {
   useEffect(() => {
     if (user) fetchAllImages();
   }, [user?.id, role]);
+
+  const submitGallery = async () => {
+    if (images.length === 0) return;
+    setUploading(true);
+    const loadingToast = toast.loading("Uploading images...");
+    try {
+      const formData = new FormData();
+      images.forEach((img) => formData.append("images", img));
+      const response = await axios.post(
+        "http://localhost:3030/provider/upload-gallery",
+        formData,
+        { withCredentials: true },
+      );
+      if (response.data.success) {
+        toast.success(response.data.message || "Gallery updated! ✨", {
+          id: loadingToast,
+        });
+        setImages([]);
+        fetchAllImages();
+      }
+    } catch (error) {
+      const msg = error.response?.data?.message || "Upload failed.";
+      toast.error(msg, { id: loadingToast });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleChangeImage = (e) => {
     setError("");
@@ -77,44 +107,40 @@ export default function ImageUpload({ role, user, ok }) {
     setImages((prev) => [...prev, ...validFiles]);
   };
 
-  const submitGallery = async () => {
-    if (images.length === 0) return;
-
-    setUploading(true);
-    setError("");
-    try {
-      const formData = new FormData();
-      images.forEach((img) => formData.append("images", img));
-
-      const response = await axios.post(
-        "http://localhost:3030/provider/upload-gallery",
-        formData,
-        { withCredentials: true },
-      );
-
-      if (response.data.success) {
-        setImages([]);
-        fetchAllImages();
-      }
-    } catch (error) {
-      setError("Upload failed. Please try again or check your connection.");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleSetMain = async (path) => {
+    const loadingToast = toast.loading("Updating main image...");
     try {
       const response = await axios.post(
         "http://localhost:3030/provider/mainImage",
         { imagePath: path },
         { withCredentials: true },
       );
-      if (response.data.success) fetchAllImages();
+      if (response.data.success) {
+        toast.success("Main image updated!", { id: loadingToast });
+        fetchAllImages();
+      }
     } catch (error) {
-      console.error(error);
+      toast.error("Failed to update main image.", { id: loadingToast });
     }
   };
+  const removeExistingImage = async (path) => {
+    if (!window.confirm("Are you sure you want to delete this image?")) return;
+
+    const loadingToast = toast.loading("Deleting image...");
+    try {
+      const response = await axios.delete(
+        `http://localhost:3030/provider/deleteImage/${path}`,
+        { withCredentials: true },
+      );
+      if (response.data.success) {
+        toast.success("Image deleted.", { id: loadingToast });
+        fetchAllImages();
+      }
+    } catch (error) {
+      toast.error("Delete failed.", { id: loadingToast });
+    }
+  };
+
   const isGalleryValid = totalImages > 0;
   return (
     <div className={classes.imagediv}>
@@ -152,15 +178,7 @@ export default function ImageUpload({ role, user, ok }) {
             img={img}
             isExisting={true}
             isMain={img.is_main === 1}
-            onRemove={async () => {
-              if (window.confirm("Delete?")) {
-                await axios.delete(
-                  `http://localhost:3030/provider/deleteImage/${img.image_path}`,
-                  { withCredentials: true },
-                );
-                fetchAllImages();
-              }
-            }}
+            onRemove={() => removeExistingImage(img.image_path)}
             onSetMain={handleSetMain}
           />
         ))}
