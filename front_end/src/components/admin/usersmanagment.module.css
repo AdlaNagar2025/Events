@@ -1,0 +1,18 @@
+.customtable {
+  width: 100%;
+  border-collapse: collapse; 
+}
+
+.customtable th, .customtable td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+  background-color: #f2f2f2;
+
+}
+
+
+
+.customtable tr:hover {
+  background-color: #933939; /* Hover effect */
+}

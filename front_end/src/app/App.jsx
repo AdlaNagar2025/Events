@@ -14,13 +14,12 @@ import Account from "../components/BasicComponents/Account";
 import Home from "../components/BasicComponents/Home";
 import DetailsOFbusiness from "../components/provider/DetailsOFbusiness";
 import SideBar from "../components/SideBar/sideBar";
-// import UsersManagment from "../components/admin/UsersManagment";
-// import ServicesApprovals from "../components/admin/ServicesApprovals";
+import UsersManagment from "../components/admin/UsersManagment";
+import ServicesApprovals from "../components/admin/ServicesApprovals";
 import axios from "axios";
 // import CitySelect from "../components/provider/CitySelect";
-// import AllServices from "../components/customer/AllServices";
-// import FindAVendor from "../components/customer/FindAVendor";
-// import BookEvent from "../components/customer/BookEvent";
+import FindAVendor from "../components/customer/FindAVendor";
+import BookEvent from "../components/customer/BookEvent";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -91,16 +90,19 @@ function App() {
                 path="/businessAccount"
                 element={<DetailsOFbusiness user={user} />}
               />
+                  <Route path="/usersmanagment" element={<UsersManagment />} />
+            <Route
+              path="/servicesapprovals"
+              element={<ServicesApprovals user={user} />}
+            />
 
-              {/* 
-           
+   
+            <Route path="/findavendor" element={<FindAVendor user={user} />} />
             
-              <Route path="/usersmanagment" element={<UsersManagment />} />
-              <Route
-                path="/servicesapprovals"
-                element={<ServicesApprovals />}
-              /> */}
-              <Route path="*" element={<h2>Page Not Found 404</h2>} />
+            <Route path="/bookEvent" element={<BookEvent user={user} />} />
+
+            <Route path="*" element={<h2>Page Not Found 404</h2>} />
+          
             </Routes>
           </main>
         </div>

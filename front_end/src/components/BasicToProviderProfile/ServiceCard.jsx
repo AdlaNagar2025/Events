@@ -38,6 +38,7 @@ export default function ServiceCard({ user, provider, searchParams }) {
     if (provider?.id) fetchCardData();
   }, [provider.id, provider.role, provider.provider_type]);
 
+
   function handleSelectProvider() {
     navigate("/bookEvent", {
       state: {
@@ -46,6 +47,7 @@ export default function ServiceCard({ user, provider, searchParams }) {
       },
     });
   }
+
 
   if (isLoading) return <div className={classes.cardLoader}>טוען...</div>;
   // if (showProfile) return <BusinessProfile user={user} provider={provider} />;

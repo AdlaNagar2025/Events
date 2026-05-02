@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import BusinessAccount from "../BasicToProviderProfile/BusinessAccount";
 import ImageUpload from "../BasicToProviderProfile/ImagesCode/ImageUpload";
-import Calendar from "../BasicToProviderProfile/Calendar";
+import Calendar from "../BasicToProviderProfile/Calendar/Calendar";
 import classes from "./DetailsOFbusiness.module.css";
 import { FaTimes } from "react-icons/fa";
 import axios from "axios";

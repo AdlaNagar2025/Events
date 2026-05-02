@@ -1,0 +1,148 @@
+/* מיכל ראשי */
+.calendarContainer {
+    padding: 20px;
+    background-color: #fcfcfc;
+    border-radius: 15px;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.calendarContainer h2 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* עיצוב המעטפת של היומן */
+.calendarWrapper {
+    min-height: 650px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f0;
+}
+
+/* התאמת צבעים ל-FullCalendar - שימוש ב-Global כדי לדרוס את הסגנון של הספרייה */
+:global(.fc) {
+    --fc-border-color: #f0f0f0;
+    --fc-today-bg-color: rgba(212, 175, 55, 0.05);
+}
+
+:global(.fc .fc-button-primary) {
+    background-color: #2c3e50 !important;
+    border-color: #2c3e50 !important;
+    font-weight: 600 !important;
+    padding: 8px 16px !important;
+    transition: all 0.2s ease !important;
+}
+
+:global(.fc .fc-button-primary:hover) {
+    background-color: #d4af37 !important;
+    border-color: #d4af37 !important;
+    color: #2c3e50 !important;
+}
+
+:global(.fc .fc-button-active) {
+    background-color: #d4af37 !important;
+    border-color: #d4af37 !important;
+    color: #2c3e50 !important;
+}
+
+:global(.fc-col-header-cell) {
+    background-color: #f8f9fa;
+    padding: 10px 0 !important;
+}
+
+:global(.fc-event) {
+    cursor: pointer;
+    border-radius: 4px !important;
+    padding: 2px 5px !important;
+    font-size: 0.85rem !important;
+}
+
+/* תיבת אישור זמנים */
+.confirmBox {
+    margin-top: 25px;
+    padding: 25px;
+    background: #ffffff;
+    border-left: 6px solid #d4af37; /* דגש זהב בצד */
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: slideIn 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.confirmBox h4 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.2rem;
+}
+
+.confirmBox p {
+    margin: 0;
+    color: #5d6d7e;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* מיכל כפתורים בתוך תיבת האישור */
+.actionButtons {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+/* כפתור שמירה */
+.saveBtn {
+    padding: 12px 30px;
+    cursor: pointer;
+    background-color: #2c3e50;
+    color: #d4af37; /* טקסט בזהב על רקע כהה */
+    border: 2px solid #2c3e50;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.saveBtn:hover:not(:disabled) {
+    background-color: #d4af37;
+    color: #2c3e50;
+    border-color: #d4af37;
+    transform: translateY(-2px);
+}
+
+/* כפתור ביטול */
+.cancelBtn {
+    padding: 12px 25px;
+    cursor: pointer;
+    background-color: transparent;
+    color: #95a5a6;
+    border: 1px solid #dcdde1;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.cancelBtn:hover {
+    background-color: #f8f9fa;
+    color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.saveBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
