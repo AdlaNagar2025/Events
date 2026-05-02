@@ -7,7 +7,7 @@ import styles from "./app.module.css";
 
 // Components
 import Navbar from "../components/Navbar";
-// import Register from "../components/registerOrlogin/Register";
+import Register from "../components/registerOrlogin/Register";
 import Login from "../components/registerOrlogin/Login";
 // import Account from "../components/customer/Account";
 import Home from "../components/BasicComponents/Home";
@@ -77,11 +77,12 @@ function App() {
                 path="/login"
                 element={<Login onLoginSuccess={setUser} />}
               />
-              {/* <Route
+              <Route
                 path="/register"
                 element={<Register onLoginSuccess={setUser} />}
               />
-             
+
+              {/* 
               <Route
                 path="/account"
                 element={<Account user={user} onUpdateSuccess={setUser} />}
