@@ -1,4 +1,5 @@
 const doQuery = require("../query");
+const { getRole } = require("./helpingFunc");
 
 async function createBusinessProfile({ businessData, user }) {
   const userId = user.id;
@@ -145,11 +146,11 @@ async function checkStatus(providerId, role) {
   return result[0]?.status || "NOT_STARTED";
 }
 
-async function getProviderCardData(providerId, role) {
+async function getProviderCardData(providerId) {
+  const role= await getRole(providerId);
   const tableName = role === "Chief" ? "chiefs" : "halls";
   const idColumn = role === "Chief" ? "chief_id" : "hall_id";
   const priceColumn = role === "Chief" ? "price_per_hour" : "price";
-
   const sql = `
     SELECT b.*, b.${priceColumn} AS display_price, i.image_path AS main_image
     FROM ${tableName} b
@@ -157,6 +158,7 @@ async function getProviderCardData(providerId, role) {
     WHERE b.${idColumn} = ?`;
 
   const result = await doQuery(sql, [providerId]);
+  console.log("ServiceCard of Provider", result);
   return result && result.length > 0 ? result[0] : null;
 }
 
