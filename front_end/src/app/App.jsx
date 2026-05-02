@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
+import { Toaster } from "react-hot-toast";
 
 // ייבוא ה-CSS
 import styles from "./app.module.css";
@@ -9,10 +10,10 @@ import styles from "./app.module.css";
 import Navbar from "../components/Navbar";
 import Register from "../components/registerOrlogin/Register";
 import Login from "../components/registerOrlogin/Login";
-// import Account from "../components/customer/Account";
+import Account from "../components/BasicComponents/Account";
 import Home from "../components/BasicComponents/Home";
-// import DetailsOFbusiness from "../components/provider/DetailsOFbusiness";
-// import SideBar from "../components/SideBar/sideBar";
+import DetailsOFbusiness from "../components/provider/DetailsOFbusiness";
+import SideBar from "../components/SideBar/sideBar";
 // import UsersManagment from "../components/admin/UsersManagment";
 // import ServicesApprovals from "../components/admin/ServicesApprovals";
 import axios from "axios";
@@ -56,17 +57,18 @@ function App() {
   return (
     <Router>
       <div className={styles.appWrapper}>
+        <Toaster position="top-center" reverseOrder={false} />
         <Navbar user={user} setUserTo={setUser} />
 
         {/* משתמשים בדיב עוטף שיהיה ה"קונטיינר" של ה-Flex */}
 
         <div className={styles.mainLayout}>
           {/* צד שמאל: סיידבר (יופיע רק אם יש יוזר) */}
-          {/* {user != null && (
+          {user != null && (
             <aside className={styles.sidebarContainer}>
               <SideBar user={user} />
             </aside>
-          )} */}
+          )}
 
           {/* צד ימין: התוכן המשתנה של הדפים */}
           <main className={styles.contentArea}>
@@ -81,8 +83,6 @@ function App() {
                 path="/register"
                 element={<Register onLoginSuccess={setUser} />}
               />
-
-              {/* 
               <Route
                 path="/account"
                 element={<Account user={user} onUpdateSuccess={setUser} />}
@@ -91,6 +91,10 @@ function App() {
                 path="/businessAccount"
                 element={<DetailsOFbusiness user={user} />}
               />
+
+              {/* 
+           
+            
               <Route path="/usersmanagment" element={<UsersManagment />} />
               <Route
                 path="/servicesapprovals"

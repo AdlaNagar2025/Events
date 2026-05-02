@@ -44,13 +44,15 @@ router.post("/businessAccount", async (req, res) => {
       user: req.session.user,
     });
 
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
     return res.json(result);
   } catch (error) {
-    console.error("DEBUG ERROR:", error);
     return res.status(500).json({
       success: false,
-      msg: "Server Error during profile creation",
-      devError: error.message,
+      message: "Server is temporarily unavailable. Please try again later.",
     });
   }
 });
@@ -66,12 +68,10 @@ router.post("/upload-gallery", (req, res) => {
     // בדיקה אם קרתה שגיאה של Multer (למשל: קובץ גדול מדי או יותר מ-5 תמונות)
     if (err instanceof multer.MulterError) {
       if (err.code === "LIMIT_FILE_SIZE") {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "One or more files are too large (Max 2MB per image).",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "One or more files are too large (Max 2MB per image).",
+        });
       }
       return res
         .status(400)
@@ -136,9 +136,16 @@ router.post("/fillCalendar", async (req, res) => {
 });
 
 router.get("/Profile/:id", async (req, res) => {
-  const id = req.params.id;
-  const result = await getProfile(id);
-  return res.json({ success: true, data: result });
+  try {
+    const id = req.params.id;
+    const result = await getProfile(id);
+    if (!result)
+      return res.status(404).json({ success: false, msg: "Profile not found" });
+    return res.json({ success: true, data: result });
+  } catch (error) {
+    console.error("Get Profile Error:", error);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
 });
 // routes/provider.js
 
@@ -212,12 +219,18 @@ router.delete("/deleteImage/:imagePath", async (req, res) => {
 });
 router.post("/mainImage", async (req, res) => {
   try {
-    const { imagePath } = req.body; 
+    const { imagePath } = req.body;
     const providerId = req.session.user.id;
+
+    if (!imagePath)
+      return res
+        .status(400)
+        .json({ success: false, msg: "Missing image path" });
 
     await setMainImage(providerId, imagePath);
     res.json({ success: true, message: "Main image updated!" });
   } catch (error) {
+    console.error("Main Image Update Error:", error);
     res
       .status(500)
       .json({ success: false, message: "Failed to update main image" });

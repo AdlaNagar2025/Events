@@ -1,0 +1,85 @@
+/* מיכל ראשי שמאחד את הסרגל והתוכן */
+.accountContainer {
+  display: flex;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  align-items: flex-start;
+}
+
+
+/* אזור הטופס */
+.formContainer {
+  flex: 1; /* לוקח את שאר המרחב */
+}
+
+.form {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 24px;
+  border-bottom: 2px solid #f4f7f6;
+  padding-bottom: 10px;
+}
+
+.form input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.form input:focus {
+  border-color: #d4af37;
+  outline: none;
+}
+
+/* כפתור שמירה */
+.updateBtn {
+  background-color: #d4af37;
+  color: #2c3e50;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.updateBtn:hover {
+  background-color: #b8962d;
+  transform: translateY(-2px);
+}
+
+/* הודעת ברוך הבא מעל הטופס */
+.accountContainer > p {
+  font-size: 18px;
+  color: white;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+/* התאמה לנייד */
+@media (max-width: 768px) {
+  .accountContainer {
+    flex-direction: column;
+  }
+  .sideBar {
+    width: 100%;
+  }
+}
