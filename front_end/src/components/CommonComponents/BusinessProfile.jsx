@@ -19,7 +19,7 @@ export default function BusinessProfile({ user, provider }) {
 
         const response = await axios.get(url, { withCredentials: true });
         setData(response.data.data);
-        console.log("I am in BusinessProfile Componenta " + response.data.data);
+        console.log("I am in BusinessProfile Componenta ", response.data.data);
       } catch (error) {
         console.error("Error fetching profile:", error);
       } finally {
@@ -58,7 +58,10 @@ export default function BusinessProfile({ user, provider }) {
               <strong>Specialty:</strong> {data.specialty}
             </div>
             <div className={classes.infoItem}>
-              <strong>Experience:</strong> {data.experience_years} years
+              <strong>Experience:</strong>{" "}
+              {data.experience_years === 0
+                ? "Fresh Talent"
+                : `${data.experience_years} years`}
             </div>
             <div className={classes.infoItem}>
               <strong>Hourly Rate:</strong> ₪{data.price_per_hour}

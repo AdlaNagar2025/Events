@@ -3,7 +3,6 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import classes from "./BusinessAccount.module.css";
 import FormInput from "../BasicToProviderProfile/FormInput";
-import ImageUpload from "../BasicToProviderProfile/ImagesCode/ImageUpload"; // וודאי שהנתיב הזה נכון אצלך
 
 const initialChief = {
   specialty: "",

@@ -18,9 +18,8 @@ async function getProfile(id) {
   if (role === "Chief") {
     sql = `SELECT * FROM chiefs WHERE chief_id = ?`;
     result = await doQuery(sql, [id]);
-    result.experience_years = result.start_year - new Date().getFullYear();
-    console.log(result.experience_years)
-    console.log(result, "OF EXPERINCE_YEAR");
+    console.log(result[0].start_year);
+    result[0].experience_years =new Date().getFullYear()- result[0].start_year ;
   } else if (role === "Hall_Owner") {
     sql = `SELECT * FROM halls WHERE hall_id = ?`;
     result = await doQuery(sql, [id]);
@@ -30,9 +29,9 @@ async function getProfile(id) {
 }
 async function getMainFoto(id) {
   const sql = `SELECT * FROM provider_images WHERE is_main=1 AND provider_id=?;`;
-  const result = doQuery(sql, [id]);
+  const result = await doQuery(sql, [id]);
 
-  return result;
+  return result;6
 }
 
 /**

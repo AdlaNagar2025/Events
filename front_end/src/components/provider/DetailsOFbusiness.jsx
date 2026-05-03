@@ -78,7 +78,7 @@ function DetailsOFbusiness({ user }) {
         <div className={classes.stepNumber}>2</div>
         <ImageUpload
           role={user?.role}
-          user={user}
+          provider={user}
           ok={setCheck}
           isDisable={isDisable}
         />
