@@ -18,6 +18,9 @@ async function getProfile(id) {
   if (role === "Chief") {
     sql = `SELECT * FROM chiefs WHERE chief_id = ?`;
     result = await doQuery(sql, [id]);
+    result.experience_years = result.start_year - new Date().getFullYear();
+    console.log(result.experience_years)
+    console.log(result, "OF EXPERINCE_YEAR");
   } else if (role === "Hall_Owner") {
     sql = `SELECT * FROM halls WHERE hall_id = ?`;
     result = await doQuery(sql, [id]);

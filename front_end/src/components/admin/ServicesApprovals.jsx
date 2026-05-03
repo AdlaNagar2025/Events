@@ -3,12 +3,12 @@ import axios from "axios";
 import classes from "./servicesapprovals.module.css";
 import BusinessProfile from "../CommonComponents/BusinessProfile";
 
-export default function ServicesApprovals({user}) {
+export default function ServicesApprovals({ user }) {
   const [type, setType] = useState("pending");
   const [providers, setProviders] = useState([]);
   const [selectedProvider, setSelectedProvider] = useState(null);
   useEffect(() => {
-    console.log(user)
+    console.log(user);
     const fetchAllProviders = async () => {
       try {
         let url = `http://localhost:3030/admin/allServices/${type}`;
@@ -66,53 +66,83 @@ export default function ServicesApprovals({user}) {
 
       {providers.length !== 0 ? (
         <div className={classes.tableContainer}>
-        <table className={classes.customtable}>
-          <thead>
-            <tr>
-              <th>Provider Name</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Show Profile</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {providers.map((provider) => (
-              <tr key={provider.id}>
-                <td>{provider.first_name}</td>
-                <td>{provider.provider_type}</td>
-              
-                <td>  <span style={{ color: provider.status === 'pending' ? '#f39c12' : '#27ae60' }}>
-                     {provider.status}
-                   </span></td>
-                <td>
-                  <button className={classes.showBtn} onClick={() => setSelectedProvider(provider)}>
-                   View Details
-                  </button>
-                </td>
-                  <td>
-                  <div className={classes.actionBtns}>
-                    <button
-                      className={classes.approveBtn}
-                      onClick={() => handleStatusChange(provider.id, provider.provider_type, "Approved")}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      className={classes.denyBtn}
-                      onClick={() => handleStatusChange(provider.id, provider.provider_type, "Deny")}
-                    >
-                      Deny
-                    </button>
-                  </div>
-                </td>
+          <table className={classes.customtable}>
+            <thead>
+              <tr>
+                <th>Provider Name</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Show Profile</th>
+                <th>Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {providers.map((provider) => (
+                <tr key={provider.id}>
+                  <td>{provider.first_name}</td>
+                  <td>{provider.provider_type}</td>
+
+                  <td>
+                    {" "}
+                    <span
+                      style={{
+                        color:
+                          provider.status === "pending" ? "#f39c12" : "#27ae60",
+                      }}
+                    >
+                      {provider.status}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      className={classes.showBtn}
+                      onClick={() => setSelectedProvider(provider)}
+                    >
+                      View Details
+                    </button>
+                  </td>
+                  <td>
+                    <div className={classes.actionBtns}>
+                      {type !== "approved" && (
+                        <button
+                          className={classes.approveBtn}
+                          onClick={() =>
+                            handleStatusChange(
+                              provider.id,
+                              provider.provider_type,
+                              "Approved",
+                            )
+                          }
+                        >
+                          Approve
+                        </button>
+                      )}
+                      {type !== "deny" && (
+                        <button
+                          className={classes.denyBtn}
+                          onClick={() =>
+                            handleStatusChange(
+                              provider.id,
+                              provider.provider_type,
+                              "Deny",
+                            )
+                          }
+                        >
+                          Deny
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      ):(<p style={{ textAlign: 'center', color: '#777' }}>No services found for this category.</p>)
-    }
+      ) : (
+        <p style={{ textAlign: "center", color: "#777" }}>
+          No services found for this category.
+        </p>
+      )}
     </div>
   );
 }
