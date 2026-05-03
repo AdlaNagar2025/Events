@@ -15,7 +15,7 @@ import { FaTimes } from "react-icons/fa";
  * - ניהול תצוגה מקדימה לפני שמירה.
  * - אינטגרציה עם ImageItem להצגת כל תמונה בנפרד.
  */
-export default function ImageUpload({ role, user, ok }) {
+export default function ImageUpload({ role, provider, ok }) {
   const [images, setImages] = useState([]); //images that the provider selesct
   const [uploading, setUploading] = useState(false);
   const [existingImages, setExistingImages] = useState([]); //images from DB
@@ -39,7 +39,7 @@ export default function ImageUpload({ role, user, ok }) {
       if (role === "Chief" || role === "Hall_Owner") {
         url = "http://localhost:3030/provider/MyImages";
       } else {
-        url = `http://localhost:3030/${role?.toLowerCase()}/ProviderImages/${user?.id}`;
+        url = `http://localhost:3030/${role?.toLowerCase()}/ProviderImages/${provider?.id}`;
       }
       const response = await axios.get(url, { withCredentials: true });
       if (response.data.success) {
@@ -51,8 +51,8 @@ export default function ImageUpload({ role, user, ok }) {
   };
 
   useEffect(() => {
-    if (user) fetchAllImages();
-  }, [user?.id, role]);
+    if (provider) fetchAllImages();
+  }, [provider?.id, role]);
 
   const submitGallery = async () => {
     if (images.length === 0) return;
@@ -180,6 +180,7 @@ export default function ImageUpload({ role, user, ok }) {
             isMain={img.is_main === 1}
             onRemove={() => removeExistingImage(img.image_path)}
             onSetMain={handleSetMain}
+            role={role}
           />
         ))}
 

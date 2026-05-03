@@ -79,7 +79,7 @@ export default function BusinessProfile({ user, provider }) {
       <hr className={classes.divider} />
 
       <section className={classes.mediaSection}>
-        <ImageUpload role={user?.role} user={provider} />
+        <ImageUpload role={user?.role} provider={provider} />
       </section>
 
       <section className={classes.calendarSection}>

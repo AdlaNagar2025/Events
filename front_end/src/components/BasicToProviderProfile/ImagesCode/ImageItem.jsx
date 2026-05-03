@@ -11,7 +11,9 @@ import { FaStar, FaRegStar, FaTimes } from "react-icons/fa";
  * - כפתור כוכב (Main) להגדרת התמונה כתמונת פרופיל עסקית (זמין רק לתמונות קיימות).
  * - מסגרת זהב בולטת במידה והתמונה מוגדרת כראשית.
  */
-const ImageItem = ({ img, isExisting, onRemove, onSetMain, isMain }) => {
+const ImageItem = ({ img, isExisting, onRemove, onSetMain, isMain , role }) => {
+
+  console.log("I AM IN IMAGEITEM " , role)
   return (
     <div
       className={`${classes.imageWrapper} ${isMain ? classes.mainActive : ""}`}
@@ -26,7 +28,8 @@ const ImageItem = ({ img, isExisting, onRemove, onSetMain, isMain }) => {
         className={classes.previewImg}
       />
 
-      <div className={classes.overlay}>
+      { role !=="Admin" && role!= "Customer"  && (
+                <div className={classes.overlay}>
         <button
           type="button"
           className={classes.removeBtn}
@@ -35,6 +38,11 @@ const ImageItem = ({ img, isExisting, onRemove, onSetMain, isMain }) => {
         >
           <FaTimes />
         </button>
+
+      
+      
+      
+
 
         {isExisting && (
           <div
@@ -46,6 +54,7 @@ const ImageItem = ({ img, isExisting, onRemove, onSetMain, isMain }) => {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };
