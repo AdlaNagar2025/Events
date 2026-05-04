@@ -6,36 +6,44 @@ import { useLocation } from "react-router-dom";
 
 export default function BookEvent({ user, provider }) {
   const location = useLocation();
-
   // שימוש ב-Optional Chaining כדי למנוע קריסה
-  const data = location.state?.dataToEvent;
-
+  const dataToEvent = location.state?.dataToEvent;
+  const selectedProviderIds = location.state?.selectedProviderIds;
   // בדיקה אם המידע קיים, ואם לא - הצגת הודעה או הפניה חזרה
-  if (!data) {
-    return <p>Missing event details. Please go back and search again.</p>;
-  }
 
-  // function saveData(){
-  //   const response=await axios.post("http://localhost:3030/customer/eventData" ,data , {withCredentials:true} )
-  // }
+  async function saveData() {
+    try {
+      const response = await axios.post(
+        "http://localhost:3030/customer/eventData",
+        { dataToEvent, selectedProviderIds },
+        { withCredentials: true },
+      );
+      if (response.data.success) {
+        alert("DONE!!!");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   return (
     <div className={classes.EventDetails}>
       <h2>Event Details: </h2>
       <strong>Date : </strong>
-      <p>{data.date}</p>
+      <p>{dataToEvent.date}</p>
       <strong>StartTime : </strong>
-      <p>{data.startTime}</p>
+      <p>{dataToEvent.startTime}</p>
       <strong>EndTime : </strong>
-      <p>{data.endTime}</p>
+      <p>{dataToEvent.endTime}</p>
       <strong>Capacity:</strong>
-      <p>{data.capacity}</p>
+      <p>{dataToEvent.capacity}</p>
       <strong>Location:</strong>
-      <p>{data.city}</p>
+      <p>{dataToEvent.city}</p>
 
       <strong>Selected Provider</strong>
+      <p>{selectedProviderIds}</p>
 
-      {/* <button onClick={saveData}>Confirm</button> */}
+      <button onClick={saveData}>Confirm</button>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 const doQuery = require("../query");
+const { getRole } = require("./helpingFunc");
 /**
  * מבצעת חיפוש דינמי של ספקים (אולמות ושפים) לפי זמינות וקריטריונים.
  * הפונקציה בודקת ולידציה של תאריך (לא בעבר) וזמנים (התחלה לפני סוף),
@@ -93,20 +94,29 @@ async function getResultSearching(dataToSearch) {
   return result;
 }
 
-async function getEventData(eventData) {
+async function getEventData(Data, customerId) {
+  const { dataToEvent, selectedProviderIds } = Data;
+  console.log(dataToEvent);
+  console.log(selectedProviderIds);
+  const sql = `INSERT INTO events (user_id,chief_id,hall_id,requested_date,start_time,end_time,notes,guest_number) VALUES
+(?,?,?,?,?,?,?,?)`;
   let values = [
-    eventData.user_id,
-    eventData.chief_id,
-    eventData.hall_id,
-    eventData.requested_date,
-    eventData.start_time,
-    eventData.end_time,
-    eventData.notes,
+    customerId,
+    null,
+    null,
+    dataToEvent.date,
+    dataToEvent.startTime,
+    dataToEvent.endTime,
+    dataToEvent.notes || " ",
+    dataToEvent.capacity,
   ];
-  const sql = `INSERT INTO events (user_id,chief_id,hall_id,requested_date,start_time,end_time,notes) VALUES
-(?,?,?,?,?,?,?)`;
-
-  return doQuery(sql, values);
+  for (const pId of selectedProviderIds) {
+    const role = await getRole(pId);
+    if (role === "Chief") values[1] = pId;
+    else values[2] = pId;
+    await doQuery(sql, values);
+  }
+  return { suceess: true };
 }
 
 module.exports = { getResultSearching, getEventData };

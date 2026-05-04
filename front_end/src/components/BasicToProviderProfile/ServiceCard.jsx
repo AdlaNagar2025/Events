@@ -4,23 +4,15 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import BusinessProfile from "../CommonComponents/BusinessProfile";
 
-export default function ServiceCard({ user, provider, searchParams }) {
+export default function ServiceCard({ user, provider }) {
   const [showProfile, setShowProfile] = useState(false);
   const [cardData, setCardData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-    const [isChecked, setIsChecked] = useState(false);
-
-    const handleOnChange = () => {
-      setIsChecked(!isChecked);
-    };
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCardData = async () => {
       try {
         setIsLoading(true);
-
         const rolePath = user.role.toLowerCase();
         const url = `http://localhost:3030/${rolePath}/CardData/${provider.id}`;
         const response = await axios.get(url, { withCredentials: true });
@@ -38,17 +30,7 @@ export default function ServiceCard({ user, provider, searchParams }) {
     if (provider?.id) fetchCardData();
   }, [provider.id, provider.role, provider.provider_type]);
 
-  function handleSelectProvider() {
-    navigate("/bookEvent", {
-      state: {
-        dataToEvent: searchParams,
-        selectedProvider: { ...provider, ...cardData },
-      },
-    });
-  }
-
-  if (isLoading) return <div className={classes.cardLoader}>טוען...</div>;
-  // if (showProfile) return <BusinessProfile user={user} provider={provider} />;
+  if (isLoading) return <div className={classes.cardLoader}>loading...</div>;
 
   return (
     <>
@@ -111,28 +93,9 @@ export default function ServiceCard({ user, provider, searchParams }) {
             >
               View Details
             </button>
-
-        
-
-            {user?.role !== "Admin" && (
-              // <checkBox
-              //   onClick={handleSelectProvider}
-              //   className={classes.selectBtn}
-              // >
-              //   select
-              // </checkBox>
-                  <label>
-      <input
-        type="checkbox"
-        checked={isChecked}
-        onChange={handleOnChange}
-      />
-      select
-    </label>
-            )}
-          </div>
-        </div>
       </div>
+    </div>
+    </div>
     </>
   );
 }

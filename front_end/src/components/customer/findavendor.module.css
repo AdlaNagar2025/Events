@@ -1,10 +1,10 @@
-/* findavendor.module.css */
-
+/* קונטיינר ראשי */
 .container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 2rem auto;
-  padding: 0 1rem;
+  padding: 0 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  direction: ltr; /* במידה והאתר באנגלית, שנה ל-rtl אם הוא בעברית */
 }
 
 .container h2 {
@@ -14,63 +14,63 @@
   font-weight: 600;
 }
 
+/* סרגל החיפוש */
 .search {
   background: #ffffff;
-  padding: 2rem;
-  border-radius: 15px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  display: grid;
-  /* יצירת רשת של 3 עמודות שמתאימה את עצמה לגודל המסך */
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
   align-items: flex-end;
-  margin-bottom: 3rem;
+  justify-content: center;
+  margin-bottom: 30px;
 }
 
 .inputGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
+  flex: 1;
+  min-width: 150px;
 }
 
 .inputGroup label {
   font-size: 0.9rem;
-  font-weight: bold;
+  font-weight: 600;
   color: #555;
-  margin-right: 5px;
 }
 
 .inputGroup input {
-  padding: 0.8rem;
+  padding: 10px 12px;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 1rem;
-  transition: all 0.3s ease;
+  transition: border-color 0.3s;
 }
 
-/* אפקט פוקוס יפה כשלוחצים על ה-input */
 .inputGroup input:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
 }
 
+/* כפתור חיפוש */
 .searchBtn {
-  grid-column: 1 / -1; /* הכפתור יתפרס על כל הרוחב בשורה משלו */
   background-color: #007bff;
   color: white;
-  padding: 1rem;
+  padding: 11px 25px;
   border: none;
-  border-radius: 8px;
-  font-size: 1.1rem;
+  border-radius: 6px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition: background 0.3s, transform 0.2s;
 }
 
 .searchBtn:hover {
   background-color: #0056b3;
-  transform: translateY(-2px);
 }
 
 .searchBtn:disabled {
@@ -78,17 +78,98 @@
   cursor: not-allowed;
 }
 
+/* גריד של תוצאות */
 .result, .providersGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
+  gap: 25px;
+  margin-top: 20px;
 }
 
+/* עטיפה לכרטיס עם בחירה */
+.providerSelectionWrapper {
+  background: #f9f9f9;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 15px;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.providerSelectionWrapper:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* אזור הצ'קבוקס */
+.checkboxArea {
+  margin-top: 15px;
+  padding: 10px;
+  background: #fff;
+  border-radius: 8px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid #eee;
+}
+
+.checkboxArea input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.checkboxArea label {
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* כפתור ה-Booking הצף/תחתון */
+.selectBtn {
+  display: block;
+  width: fit-content;
+  margin: 40px auto;
+  padding: 15px 40px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+  transition: all 0.3s ease;
+}
+
+.selectBtn:hover {
+  background-color: #218838;
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+/* הודעת אין תוצאות */
 .noResults {
   grid-column: 1 / -1;
   text-align: center;
   font-size: 1.2rem;
-  color: #888;
-  padding: 3rem;
+  color: #777;
+  padding: 40px;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid #eee;
+  margin: 40px 0;
+}
+.selector{
+  background-color: #218838;
+  border-radius: 3px solid red;
 }

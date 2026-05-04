@@ -1,5 +1,7 @@
 .card{
-  background-color: brown;
+  background-color: #34495e;
+  color: white;
+
 }
 /* רקע כהה מסביב למודל */
 .modalOverlay {
