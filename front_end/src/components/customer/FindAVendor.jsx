@@ -12,17 +12,18 @@ import Search from "./Search";
  */
 export default function FindAVendor({ user }) {
   const navigate = useNavigate();
-  const [selectedProviderIds, setSelectedProviderIds] = useState([]);
+  const [selectedHallId, setSelectedHallId] = useState(null);
+  const [selectChiefsId, setSelectedChiefsId] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [providers, setProviders] = useState([]); 
-    const [searchParams, setSearchParams] = useState({
-      city: "",
-      capacity: "",
-      price: "",
-      date: "",
-      startTime: "",
-      endTime: "",
-    });
+  const [providers, setProviders] = useState([]);
+  const [searchParams, setSearchParams] = useState({
+    city: "",
+    capacity: "",
+    price: "",
+    date: "",
+    startTime: "",
+    endTime: "",
+  });
   // טעינת כל הספקים בטעינת הדף
   useEffect(() => {
     const fetchAllServices = async () => {
@@ -41,20 +42,25 @@ export default function FindAVendor({ user }) {
     fetchAllServices();
   }, []);
 
-  const toggleProviderSelection = (providerId) => {
-    setSelectedProviderIds(
-      (prev) =>
-        prev.includes(providerId)
-          ? prev.filter((id) => id !== providerId) // אם קיים - תוריד
-          : [...prev, providerId], // אם לא קיים - תוסיף
-    );
+  const toggleProviderSelection = (provider) => {
+    console.log(provider);
+    if (provider.provider_type === "Hall_Owner")
+      setSelectedHallId((prev) => (prev === provider.id ? null : provider.id));
+    else if (provider.provider_type === "Chief") {
+      setSelectedChiefsId(
+        (prev) =>
+          prev.includes(provider.id)
+            ? prev.filter((id) => id !== provider.id) // הסרה
+            : [...prev, provider.id], // הוספה - רק את ה-ID!
+      );
+    }
   };
-  console.log(selectedProviderIds);
   const handleBookingClick = () => {
     navigate("/bookEvent", {
       state: {
         dataToEvent: searchParams,
-        selectedProviderIds: selectedProviderIds,
+        selectedHallId: selectedHallId,
+        selectChiefsId: selectChiefsId,
       },
     });
   };
@@ -78,14 +84,14 @@ export default function FindAVendor({ user }) {
             <div key={p.id} className={classes.selector}>
               <input
                 type="checkbox"
-                onChange={() => toggleProviderSelection(p.id)}
+                onChange={() => toggleProviderSelection(p)}
               />
               select
               <ServiceCard user={user} provider={p} />
             </div>
           ))}
       </div>
-      {selectedProviderIds.length > 0 && (
+      {(selectedHallId != null || selectChiefsId.length > 0) && (
         <button className={classes.selectBtn} onClick={handleBookingClick}>
           select
         </button>

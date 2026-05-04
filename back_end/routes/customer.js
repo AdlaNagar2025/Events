@@ -94,6 +94,7 @@ router.get("/CardData/:id", async (req, res) => {
 
 router.post("/eventData", async (req, res) => {
   try {
+    console.log(req.body)
     const result = await getEventData(req.body, req.session.user.id);
     return res.json(result);
   } catch (error) {

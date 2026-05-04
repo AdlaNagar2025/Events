@@ -8,14 +8,21 @@ export default function BookEvent({ user, provider }) {
   const location = useLocation();
   // שימוש ב-Optional Chaining כדי למנוע קריסה
   const dataToEvent = location.state?.dataToEvent;
-  const selectedProviderIds = location.state?.selectedProviderIds;
+  const selectedHallId = location.state?.selectedHallId;
+    const selectChiefsId = location.state?.selectChiefsId;
+
+
   // בדיקה אם המידע קיים, ואם לא - הצגת הודעה או הפניה חזרה
 
   async function saveData() {
     try {
       const response = await axios.post(
         "http://localhost:3030/customer/eventData",
-        { dataToEvent, selectedProviderIds },
+        {
+          dataToEvent,
+          hallId: selectedHallId,
+          selectedChiefsId: selectChiefsId, // שינוי שם שיתאים ל-Backend
+        },
         { withCredentials: true },
       );
       if (response.data.success) {
@@ -41,7 +48,7 @@ export default function BookEvent({ user, provider }) {
       <p>{dataToEvent.city}</p>
 
       <strong>Selected Provider</strong>
-      <p>{selectedProviderIds}</p>
+      <p>{selectedHallId}</p>
 
       <button onClick={saveData}>Confirm</button>
     </div>
