@@ -93,8 +93,13 @@ router.get("/CardData/:id", async (req, res) => {
 });
 
 router.post("/eventData", async (req, res) => {
-  const result = await getEventData(req.body , req.session.user.id);
-  return res.json(result);
+  try {
+    const result = await getEventData(req.body, req.session.user.id);
+    return res.json(result);
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 module.exports = router;

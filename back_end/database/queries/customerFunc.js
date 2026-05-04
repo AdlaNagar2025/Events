@@ -95,28 +95,30 @@ async function getResultSearching(dataToSearch) {
 }
 
 async function getEventData(Data, customerId) {
-  const { dataToEvent, selectedProviderIds } = Data;
+  const { dataToEvent, hallId, selectedChiefsId } = Data;
   console.log(dataToEvent);
-  console.log(selectedProviderIds);
-  const sql = `INSERT INTO events (user_id,chief_id,hall_id,requested_date,start_time,end_time,notes,guest_number) VALUES
-(?,?,?,?,?,?,?,?)`;
+  const sql = `INSERT INTO events (user_id,hall_id,requested_date,start_time,end_time,notes,guest_number) VALUES
+(?,?,?,?,?,?,?)`;
   let values = [
     customerId,
-    null,
-    null,
+    hallId || null,
     dataToEvent.date,
     dataToEvent.startTime,
     dataToEvent.endTime,
     dataToEvent.notes || " ",
     dataToEvent.capacity,
   ];
-  for (const pId of selectedProviderIds) {
-    const role = await getRole(pId);
-    if (role === "Chief") values[1] = pId;
-    else values[2] = pId;
-    await doQuery(sql, values);
+  const result = await doQuery(sql, values);
+
+  const sql1 = `INSERT INTO event_providers (event_id , provider_id ) VALUES
+(?,?)`;
+  if (selectedChiefsId && selectedChiefsId.length > 0) {
+    for (const pId of selectedChiefsId) {
+      await doQuery(sql1, [result.insertId, pId]); // תיקון ל-sql1
+    }
   }
-  return { suceess: true };
+
+  return { success: true }; // תיקון איות
 }
 
 module.exports = { getResultSearching, getEventData };
