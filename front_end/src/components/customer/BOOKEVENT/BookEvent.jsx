@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import classes from "./bookEvent.module.css";
-import ServiceCard from "../BasicToProviderProfile/ServiceCard";
+import ServiceCard from "../../BasicToProviderProfile/ServiceCard";
 import { useLocation } from "react-router-dom";
 
 export default function BookEvent({ user, provider }) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import classes from "./findavendor.module.css";
-import ServiceCard from "../BasicToProviderProfile/ServiceCard";
+import ServiceCard from "../../BasicToProviderProfile/ServiceCard";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Search from "./Search";

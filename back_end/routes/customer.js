@@ -9,6 +9,8 @@ const {
 const {
   getResultSearching,
   getEventData,
+  getAllEventsData,
+  getAllEventsChiefs,
 } = require("../database/queries/customerFunc");
 const { getProviderCardData } = require("../database/queries/businessAccount");
 const router = express.Router();
@@ -94,7 +96,7 @@ router.get("/CardData/:id", async (req, res) => {
 
 router.post("/eventData", async (req, res) => {
   try {
-    console.log(req.body)
+    console.log(req.body);
     const result = await getEventData(req.body, req.session.user.id);
     return res.json(result);
   } catch (error) {
@@ -103,4 +105,15 @@ router.post("/eventData", async (req, res) => {
   }
 });
 
+router.get("/myEventsData", async (req, res) => {
+  const result = await getAllEventsData(req.session.user.id);
+  return res.json({sucess:true , data:result});
+});
+
+
+
+router.get("/myEventsChiefsData", async (req, res) => {
+    const result =await getAllEventsChiefs(req.session.user.id);
+    return res.json({ sucess: true, data: result });
+});
 module.exports = router;

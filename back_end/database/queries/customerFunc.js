@@ -121,4 +121,22 @@ async function getEventData(Data, customerId) {
   return { success: true }; // תיקון איות
 }
 
-module.exports = { getResultSearching, getEventData };
+async function getAllEventsData(customerId) {
+  const sql = `SELECT * FROM events WHERE user_id=?;`
+    const result = await doQuery(sql, [customerId]);
+  return result
+}
+
+async function getAllEventsChiefs(customerId) {
+     const sql = `SELECT * FROM event_providers WHERE event_id in(
+SELECT event_id FROM events WHERE user_id=? )`;
+     const result = await doQuery(sql, [customerId]);
+    return result
+}
+
+module.exports = {
+  getResultSearching,
+  getEventData,
+  getAllEventsData,
+  getAllEventsChiefs,
+};
