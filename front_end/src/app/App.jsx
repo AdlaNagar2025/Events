@@ -7,7 +7,7 @@ import { Toaster } from "react-hot-toast";
 import styles from "./app.module.css";
 
 // Components
-import Navbar from "../components/Navbar";
+import Navbar from "../components/NavBar/Navbar";
 import Register from "../components/registerOrlogin/Register";
 import Login from "../components/registerOrlogin/Login";
 import Account from "../components/BasicComponents/Account";
@@ -21,8 +21,6 @@ import axios from "axios";
 import FindAVendor from "../components/customer/findAvendors/FindAVendor";
 import BookEvent from "../components/customer/BOOKEVENT/BookEvent";
 import MyBooking from "../components/customer/MYEVENTS/MyBooking";
-
-
 
 function App() {
   const [user, setUser] = useState(null);

@@ -1,6 +1,6 @@
-import React from 'react'
-import { useState } from 'react';
-import axios from 'axios';
+import React from "react";
+import { useState } from "react";
+import axios from "axios";
 import classes from "./findavendor.module.css";
 
 export default function Search({
@@ -9,6 +9,7 @@ export default function Search({
   isLoading,
   setSearchParams,
   searchParams,
+  setIsSearch,
 }) {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -133,7 +134,10 @@ export default function Search({
         </div>
 
         <button
-          onClick={handleSearch}
+          onClick={() => {
+            setIsSearch(true);
+            handleSearch();
+          }}
           disabled={isLoading}
           className={classes.searchBtn}
         >

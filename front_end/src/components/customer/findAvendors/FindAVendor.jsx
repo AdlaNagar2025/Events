@@ -16,6 +16,7 @@ export default function FindAVendor({ user }) {
   const [selectChiefsId, setSelectedChiefsId] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [providers, setProviders] = useState([]);
+  const[isSearch,setIsSearch]=useState(false)
   const [searchParams, setSearchParams] = useState({
     city: "",
     capacity: "",
@@ -24,6 +25,7 @@ export default function FindAVendor({ user }) {
     startTime: "",
     endTime: "",
   });
+  console.log(isSearch)
   // טעינת כל הספקים בטעינת הדף
   useEffect(() => {
     const fetchAllServices = async () => {
@@ -72,6 +74,7 @@ export default function FindAVendor({ user }) {
         isLoading={isLoading}
         setSearchParams={setSearchParams}
         searchParams={searchParams}
+        setIsSearch={setIsSearch}
       />
       <div className={classes.providersGrid}>
         {providers.length == 0 && (
@@ -82,11 +85,16 @@ export default function FindAVendor({ user }) {
         {providers.length > 0 &&
           providers.map((p) => (
             <div key={p.id} className={classes.selector}>
-              <input
-                type="checkbox"
-                onChange={() => toggleProviderSelection(p)}
-              />
-              select
+              {isSearch && (
+                <div>
+                  <input
+                    type="checkbox"
+                    onChange={() => toggleProviderSelection(p)}
+                  />
+                  select
+                </div>
+              )}
+
               <ServiceCard user={user} provider={p} />
             </div>
           ))}

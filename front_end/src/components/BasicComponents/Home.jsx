@@ -1,4 +1,4 @@
-import Navbar from "../Navbar";
+import Navbar from "../NavBar/Navbar";
 import classes from "./home.module.css";
 // import home_background from "../assets/home_background.png";
 // import backGround from "../assets/BackGround.png";
