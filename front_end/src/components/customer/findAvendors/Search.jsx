@@ -1,5 +1,5 @@
 import React from "react";
-import { useState } from "react";
+import { useState , useEffect} from "react";
 import axios from "axios";
 import classes from "./findavendor.module.css";
 
@@ -11,8 +11,21 @@ export default function Search({
   searchParams,
   setIsSearch,
 }) {
+  useEffect(() => {
+    if (
+      searchParams.date &&
+      searchParams.startTime &&
+      searchParams.endTime &&
+      searchParams.capacity > 0
+    ) {
+      if (searchParams.startTime < searchParams.endTime) {
+        handleSearch();
+      }
+    }
+  }, [searchParams]);
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    setIsSearch(false);
     setSearchParams((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -55,6 +68,7 @@ export default function Search({
         { withCredentials: true },
       );
       setProviders(response.data.data);
+      setIsSearch(true);
     } catch (error) {
       console.log("Search failed", error);
     } finally {
@@ -132,17 +146,14 @@ export default function Search({
             onChange={handleInputChange}
           />
         </div>
-
+{/* 
         <button
-          onClick={() => {
-            setIsSearch(true);
-            handleSearch();
-          }}
+          onClick={handleSearch}
           disabled={isLoading}
           className={classes.searchBtn}
         >
           {isLoading ? "Searching..." : "Search"}
-        </button>
+        </button> */}
       </div>
     </div>
   );

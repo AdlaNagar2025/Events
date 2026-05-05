@@ -12,11 +12,11 @@ import Search from "./Search";
  */
 export default function FindAVendor({ user }) {
   const navigate = useNavigate();
-  const [selectedHallId, setSelectedHallId] = useState(null);
-  const [selectChiefsId, setSelectedChiefsId] = useState([]);
+  const [selectedHall, setSelectedHall] = useState(null);
+  const [selectedChiefs, setSelectedChiefs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [providers, setProviders] = useState([]);
-  const[isSearch,setIsSearch]=useState(false)
+  const [isSearch, setIsSearch] = useState(false);
   const [searchParams, setSearchParams] = useState({
     city: "",
     capacity: "",
@@ -25,7 +25,7 @@ export default function FindAVendor({ user }) {
     startTime: "",
     endTime: "",
   });
-  console.log(isSearch)
+  console.log(isSearch);
   // טעינת כל הספקים בטעינת הדף
   useEffect(() => {
     const fetchAllServices = async () => {
@@ -44,16 +44,16 @@ export default function FindAVendor({ user }) {
     fetchAllServices();
   }, []);
 
+
   const toggleProviderSelection = (provider) => {
-    console.log(provider);
-    if (provider.provider_type === "Hall_Owner")
-      setSelectedHallId((prev) => (prev === provider.id ? null : provider.id));
-    else if (provider.provider_type === "Chief") {
-      setSelectedChiefsId(
+    if (provider.provider_type === "Hall_Owner") {
+      setSelectedHall((prev) => (prev?.id === provider.id ? null : provider));
+    } else if (provider.provider_type === "Chief") {
+      setSelectedChiefs(
         (prev) =>
-          prev.includes(provider.id)
-            ? prev.filter((id) => id !== provider.id) // הסרה
-            : [...prev, provider.id], // הוספה - רק את ה-ID!
+          prev.some((p) => p.id === provider.id)
+            ? prev.filter((p) => p.id !== provider.id) // הסרה
+            : [...prev, provider], 
       );
     }
   };
@@ -61,8 +61,8 @@ export default function FindAVendor({ user }) {
     navigate("/bookEvent", {
       state: {
         dataToEvent: searchParams,
-        selectedHallId: selectedHallId,
-        selectChiefsId: selectChiefsId,
+        selectedHall: selectedHall, // שולח אובייקט מלא
+        selectedChiefs: selectedChiefs, // שולח מערך אובייקטים מלא
       },
     });
   };
@@ -89,6 +89,11 @@ export default function FindAVendor({ user }) {
                 <div>
                   <input
                     type="checkbox"
+                    checked={
+                      p.provider_type === "Hall_Owner"
+                        ? selectedHall?.id === p.id
+                        : selectedChiefs.some((chief) => chief.id === p.id)
+                    }
                     onChange={() => toggleProviderSelection(p)}
                   />
                   select
@@ -99,7 +104,7 @@ export default function FindAVendor({ user }) {
             </div>
           ))}
       </div>
-      {(selectedHallId != null || selectChiefsId.length > 0) && (
+      {(selectedHall != null || selectedChiefs.length > 0) && (
         <button className={classes.selectBtn} onClick={handleBookingClick}>
           select
         </button>
