@@ -4,14 +4,18 @@ import { useEffect } from "react";
 import axios from "axios";
 import { useState } from "react";
 
-export default function MyBooking() {
+export default function MyBooking({user}) {
+  console.log("Iam in MyBooking",user)
   const [events, setEvents] = useState([]);
-  console.log("MY BOOKING");
   useEffect(() => {
     const fetchAllEvents = async () => {
       try {
+          let rolePath = user?.role.toLowerCase();
+          if (rolePath === "chief" || rolePath === "hall_owner")
+            rolePath = "provider";
+          console.log(rolePath);
         const response = await axios.get(
-          "http://localhost:3030/customer/myEventsData",
+          `http://localhost:3030/${rolePath}/myEventsData`,
           {
             withCredentials: true,
           },
@@ -22,12 +26,12 @@ export default function MyBooking() {
       }
     };
     fetchAllEvents();
-  }, []);
+  }, [user]);
 
   return (
     <div className={classes.event}>
       {events.map((e) => (
-        <div>
+        <div key={e.event_id}>
           <p>status:{e.status.toLowerCase()}</p>
 
           <div>
@@ -36,11 +40,15 @@ export default function MyBooking() {
             <p>{e.start_time}</p>
             <p>{e.end_time}</p>
             <p>{e.guest_number}</p>
+            {/* <p></p> */}
           </div>
 
           <button>Update</button>
           <button>Cancel</button>
-          {e.requested_date < new Date() && e.status.toLowerCase() ==="approved"  &&  <button>Write a Review</button>}
+          {e.requested_date < new Date() &&
+            e.status.toLowerCase() === "approved" && (
+              <button>Write a Review</button>
+            )}
         </div>
       ))}
     </div>

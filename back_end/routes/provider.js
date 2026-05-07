@@ -21,6 +21,7 @@ const {
   getProfile,
   updateBusinessStatus,
 } = require("../database/queries/commonFunc");
+const { getAllEvents } = require("../database/queries/providersFunc");
 
 /**
  * הגנה גלובלית על כל נתיבי ה-Provider:
@@ -261,5 +262,10 @@ router.post("/approve-business", async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: "Update failed" });
   }
+});
+
+router.get("/myEventsData", async (req, res) => {
+  const result = await getAllEvents(req.session.user.id);
+  return res.json({data:result});
 });
 module.exports = router;
