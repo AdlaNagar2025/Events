@@ -110,7 +110,7 @@ router.get("/myEventsData", async (req, res) => {
   return res.json({ sucess: true, data: result });
 });
 
-router.update("/updateEventData/:id", async (req, res) => {
+router.put("/updateEventData/:id", async (req, res) => {
   try {
     const eventId=req.params.id
     const result = await updateEventData(

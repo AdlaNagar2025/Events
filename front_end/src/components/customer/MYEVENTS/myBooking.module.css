@@ -6,3 +6,13 @@
   margin-bottom: 3px;
 
 }
+.pending{
+  color: rgb(138, 182, 155);
+
+}
+.rejected{
+  color: red;
+}
+.approve{
+  color: pink;
+}

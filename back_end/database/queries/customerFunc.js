@@ -1,5 +1,5 @@
 const doQuery = require("../query");
-const { getRole } = require("./helpingFunc");
+const { getRole, getStatusEvent } = require("./helpingFunc");
 /**
  * מבצעת חיפוש דינמי של ספקים (אולמות ושפים) לפי זמינות וקריטריונים.
  * הפונקציה בודקת ולידציה של תאריך (לא בעבר) וזמנים (התחלה לפני סוף),
@@ -140,16 +140,19 @@ LEFT JOIN event_providers ep ON e.event_id = ep.event_id
 LEFT JOIN chiefs c ON ep.provider_id = c.chief_id
 LEFT JOIN users u ON c.chief_id = u.id
 WHERE e.user_id = ?`;
-    const result = await doQuery(sql, [customerId]);
-  return result
+  const result = await doQuery(sql, [customerId]);
+const fresult = []; // מערך חדש וריק
+
+  for (const row of result) {
+    const finalStatus = await getStatusEvent(row.event_id);
+    row.finalStatus = finalStatus;
+    fresult.push(row); // מוסיפים למערך רק אחרי שה-await הסתיים
+  }
+
+console.log(fresult)
+  return fresult;
 }
 
-// async function getAllEventsChiefs(customerId) {
-//      const sql = `SELECT * FROM event_providers WHERE event_id in(
-// SELECT event_id FROM events WHERE user_id=? )`;
-//      const result = await doQuery(sql, [customerId]);
-//     return result
-// }
 
 async function updateEventData(updatinData, customerId, eventId) {
   const sql=`SELECT events.event_id , events.hall_id,events.requested_date,events.start_time,events.end_time,events.guest_number , events.notes , events.status,event_providers.id,event_providers.provider_id,event_providers.status FROM events join  event_providers on event_providers.event_id=events.event_id WHERE user_id=? AND events.event_id=?`
