@@ -10,7 +10,7 @@ const {
   getResultSearching,
   getEventData,
   getAllEventsData,
-  getAllEventsChiefs,
+  updateEventData,
 } = require("../database/queries/customerFunc");
 const { getProviderCardData } = require("../database/queries/businessAccount");
 const router = express.Router();
@@ -107,13 +107,22 @@ router.post("/eventData", async (req, res) => {
 
 router.get("/myEventsData", async (req, res) => {
   const result = await getAllEventsData(req.session.user.id);
-  return res.json({sucess:true , data:result});
+  return res.json({ sucess: true, data: result });
 });
 
-
-
-router.get("/myEventsChiefsData", async (req, res) => {
-    const result =await getAllEventsChiefs(req.session.user.id);
-    return res.json({ sucess: true, data: result });
+router.update("/updateEventData/:id", async (req, res) => {
+  try {
+    const eventId=req.params.id
+    const result = await updateEventData(
+      req.body,
+      req.session.user.id,
+      eventId,
+    );
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
+
 module.exports = router;

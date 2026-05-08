@@ -17,7 +17,6 @@ async function changeStatusEvent(providerId, newStatus) {
   const result = await doQuert(sql, [newStatus, providerId]);
 }
 
-// SELECT * , event_providers.provider_id
-// FROM events JOIN event_providers ON events.event_id= event_providers.event_id;
+
 
 module.exports = { getAllEvents };

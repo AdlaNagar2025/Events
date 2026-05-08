@@ -1,8 +1,10 @@
 // import { useEffect, useState } from "react";
 // import classes from "./findavendor.module.css";
-// import ServiceCard from "../BasicToProviderProfile/ServiceCard";
+// import ServiceCard from "../../BasicToProviderProfile/ServiceCard";
 // import axios from "axios";
 // import { useNavigate } from "react-router-dom";
+// import Search from "./Search";
+// import { useLocation } from "react-router-dom";
 // /**
 //  * קומפוננטת FindAVendor:
 //  * מנהלת את ממשק החיפוש והסינון של ספקי שירות.
@@ -10,12 +12,28 @@
 //  * מציגה את כל הספקים בטעינה ראשונית, ומתעדכנת לפי תוצאות החיפוש מהשרת.
 //  */
 // export default function FindAVendor({ user }) {
-//   const [selectedProviderIds, setSelectedProviderIds] = useState([]);
+//   const location = useLocation();
+//   const eventToUpdate = location.state?.Event;
+
+//   useEffect(() => {
+//     if (eventToUpdate) {
+//       console.log("Updating existing event:", eventToUpdate);
+//       setSearchParams({
+//         city: "",
+//         capacity: eventToUpdate.guest_number || "",
+//         date: eventToUpdate.requested_date || "",
+//         startTime: eventToUpdate.start_time || "",
+//         endTime: eventToUpdate.end_time || "",
+//       });
+//       setIsSearch(true);
+//     }
+//   }, [eventToUpdate]);
 //   const navigate = useNavigate();
+//   const [selectedHall, setSelectedHall] = useState(null);
+//   const [selectedChiefs, setSelectedChiefs] = useState([]);
 //   const [isLoading, setIsLoading] = useState(false);
-//   const [searchResults, setSearchResults] = useState([]);
-//   const [providers, setProviders] = useState([]); //PROVIDERS THAT IN DB
-//   const [hasSearched, setHasSearched] = useState(false);
+//   const [providers, setProviders] = useState([]);
+//   const [isSearch, setIsSearch] = useState(false);
 //   const [searchParams, setSearchParams] = useState({
 //     city: "",
 //     capacity: "",
@@ -24,7 +42,7 @@
 //     startTime: "",
 //     endTime: "",
 //   });
-
+//   console.log(isSearch);
 //   // טעינת כל הספקים בטעינת הדף
 //   useEffect(() => {
 //     const fetchAllServices = async () => {
@@ -43,197 +61,69 @@
 //     fetchAllServices();
 //   }, []);
 
-//   const handleInputChange = (e) => {
-//     const { name, value } = e.target;
-//     setSearchParams((prev) => ({ ...prev, [name]: value }));
-//   };
-
-//   const handleSearch = async () => {
-//     if (!searchParams.date) {
-//       alert("Please select a date for your event.");
-//       return;
-//     }
-//     if (!searchParams.startTime) {
-//       alert("Please select a start time for your event.");
-//       return;
-//     }
-//     if (!searchParams.endTime) {
-//       alert("Please select a end time for your event.");
-//       return;
-//     }
-//     if (searchParams.startTime > searchParams.endTime) {
-//       alert("End time must be after start time.");
-//       return;
-//     }
-
-//     if (!searchParams.capacity) {
-//       alert("Please select a capacity for your event.");
-//       return;
-//     }
-//     if (searchParams.capacity && searchParams.capacity <= 0) {
-//       alert("Capacity must be greater than 0");
-//       return;
-//     }
-
-//     if (searchParams.price && searchParams.price < 0) {
-//       alert("Price cannot be negative");
-//       return;
-//     }
-
-//     setIsLoading(true);
-//     setHasSearched(true);
-//     try {
-//       const response = await axios.post(
-//         "http://localhost:3030/customer/Searching",
-//         searchParams,
-//         { withCredentials: true },
+//   const toggleProviderSelection = (provider) => {
+//     if (provider.provider_type === "Hall_Owner") {
+//       setSelectedHall((prev) => (prev?.id === provider.id ? null : provider));
+//     } else if (provider.provider_type === "Chief") {
+//       setSelectedChiefs((prev) =>
+//         prev.some((p) => p.id === provider.id)
+//           ? prev.filter((p) => p.id !== provider.id) // הסרה
+//           : [...prev, provider],
 //       );
-//       setSearchResults(response.data.data);
-//     } catch (error) {
-//       console.log("Search failed", error);
-//     } finally {
-//       setIsLoading(false);
 //     }
 //   };
-
-//   // const toggleProviderSelection = (providerId) => {
-//   //   setSelectedProviderIds(
-//   //     (prev) =>
-//   //       prev.includes(providerId)
-//   //         ? prev.filter((id) => id !== providerId) // אם קיים - תוריד
-//   //         : [...prev, providerId], // אם לא קיים - תוסיף
-//   //   );
-//   // };
-//   // const handleBookingClick = () => {
-//   //   if (selectedProviderIds.length === 0) {
-//   //     alert("Please select at least one vendor.");
-//   //     return;
-//   //   }
-
-//   //   navigate("/bookEvent", {
-//   //     state: {
-//   //       dataToEvent: searchParams,
-//   //       selectedProviderIds: selectedProviderIds, // הוספנו את הספקים שנבחרו
-//   //     },
-//   //   });
-//   // };
-//   // const isThisSelected = (pId) => selectedProviderIds.includes(pId);
-
+//   const handleBookingClick = () => {
+//     navigate("/bookEvent", {
+//       state: {
+//         dataToEvent: searchParams,
+//         selectedHall: selectedHall, // שולח אובייקט מלא
+//         selectedChiefs: selectedChiefs, // שולח מערך אובייקטים מלא
+//       },
+//     });
+//   };
 //   return (
-//     <div className={classes.container}>
-//       <h2>Find Your Event Team: Unified Vendor Search</h2>
-//       <div className={classes.search}>
-//         <div className={classes.inputGroup}>
-//           <label htmlFor="date">Date:</label>
-//           <input
-//             id="date"
-//             type="date"
-//             min={new Date().toISOString().split("T")[0]}
-//             value={searchParams.date}
-//             name="date"
-//             onChange={handleInputChange}
-//           />
-//         </div>
-
-//         <div className={classes.inputGroup}>
-//           <label htmlFor="startTime">Start Time:</label>
-//           <input
-//             id="startTime"
-//             type="time"
-//             value={searchParams.startTime}
-//             name="startTime"
-//             onChange={handleInputChange}
-//           />
-//         </div>
-
-//         <div className={classes.inputGroup}>
-//           <label htmlFor="endTime">End Time:</label>
-//           <input
-//             id="endTime"
-//             type="time"
-//             value={searchParams.endTime}
-//             name="endTime"
-//             onChange={handleInputChange}
-//           />
-//         </div>
-
-//         <div className={classes.inputGroup}>
-//           <label htmlFor="city">Location:</label>
-//           <input
-//             id="city"
-//             type="text"
-//             value={searchParams.city}
-//             name="city"
-//             onChange={handleInputChange}
-//             placeholder="Enter city..."
-//           />
-//         </div>
-
-//         <div className={classes.inputGroup}>
-//           <label htmlFor="capacity">Capacity:</label>
-//           <input
-//             id="capacity"
-//             type="number"
-//             value={searchParams.capacity}
-//             name="capacity"
-//             onChange={handleInputChange}
-//           />
-//         </div>
-
-//         <div className={classes.inputGroup}>
-//           <label htmlFor="price">Max Price:</label>
-//           <input
-//             id="price"
-//             type="number"
-//             value={searchParams.price}
-//             name="price"
-//             onChange={handleInputChange}
-//           />
-//         </div>
-
-//         <button
-//           onClick={handleSearch}
-//           disabled={isLoading}
-//           className={classes.searchBtn}
-//         >
-//           {isLoading ? "Searching..." : "Search"}
-//         </button>
-//       </div>
-//       <hr />
-//       {/* תצוגת תוצאות החיפוש */}
-//       <div className={classes.result}>
-//         {searchResults.length > 0 ? (
-//           searchResults.map((p) => (
-//             <div key={p.id} className={classes.providerSelectionWrapper}>
-//               <ServiceCard user={user} provider={p} />
-
-//               {/* <div className={classes.checkboxArea}>
-//                 <input
-//                   type="checkbox"
-//                   id={`select-${p.id}`}
-//                   checked={isThisSelected(p.id)}
-//                   onChange={() => toggleProviderSelection(p.id)} // קריאה עטופה ב-Arrow Function
-//                 />
-//                 <label htmlFor={`select-${p.id}`}>Select this vendor</label>
-//               </div> */}
-//             </div>
-//           ))
-//         ) : hasSearched && !isLoading ? (
+//     <div>
+//       <Search
+//         setProviders={setProviders}
+//         setIsLoading={setIsLoading}
+//         isLoading={isLoading}
+//         setSearchParams={setSearchParams}
+//         searchParams={searchParams}
+//         setIsSearch={setIsSearch}
+//       />
+//       <div className={classes.providersGrid}>
+//         {providers.length == 0 && (
 //           <p className={classes.noResults}>
 //             No vendors found for your criteria.
 //           </p>
-//         ) : null}
-//       </div>
-//       {/* תצוגת ברירת מחדל - לפני שבוצע חיפוש */}
-//       {!hasSearched && (
-//         <div className={classes.providersGrid}>
-//           {providers.map((p) => (
-//             <ServiceCard key={p.id} user={user} provider={p} />
+//         )}
+//         {providers.length > 0 &&
+//           providers.map((p) => (
+//             <div key={p.id} className={classes.selector}>
+//               {isSearch && (
+//                 <div>
+//                   <input
+//                     type="checkbox"
+//                     checked={
+//                       p.provider_type === "Hall_Owner"
+//                         ? selectedHall?.id === p.id
+//                         : selectedChiefs.some((chief) => chief.id === p.id)
+//                     }
+//                     onChange={() => toggleProviderSelection(p)}
+//                   />
+//                   select
+//                 </div>
+//               )}
+
+//               <ServiceCard user={user} provider={p} />
+//             </div>
 //           ))}
-//         </div>
+//       </div>
+//       {(selectedHall != null || selectedChiefs.length > 0) && (
+//         <button className={classes.selectBtn} onClick={handleBookingClick}>
+//           select
+//         </button>
 //       )}
-//       {/* //onClick={handleBookingClick} */}
-//       <button className={classes.selectBtn}>select</button>
 //     </div>
 //   );
 // }

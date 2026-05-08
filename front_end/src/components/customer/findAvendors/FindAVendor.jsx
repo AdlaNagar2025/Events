@@ -4,6 +4,7 @@ import ServiceCard from "../../BasicToProviderProfile/ServiceCard";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Search from "./Search";
+import { useLocation } from "react-router-dom";
 /**
  * קומפוננטת FindAVendor:
  * מנהלת את ממשק החיפוש והסינון של ספקי שירות.
@@ -11,6 +12,22 @@ import Search from "./Search";
  * מציגה את כל הספקים בטעינה ראשונית, ומתעדכנת לפי תוצאות החיפוש מהשרת.
  */
 export default function FindAVendor({ user }) {
+  const location = useLocation();
+  const eventToUpdate = location.state?.Event; 
+
+  useEffect(() => {
+    if (eventToUpdate) {
+      console.log("Updating existing event:", eventToUpdate);
+      setSearchParams({
+        city: "",
+        capacity: eventToUpdate.guest_number || "",
+        date: eventToUpdate.requested_date || "",
+        startTime: eventToUpdate.start_time || "",
+        endTime: eventToUpdate.end_time || "",
+      });
+      setIsSearch(true); 
+    }
+  }, [eventToUpdate]);
   const navigate = useNavigate();
   const [selectedHall, setSelectedHall] = useState(null);
   const [selectedChiefs, setSelectedChiefs] = useState([]);
@@ -44,16 +61,14 @@ export default function FindAVendor({ user }) {
     fetchAllServices();
   }, []);
 
-
   const toggleProviderSelection = (provider) => {
     if (provider.provider_type === "Hall_Owner") {
       setSelectedHall((prev) => (prev?.id === provider.id ? null : provider));
     } else if (provider.provider_type === "Chief") {
-      setSelectedChiefs(
-        (prev) =>
-          prev.some((p) => p.id === provider.id)
-            ? prev.filter((p) => p.id !== provider.id) // הסרה
-            : [...prev, provider], 
+      setSelectedChiefs((prev) =>
+        prev.some((p) => p.id === provider.id)
+          ? prev.filter((p) => p.id !== provider.id) // הסרה
+          : [...prev, provider],
       );
     }
   };
