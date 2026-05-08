@@ -128,18 +128,20 @@ async function getAllEventsData(customerId) {
     e.start_time,
     e.end_time,
     e.guest_number,
-    e.status,
+    e.status AS hall_status,
+    e.hall_id,
     h.hall_name,
-    h.price,
+    h.price AS hall_price,
     u.first_name AS chief_name,
-      ep.status As chief_status,
+    ep.provider_id AS chief_id,
+    ep.status AS chief_status,
     c.price_per_hour
-FROM events e
-LEFT JOIN halls h ON e.hall_id = h.hall_id
-LEFT JOIN event_providers ep ON e.event_id = ep.event_id
-LEFT JOIN chiefs c ON ep.provider_id = c.chief_id
-LEFT JOIN users u ON c.chief_id = u.id
-WHERE e.user_id = ?`;
+  FROM events e
+  LEFT JOIN halls h ON e.hall_id = h.hall_id
+  LEFT JOIN event_providers ep ON e.event_id = ep.event_id
+  LEFT JOIN chiefs c ON ep.provider_id = c.chief_id
+  LEFT JOIN users u ON c.chief_id = u.id
+  WHERE e.user_id = ?`;
   const result = await doQuery(sql, [customerId]);
 const fresult = []; // מערך חדש וריק
 

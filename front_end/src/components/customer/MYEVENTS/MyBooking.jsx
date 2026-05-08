@@ -10,37 +10,103 @@ export default function MyBooking({ user }) {
   const navigate =useNavigate()
   const [eventData,setEventData]=useState()
   const [events, setEvents] = useState([]);
+  const [events1,setEvents1]=useState([])
       let rolePath = user?.role.toLowerCase();
       if (rolePath === "chief" || rolePath === "hall_owner")
         rolePath = "provider";
       console.log(rolePath);
 
+  // useEffect(() => {
+  //   const fetchAllEvents = async () => {
+  //     try {
+  //       const response = await axios.get(
+  //         `http://localhost:3030/${rolePath}/myEventsData`,
+  //         {
+  //           withCredentials: true,
+  //         },
+  //       );
+  //       setEvents(response.data.data);
+  //       events.map((e)=>{
+  //         if(!events1.includes(e.event_id))
+  //         {
+  //            events1.chiefsId.push(e.chief_id)
+  //             events1.push(e);
+  //         }
+  //         else
+  //           events1.chiefsId.push(e.chief_id)
+  //         setEvents1(([...prev , events1]))
+  //       })
+
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   };
+  //   fetchAllEvents();
+  // }, [user]);
   useEffect(() => {
     const fetchAllEvents = async () => {
       try {
         const response = await axios.get(
           `http://localhost:3030/${rolePath}/myEventsData`,
-          {
-            withCredentials: true,
-          },
+          { withCredentials: true },
         );
-        setEvents(response.data.data);
+
+        const rawData = response.data.data;
+
+        // איחוד כפילויות בעזרת אובייקט (Map)
+        const grouped = rawData.reduce((acc, current) => {
+          const existingEvent = acc.find(
+            (item) => item.event_id === current.event_id,
+          );
+
+          if (existingEvent) {
+            // אם האירוע כבר קיים, רק נוסיף את השף לרשימה שלו
+            if (!existingEvent.chiefs) existingEvent.chiefs = [];
+            existingEvent.chiefs.push({
+              id: current.chief_id,
+              name: current.chief_name,
+              status: current.chief_status,
+              price: (
+                calculateDuration(current.start_time, current.end_time) *
+                current.price_per_hour
+              ).toFixed(2),
+            });
+          } else {
+            // אם זה אירוע חדש, ניצור אותו עם מערך שפים התחלתי
+            acc.push({
+              ...current,
+              chiefs: [
+                {
+                  id: current.chief_id,
+                  name: current.chief_name,
+                  status: current.chief_status,
+                  price: (
+                    calculateDuration(current.start_time, current.end_time) *
+                    current.price_per_hour
+                  ).toFixed(2),
+                },
+              ],
+            });
+          }
+          return acc;
+        }, []);
+
+        setEvents(grouped); // שומרים ב-State את המערך הנקי ללא כפילויות
       } catch (error) {
         console.log(error);
       }
     };
     fetchAllEvents();
-  }, [user]);
+  }, [user, rolePath]);
 
   function update(e){
     navigate("/findavendor" , {
       state:{
-        Event:e
+        Event:e,
+        hallId:e.hall_id,
+        ChiefIds:e.chief_id
       }
     });
-
-
-
   }
 
  const calculateDuration = (start, end) => {
@@ -67,91 +133,54 @@ const durationInHours = diffInMinutes / 60;
  };
   return (
     <div className={classes.event}>
-      {/* {events.map((e) => (
-        <div key={e.event_id}>
-          <p className={classes[e.finalStatus.toLowerCase()]}>
-            Status: {e.finalStatus}
-          </p>
-          <div>
-            <p>Event Details</p>
-            <strong>Date:</strong>
-            <p>{e.requested_date}</p>
-            <strong>Start Time:</strong>
-            <p>{e.start_time}</p>
-            <strong>End Time:</strong>
-            <p>{e.end_time}</p>
-            <strong>Guest Number:</strong>
-            <p>{e.guest_number}</p>
-            <strong>Hall Detail:</strong>
-            <p>
-              {e?.hall_name} & {e?.price} & {e?.status}
-            </p>
-            <strong>Chiefs Detail:</strong>
-            <p>
-              {e?.chief_name} & {e.price_per_hour} & {e?.chief_status}
-            </p>
-          </div>
-          <button onClick={() => update(e)}>Update</button>
-          <button>Cancel</button>
-          <hr />
-          {rolePath === "provider" && (
-            <div>
-              <button>Approve</button>
-              <button>Reject</button>
-            </div>
-          )}
-          {e.requested_date < new Date() &&
-            e.status.toLowerCase() === "approved" && (
-              <button>Write a Review</button>
-            )}
-        </div>
-      ))} */}
+   
       {events.map((e) => {
-        // חישוב השעות עבור האירוע הנוכחי
         const hours = calculateDuration(e.start_time, e.end_time);
         const totalPrice = (e.price_per_hour * hours).toFixed(2); // עיגול ל-2 ספרות
 
         return (
           <div key={e.event_id} className={classes.eventCard}>
-         <div key={e.event_id}>
-          <p className={classes[e.finalStatus.toLowerCase()]}>
-            Status: {e.finalStatus}
-          </p>
-          <div>
-            <p>Event Details</p>
-            <strong>Date:</strong>
-            <p>{e.requested_date}</p>
-            <strong>Start Time:</strong>
-            <p>{e.start_time}</p>
-            <strong>End Time:</strong>
-            <p>{e.end_time}</p>
-            <strong>Guest Number:</strong>
-            <p>{e.guest_number}</p>
-            <strong>Hall Detail:</strong>
-            <p>
-              {e?.hall_name} & {e?.price} & {e?.status}
-            </p>
-            <strong>Chiefs Detail:</strong>
-            <p>
-              {e?.chief_name} | {hours} hours | Total: ₪{totalPrice} | Status:{" "}
-              {e?.chief_status}
-            </p>
-              <button onClick={() => update(e)}>Update</button>
-          <button>Cancel</button>
-          <hr />
-          {rolePath === "provider" && (
-            <div>
-              <button>Approve</button>
-              <button>Reject</button>
+            <div key={e.event_id}>
+              <p className={classes[e.finalStatus.toLowerCase()]}>
+                Status: {e.finalStatus}
+              </p>
+              <div>
+                <p>Event Details</p>
+                <strong>Date:</strong>
+                <p>{e.requested_date}</p>
+                <strong>Start Time:</strong>
+                <p>{e.start_time}</p>
+                <strong>End Time:</strong>
+                <p>{e.end_time}</p>
+                <strong>Guest Number:</strong>
+                <p>{e.guest_number}</p>
+                <strong>Hall Detail:</strong>
+                <p>
+                  {e?.hall_name} & {e?.price} & {e?.status}
+                </p>
+                <strong>Chiefs Detail:</strong>
+                {e.chiefs.map((chief) => (
+                  <p key={chief.id}>
+                    {chief.name} | Total: ₪{chief.price} | Status:{" "}
+                    {chief.status}
+                  </p>
+                ))}
+                <button onClick={() => update(e)}>Update</button>
+                <button>Cancel</button>
+                <hr />
+                {rolePath === "provider" && (
+                  <div>
+                    <button>Approve</button>
+                    <button>Reject</button>
+                  </div>
+                )}
+                {e.requested_date < new Date() &&
+                  e.status.toLowerCase() === "approved" && (
+                    <button>Write a Review</button>
+                  )}
+              </div>
             </div>
-          )}
-          {e.requested_date < new Date() &&
-            e.status.toLowerCase() === "approved" && (
-              <button>Write a Review</button>
-            )}
-        </div>
-        </div>
-        </div>
+          </div>
         );
       })}
     </div>
