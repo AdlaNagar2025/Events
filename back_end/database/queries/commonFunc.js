@@ -16,7 +16,7 @@ async function getProfile(id) {
   let result;
 
   if (role === "Chief") {
-    sql = `SELECT * FROM chiefs WHERE chief_id = ?`;
+    sql = `SELECT chiefs.* , users.first_name , users.last_name FROM chiefs JOIN users ON chiefs.chief_id=users.id WHERE chief_id = ?`;
     result = await doQuery(sql, [id]);
     console.log(result[0].start_year);
     result[0].experience_years =new Date().getFullYear()- result[0].start_year ;

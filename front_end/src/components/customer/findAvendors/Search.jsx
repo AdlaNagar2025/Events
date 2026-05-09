@@ -34,7 +34,16 @@ export default function Search({
   };
 
   const handleSearch = async () => {
-   if (!validation()) return;
+    const { requested_date, start_time, end_time, guest_number } = searchParams;
+    if (
+      !requested_date ||
+      !start_time ||
+      !end_time ||
+      guest_number <= 0 ||
+      start_time >= end_time
+    ) {
+      return;
+    }
     setIsLoading(true);
     try {
       const response = await axios.post(
@@ -49,7 +58,7 @@ export default function Search({
     } finally {
       setIsLoading(false);
     }
-  };
+  };;
   return (
     <div className={classes.container}>
       <h2>Find Your Event Team: Unified Vendor Search</h2>

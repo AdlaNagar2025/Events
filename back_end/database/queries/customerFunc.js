@@ -99,14 +99,15 @@ async function getEventData(Data, customerId) {
   console.log(dataToEvent);
   const sql = `INSERT INTO events (user_id,hall_id,requested_date,start_time,end_time,notes,guest_number) VALUES
 (?,?,?,?,?,?,?)`;
+
   let values = [
     customerId,
     hallId || null,
-    dataToEvent.date,
-    dataToEvent.startTime,
-    dataToEvent.endTime,
+    dataToEvent.requested_date, // ודאי שזה השם שנשלח מה-Search
+    dataToEvent.start_time,
+    dataToEvent.end_time,
     dataToEvent.notes || " ",
-    dataToEvent.capacity,
+    dataToEvent.guest_number, // ודאי שזה לא capacity
   ];
   const result = await doQuery(sql, values);
 
@@ -114,7 +115,7 @@ async function getEventData(Data, customerId) {
 (?,?)`;
   if (selectedChiefsId && selectedChiefsId.length > 0) {
     for (const pId of selectedChiefsId) {
-      await doQuery(sql1, [result.insertId, pId]); // תיקון ל-sql1
+      await doQuery(sql1, [result.insertId, pId]); 
     }
   }
 
@@ -369,17 +370,57 @@ async function handleEventBasicUpdate(updatingData, currentEvent, eventId) {
   }
   return isCritical;
 }
-async function handleChiefsUpdate(newChiefsIds, eventId) {
-  if (!newChiefsIds || !Array.isArray(newChiefsIds)) return;
+// async function handleChiefsUpdate(newChiefsIds, eventId) {
+//   if (!newChiefsIds || !Array.isArray(newChiefsIds)) return;
 
+//   const rows = await doQuery(
+//     `SELECT provider_id FROM event_providers WHERE event_id = ?`,
+//     [eventId],
+//   );
+//   const existingIds = rows.map((r) => r.provider_id);
+
+//   // הוספה
+//   for (const id of newChiefsIds) {
+//     if (!existingIds.includes(id)) {
+//       await doQuery(
+//         `INSERT INTO event_providers (event_id, provider_id, status) VALUES (?, ?, 'pending')`,
+//         [eventId, id],
+//       );
+//     }
+//   }
+
+//   // מחיקה
+//   if (newChiefsIds.length > 0) {
+//     const placeholders = newChiefsIds.map(() => "?").join(",");    
+//     await doQuery(
+//       `DELETE FROM event_providers WHERE event_id = ? AND provider_id NOT IN (${placeholders})`,
+//       [eventId, ...newChiefsIds],
+//     );
+//   } else {
+//     await doQuery(`DELETE FROM event_providers WHERE event_id = ?`, [eventId]);
+//   }
+// }
+async function handleChiefsUpdate(newChiefsIds, eventId) {
+  // 1. סינון ראשוני - וודא שזה מערך ושיש בו רק ערכים שהם לא null/undefined
+  const validIds = Array.isArray(newChiefsIds)
+    ? newChiefsIds.filter((id) => id !== null && id !== undefined)
+    : [];
+
+  // 2. אם המערך ריק לגמרי (או שלא נשלחו שפים) - מחיקת כל השפים הקיימים לאירוע
+  if (validIds.length === 0) {
+    await doQuery(`DELETE FROM event_providers WHERE event_id = ?`, [eventId]);
+    return;
+  }
+
+  // 3. בדיקת המצב הקיים ב-DB
   const rows = await doQuery(
     `SELECT provider_id FROM event_providers WHERE event_id = ?`,
     [eventId],
   );
   const existingIds = rows.map((r) => r.provider_id);
 
-  // הוספה
-  for (const id of newChiefsIds) {
+  // 4. הוספת שפים חדשים
+  for (const id of validIds) {
     if (!existingIds.includes(id)) {
       await doQuery(
         `INSERT INTO event_providers (event_id, provider_id, status) VALUES (?, ?, 'pending')`,
@@ -388,20 +429,16 @@ async function handleChiefsUpdate(newChiefsIds, eventId) {
     }
   }
 
-  // מחיקה
-  if (newChiefsIds.length > 0) {
-    await doQuery(
-      `DELETE FROM event_providers WHERE event_id = ? AND provider_id NOT IN (?)`,
-      [eventId, newChiefsIds],
-    );
-  } else {
-    await doQuery(`DELETE FROM event_providers WHERE event_id = ?`, [eventId]);
-  }
+  // 5. מחיקת שפים שהוסרו
+  const placeholders = validIds.map(() => "?").join(",");
+  await doQuery(
+    `DELETE FROM event_providers WHERE event_id = ? AND provider_id NOT IN (${placeholders})`,
+    [eventId, ...validIds],
+  );
 }
 
-
 async function handleHallUpdate(updatingHallId, currentHallId, eventId) {
-  if (updatingHallId && updatingHallId !== currentHallId) {
+  if (updatingHallId !== currentHallId) {
     const sqlHall = `UPDATE events SET hall_id = ?, status = 'PENDING' WHERE event_id = ?`;
     await doQuery(sqlHall, [updatingHallId, eventId]);
   }
