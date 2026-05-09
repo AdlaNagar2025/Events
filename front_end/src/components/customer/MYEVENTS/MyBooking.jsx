@@ -4,46 +4,17 @@ import { useEffect } from "react";
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import EventData from "../BOOKEVENT/EventData";
 
 
 export default function MyBooking({ user }) {
   const navigate =useNavigate()
   const [eventData,setEventData]=useState()
   const [events, setEvents] = useState([]);
-  const [events1,setEvents1]=useState([])
       let rolePath = user?.role.toLowerCase();
       if (rolePath === "chief" || rolePath === "hall_owner")
         rolePath = "provider";
       console.log(rolePath);
-
-  // useEffect(() => {
-  //   const fetchAllEvents = async () => {
-  //     try {
-  //       const response = await axios.get(
-  //         `http://localhost:3030/${rolePath}/myEventsData`,
-  //         {
-  //           withCredentials: true,
-  //         },
-  //       );
-  //       setEvents(response.data.data);
-  //       events.map((e)=>{
-  //         if(!events1.includes(e.event_id))
-  //         {
-  //            events1.chiefsId.push(e.chief_id)
-  //             events1.push(e);
-  //         }
-  //         else
-  //           events1.chiefsId.push(e.chief_id)
-  //         setEvents1(([...prev , events1]))
-  //       })
-
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   };
-  //   fetchAllEvents();
-  // }, [user]);
-  useEffect(() => {
     const fetchAllEvents = async () => {
       try {
         const response = await axios.get(
@@ -53,7 +24,6 @@ export default function MyBooking({ user }) {
 
         const rawData = response.data.data;
 
-        // איחוד כפילויות בעזרת אובייקט (Map)
         const grouped = rawData.reduce((acc, current) => {
           const existingEvent = acc.find(
             (item) => item.event_id === current.event_id,
@@ -96,6 +66,9 @@ export default function MyBooking({ user }) {
         console.log(error);
       }
     };
+
+  useEffect(() => {
+
     fetchAllEvents();
   }, [user, rolePath]);
 
@@ -131,6 +104,21 @@ const durationInHours = diffInMinutes / 60;
   // החזרת מספר חיובי (למקרה שהזמנים הוזנו הפוך)
   return Math.max(0, durationInHours);
  };
+
+ async function  handlechangeStatus(eventId,status){
+  try{
+    const response = await axios.put(
+      `http://localhost:3030/provider/changeEventStatus/${eventId}`,
+      { status: status},
+      { withCredentials: true },
+    );
+    console.log(response.data.data)
+    fetchAllEvents()
+  }
+  catch(error)
+  {console.log(error)}
+ }
+
   return (
     <div className={classes.event}>
    
@@ -142,9 +130,16 @@ const durationInHours = diffInMinutes / 60;
         return (
           <div key={e.event_id} className={classes.eventCard}>
             <div key={e.event_id}>
-              <p className={classes[e.finalStatus.toLowerCase()]}>
-                Status: {e.finalStatus}
-              </p>
+              {rolePath === "customer" && (
+                <p className={classes[e.finalStatus.toLowerCase()]}>
+                  Status: {e.finalStatus}
+                </p>
+              )}
+              {rolePath === "provider" && (
+                <p className={classes[e.status.toLowerCase()]}>
+                  Status: {e.status}
+                </p>
+              )}
               <div>
                 <p>Event Details</p>
                 <strong>Date:</strong>
@@ -155,30 +150,48 @@ const durationInHours = diffInMinutes / 60;
                 <p>{e.end_time}</p>
                 <strong>Guest Number:</strong>
                 <p>{e.guest_number}</p>
-                <strong>Hall Detail:</strong>
-                <p>
-                  {e?.hall_name} & {e?.price} & {e?.status}
-                </p>
-                <strong>Chiefs Detail:</strong>
-                {e.chiefs.map((chief) => (
-                  <p key={chief.id}>
-                    {chief.name} | Total: ₪{chief.price} | Status:{" "}
-                    {chief.status}
-                  </p>
-                ))}
-                <button onClick={() => update(e)}>Update</button>
-                <button>Cancel</button>
-                <hr />
-                {rolePath === "provider" && (
+                {rolePath !== "provider" && (
                   <div>
-                    <button>Approve</button>
-                    <button>Reject</button>
+                    <strong>Hall Detail:</strong>
+                    <p>
+                      {e?.hall_name} & {e?.price} & {e?.status}
+                    </p>
+                    <strong>Chiefs Detail:</strong>
+                    {e.chiefs.map((chief) => (
+                      <p key={chief.id}>
+                        {chief.name} | Total: ₪{chief.price} | Status:{" "}
+                        {chief.status}
+                      </p>
+                    ))}
                   </div>
                 )}
-                {e.requested_date < new Date() &&
-                  e.status.toLowerCase() === "approved" && (
-                    <button>Write a Review</button>
-                  )}
+                {/* <div> */}
+                {/* <EventData dataToEvent={e} hallData={e} chiefsData={e}/> */}
+                {rolePath === "customer" && (
+                  <div>
+                    <button onClick={() => update(e)}>Update</button>{" "}
+                    <button>Cancel</button>
+                  </div>
+                )}
+
+                {rolePath === "provider" && (
+                  <div>
+                    <button
+                      onClick={() => handlechangeStatus(e.event_id, "APPROVED")}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handlechangeStatus(e.event_id, "REJECTED")}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
+                <hr />
+                {e.requested_date < new Date() && e.status === "APPROVED" && (
+                  <button>Write a Review</button>
+                )}
               </div>
             </div>
           </div>

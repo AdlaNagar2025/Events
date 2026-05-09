@@ -21,7 +21,10 @@ const {
   getProfile,
   updateBusinessStatus,
 } = require("../database/queries/commonFunc");
-const { getAllEvents } = require("../database/queries/providersFunc");
+const {
+  getAllEvents,
+  changeStatusEvent,
+} = require("../database/queries/providersFunc");
 
 /**
  * הגנה גלובלית על כל נתיבי ה-Provider:
@@ -268,4 +271,14 @@ router.get("/myEventsData", async (req, res) => {
   const result = await getAllEvents(req.session.user.id);
   return res.json({data:result});
 });
+
+
+
+router.put("/changeEventStatus/:eventId" ,async(req,res)=>{
+  const eventId=req.params.eventId
+
+  const status=req.body.status
+  const result = changeStatusEvent(req.session.user.id,eventId,status)
+  return res.json({data:result})
+} )
 module.exports = router;

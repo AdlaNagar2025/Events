@@ -32,7 +32,7 @@ export default function SideBar({ user }) {
         <div className={classes.sideBar}>
           <p>DashBoard</p>
           <p>Calender && Bookings</p>
-          <Link to="/myBooking">My Booking</Link>
+          <Link to="/myEventsAndCalendar">My Booking</Link>
           <p>Clients && Reviews</p>
           <Link to="/account">My Account</Link>
           <Link to="/businessAccount">Profile Setting</Link>
