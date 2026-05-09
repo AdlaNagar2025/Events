@@ -10,17 +10,21 @@ export default function Search({
   setSearchParams,
   searchParams,
   setIsSearch,
+  validation
 }) {
   useEffect(() => {
     if (
-      searchParams.date &&
-      searchParams.startTime &&
-      searchParams.endTime &&
-      searchParams.capacity > 0
+      searchParams.requested_date &&
+      searchParams.start_time &&
+      searchParams.end_time &&
+      searchParams.guest_number > 0
     ) {
-      if (searchParams.startTime < searchParams.endTime) {
+      // השהיה קטנה (Optional) כדי לא להעמיס
+      const delayDebounceFn = setTimeout(() => {
         handleSearch();
-      }
+      }, 500);
+
+      return () => clearTimeout(delayDebounceFn);
     }
   }, [searchParams]);
   const handleInputChange = (e) => {
@@ -30,36 +34,7 @@ export default function Search({
   };
 
   const handleSearch = async () => {
-    if (!searchParams.date) {
-      alert("Please select a date for your event.");
-      return;
-    }
-    if (!searchParams.startTime) {
-      alert("Please select a start time for your event.");
-      return;
-    }
-    if (!searchParams.endTime) {
-      alert("Please select a end time for your event.");
-      return;
-    }
-    if (searchParams.startTime > searchParams.endTime) {
-      alert("End time must be after start time.");
-      return;
-    }
-
-    if (!searchParams.capacity) {
-      alert("Please select a capacity for your event.");
-      return;
-    }
-    if (searchParams.capacity && searchParams.capacity <= 0) {
-      alert("Capacity must be greater than 0");
-      return;
-    }
-
-    if (searchParams.price && searchParams.price < 0) {
-      alert("Price cannot be negative");
-      return;
-    }
+   if (!validation()) return;
     setIsLoading(true);
     try {
       const response = await axios.post(
@@ -85,8 +60,8 @@ export default function Search({
             id="date"
             type="date"
             min={new Date().toISOString().split("T")[0]}
-            value={searchParams.date}
-            name="date"
+            value={searchParams.requested_date}
+            name="requested_date"
             onChange={handleInputChange}
           />
         </div>
@@ -96,8 +71,8 @@ export default function Search({
           <input
             id="startTime"
             type="time"
-            value={searchParams.startTime}
-            name="startTime"
+            value={searchParams.start_time}
+            name="start_time"
             onChange={handleInputChange}
           />
         </div>
@@ -107,8 +82,8 @@ export default function Search({
           <input
             id="endTime"
             type="time"
-            value={searchParams.endTime}
-            name="endTime"
+            value={searchParams.end_time}
+            name="end_time"
             onChange={handleInputChange}
           />
         </div>
@@ -130,8 +105,8 @@ export default function Search({
           <input
             id="capacity"
             type="number"
-            value={searchParams.capacity}
-            name="capacity"
+            value={searchParams.guest_number}
+            name="guest_number"
             onChange={handleInputChange}
           />
         </div>
@@ -146,7 +121,7 @@ export default function Search({
             onChange={handleInputChange}
           />
         </div>
-{/* 
+        {/* 
         <button
           onClick={handleSearch}
           disabled={isLoading}

@@ -13,6 +13,7 @@ export default function BookEvent({ user, provider }) {
   // בדיקה אם המידע קיים, ואם לא - הצגת הודעה או הפניה חזרה
 
 useEffect(()=>{
+  if (!selectedHall?.id) return;
     async function HallData() {
       try {
         const url = `http://localhost:3030/customer/CardData/${selectedHall?.id}`;
@@ -63,16 +64,16 @@ HallData()
 
       <div className={classes.infoSection}>
         <p>
-          <strong>Date:</strong> {dataToEvent.date}
+          <strong>Date:</strong> {dataToEvent.requested_date}
         </p>
         <p>
-          <strong>Start Time:</strong> {dataToEvent.startTime}
+          <strong>Start Time:</strong> {dataToEvent.start_time}
         </p>
         <p>
-          <strong>End Time:</strong> {dataToEvent.endTime}
+          <strong>End Time:</strong> {dataToEvent.end_time}
         </p>
         <p>
-          <strong>Capacity:</strong> {dataToEvent.capacity}
+          <strong>Capacity:</strong> {dataToEvent.guest_number}
         </p>
         <p>
           <strong>Location:</strong> {hallData?.city || dataToEvent.city || "Not specified"}
@@ -84,7 +85,7 @@ HallData()
       <h3>Selected Providers</h3>
 
       <p>
-        <strong>Hall:</strong>{hallData?.hall_name}
+        <strong>Hall:</strong>{hallData?.hall_name} |
         {selectedHall ? selectedHall.first_name : "None selected"}
       </p>
 
@@ -93,7 +94,7 @@ HallData()
         {selectedChiefs.length > 0 ? (
           <ul>
             {selectedChiefs.map((s) => (
-              <li key={s.id}>{s.first_name}</li> // הוספת return (דרך סוגריים עגולים) ו-Key
+              <li key={s.id}>{s.first_name}</li> 
             ))}
           </ul>
         ) : (

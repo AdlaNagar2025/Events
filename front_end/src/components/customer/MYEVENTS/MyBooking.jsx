@@ -100,12 +100,12 @@ export default function MyBooking({ user }) {
   }, [user, rolePath]);
 
   function update(e){
-    navigate("/findavendor" , {
-      state:{
-        Event:e,
-        hallId:e.hall_id,
-        ChiefIds:e.chief_id
-      }
+    navigate("/findavendor", {
+      state: {
+        Event: e,
+        hallId: e.hall_id,
+        ChiefIds: e.chiefs.map((c) => c.id),
+      },
     });
   }
 
@@ -135,6 +135,7 @@ const durationInHours = diffInMinutes / 60;
     <div className={classes.event}>
    
       {events.map((e) => {
+        console.log( "hhhh" ,e)
         const hours = calculateDuration(e.start_time, e.end_time);
         const totalPrice = (e.price_per_hour * hours).toFixed(2); // עיגול ל-2 ספרות
 

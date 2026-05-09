@@ -10,42 +10,42 @@ const { getRole, getStatusEvent } = require("./helpingFunc");
 async function getResultSearching(dataToSearch) {
   let finalValues = [];
   if (
-    !dataToSearch.date ||
-    !dataToSearch.capacity ||
-    !dataToSearch.startTime ||
-    !dataToSearch.endTime
+    !dataToSearch.requested_date ||
+    !dataToSearch.guest_number ||
+    !dataToSearch.start_time ||
+    !dataToSearch.end_time
   ) {
     throw new Error("Missing search data");
   }
   const today = new Date().toISOString().split("T")[0];
-  if (dataToSearch.date < today) {
+  if (dataToSearch.requested_date < today) {
     console.log("Validation Error: Cannot search for past dates");
     return [];
   }
 
-  if (dataToSearch.startTime && dataToSearch.endTime) {
-    if (dataToSearch.startTime >= dataToSearch.endTime) {
+  if (dataToSearch.start_time && dataToSearch.end_time) {
+    if (dataToSearch.start_time >= dataToSearch.end_time) {
       console.log("Validation Error: Start time is after end time");
       return [];
     }
   }
 
   const price = dataToSearch.price ? parseInt(dataToSearch.price) : null;
-  const capacity = dataToSearch.capacity
-    ? parseInt(dataToSearch.capacity)
+  const capacity = dataToSearch.guest_number
+    ? parseInt(dataToSearch.guest_number)
     : null;
 
   // 1. זמינות (Availability)
   let availSql = `SELECT provider_id FROM availability WHERE available_date = ? AND is_available = 1`;
-  finalValues.push(dataToSearch.date);
+  finalValues.push(dataToSearch.requested_date);
 
-  if (dataToSearch.startTime) {
+  if (dataToSearch.start_time) {
     availSql += " AND start_time <= ?";
-    finalValues.push(dataToSearch.startTime);
+    finalValues.push(dataToSearch.start_time);
   }
-  if (dataToSearch.endTime) {
+  if (dataToSearch.end_time) {
     availSql += " AND end_time >= ?";
-    finalValues.push(dataToSearch.endTime);
+    finalValues.push(dataToSearch.end_time);
   }
 
   // 2. תנאים לאולמות
@@ -60,7 +60,7 @@ async function getResultSearching(dataToSearch) {
   }
   if (capacity) {
     hallCond += " AND capacity >= ?";
-    finalValues.push(dataToSearch.capacity);
+    finalValues.push(dataToSearch.guest_number);
   }
 
   // 3. תנאים לשפים
@@ -75,7 +75,7 @@ async function getResultSearching(dataToSearch) {
   }
   if (capacity) {
     chiefCond += " AND capacity >= ?";
-    finalValues.push(dataToSearch.capacity);
+    finalValues.push(dataToSearch.guest_number);
   }
 
   // 4. השאילתה הסופית
@@ -143,7 +143,7 @@ async function getAllEventsData(customerId) {
   LEFT JOIN users u ON c.chief_id = u.id
   WHERE e.user_id = ?`;
   const result = await doQuery(sql, [customerId]);
-const fresult = []; // מערך חדש וריק
+  const fresult = []; // מערך חדש וריק
 
   for (const row of result) {
     const finalStatus = await getStatusEvent(row.event_id);
@@ -151,26 +151,25 @@ const fresult = []; // מערך חדש וריק
     fresult.push(row); // מוסיפים למערך רק אחרי שה-await הסתיים
   }
 
-console.log(fresult)
+  console.log(fresult);
   return fresult;
 }
 
-
-async function updateEventData(updatinData, customerId, eventId) {
-  const sql=`SELECT events.event_id , events.hall_id,events.requested_date,events.start_time,events.end_time,events.guest_number , events.notes , events.status,event_providers.id,event_providers.provider_id,event_providers.status FROM events join  event_providers on event_providers.event_id=events.event_id WHERE user_id=? AND events.event_id=?`
-const result=await doQuery(sql, [customerId,eventId])
-let values=[]
-if(result[requsted_date] != updatinData.requsted_date)
-{
-  console.log("Date Change")
-  values.append( updatinData.requsted_date)
-}
-if(result[start_time]!= updatinData.start_time)
-  {
-    console.log("Date Change");
-    values.append(updatinData.requsted_date);
-  }
-}
+// async function updateEventData(updatinData, customerId, eventId) {
+//   const sql=`SELECT events.event_id , events.hall_id,events.requested_date,events.start_time,events.end_time,events.guest_number , events.notes , events.status,event_providers.id,event_providers.provider_id,event_providers.status FROM events join  event_providers on event_providers.event_id=events.event_id WHERE user_id=? AND events.event_id=?`
+// const result=await doQuery(sql, [customerId,eventId])
+// let values=[]
+// if(result[requsted_date] != updatinData.requsted_date)
+// {
+//   console.log("Date Change")
+//   values.append( updatinData.requsted_date)
+// }
+// if(result[start_time]!= updatinData.start_time)
+//   {
+//     console.log("Date Change");
+//     values.append(updatinData.requsted_date);
+//   }
+// }
 /**
  * עדכון נתוני אירוע קיים:
  * 1. בודק הרשאות משתמש מול האירוע.
@@ -266,9 +265,14 @@ if(result[start_time]!= updatinData.start_time)
 // }
 async function updateEventData(updatingData, customerId, eventId) {
   try {
+    console.log(updatingData);
+    console.log(updatingData.searchParams)
+    console.log(updatingData.searchParams.start_time)
+    console.log(updatingData.hallId)
+    console.log(updatingData.ChiefsIds)
     await doQuery("START TRANSACTION");
     // בדיקה ראשונית
-    const currentEvent = await validateAndGetEvent(customerId, eventId)
+    const currentEvent = await validateAndGetEvent(customerId, eventId);
     // עדכון פרטי אירוע ואיפוס אם צריך
     const isCritical = await handleEventBasicUpdate(
       updatingData,
@@ -293,33 +297,74 @@ async function validateAndGetEvent(customerId, eventId) {
   if (rows.length === 0) throw new Error("Unauthorized or Event not found");
   return rows[0];
 }
+// async function handleEventBasicUpdate(updatingData, currentEvent, eventId) {
+//   let fields = [];
+//   let values = [];
+//   let isCritical = false;
+
+//   ["requested_date", "start_time", "end_time"].forEach((field) => {
+//     if ((`${updatingData.searchParams.${field}}`) &&(`${updatingData.searchParams.${field}}`) !== currentEvent[field]) {
+//       fields.push(`${field} = ?`);
+//       values.push(updatingData.searchParams.${field});
+//       isCritical = true;
+//     }
+//   });
+
+//   if (fields.length > 0) {
+//     fields.push("status = ?");
+//     values.push("PENDING");
+//     values.push(eventId);
+//     await doQuery(
+//       `UPDATE events SET ${fields.join(", ")} WHERE event_id = ?`,
+//       values,
+//     );
+//   }
+
+//   if (isCritical) {
+//     await doQuery(
+//       `UPDATE event_providers SET status = 'pending' WHERE event_id = ?`,
+//       [eventId],
+//     );
+//   }
+//   return isCritical;
+// }
+
 async function handleEventBasicUpdate(updatingData, currentEvent, eventId) {
   let fields = [];
   let values = [];
   let isCritical = false;
 
-  ["requested_date", "start_time", "end_time"].forEach((field) => {
-    if (updatingData[field] && updatingData[field] !== currentEvent[field]) {
+  // רשימת השדות שאנחנו בודקים אם השתנו
+  const relevantFields = ["requested_date", "start_time", "end_time", "guest_number"];
+
+  relevantFields.forEach((field) => {
+    const newValue = updatingData.searchParams[field]; // גישה נכונה למפתח דינמי
+    const oldValue = currentEvent[field];
+
+    if (newValue && newValue !== oldValue) {
       fields.push(`${field} = ?`);
-      values.push(updatingData[field]);
-      isCritical = true;
+      values.push(newValue);
+      isCritical = true; // אם השתנה תאריך/שעה, צריך לאפס סטטוסים לספקים
     }
   });
 
   if (fields.length > 0) {
     fields.push("status = ?");
     values.push("PENDING");
-    values.push(eventId);
+    
+    values.push(eventId); // ה-ID עבור ה-WHERE
+
     await doQuery(
       `UPDATE events SET ${fields.join(", ")} WHERE event_id = ?`,
-      values,
+      values
     );
   }
 
   if (isCritical) {
+    // איפוס סטטוס לכל הספקים של האירוע כי הפרטים השתנו
     await doQuery(
       `UPDATE event_providers SET status = 'pending' WHERE event_id = ?`,
-      [eventId],
+      [eventId]
     );
   }
   return isCritical;
@@ -353,17 +398,18 @@ async function handleChiefsUpdate(newChiefsIds, eventId) {
     await doQuery(`DELETE FROM event_providers WHERE event_id = ?`, [eventId]);
   }
 }
-async function handleHallUpdate(updatingHall, currentHall, eventId){
-      if (updatingHall && updatingHall !== currentHall) {
-        const sqlHall = `UPDATE events SET hall_id = ?, status = 'PENDING' WHERE event_id = ?`;
-        await doQuery(sqlHall, [updatingData.hallId, eventId]);
-      }
-  
+
+
+async function handleHallUpdate(updatingHallId, currentHallId, eventId) {
+  if (updatingHallId && updatingHallId !== currentHallId) {
+    const sqlHall = `UPDATE events SET hall_id = ?, status = 'PENDING' WHERE event_id = ?`;
+    await doQuery(sqlHall, [updatingHallId, eventId]);
+  }
 }
 
 module.exports = {
   getResultSearching,
   getEventData,
   getAllEventsData,
-  updateEventData
+  updateEventData,
 };
