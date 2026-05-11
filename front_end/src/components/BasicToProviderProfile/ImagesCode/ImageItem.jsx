@@ -13,7 +13,7 @@ import { FaStar, FaRegStar, FaTimes } from "react-icons/fa";
  */
 const ImageItem = ({ img, isExisting, onRemove, onSetMain, isMain , role }) => {
 
-  console.log("I AM IN IMAGEITEM " , role)
+  // console.log("I AM IN IMAGEITEM " , role)
   return (
     <div
       className={`${classes.imageWrapper} ${isMain ? classes.mainActive : ""}`}

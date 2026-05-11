@@ -15,6 +15,7 @@ export default function Calendar({ role, user }) {
   const [loading, setLoading] = useState(false); // הוספת סטייט לטעינה
 
   // State חדש לשמירת האירועים שיוצגו על היומן
+  const [worksHour, setWorksHour] = useState([]);
   const [events, setEvents] = useState([]);
 
   // פונקציה למשיכת זמינות קיימת מהשרת
@@ -28,9 +29,8 @@ export default function Calendar({ role, user }) {
 
       const response = await axios.get(url, { withCredentials: true });
       if (response.data.success) {
-        console.log("Data from DB:", response.data.data);
         const dataFromDB = response.data.data || [];
-        const formattedEvents = dataFromDB.map((item) => {
+        const formattedWorksHour = dataFromDB.map((item) => {
           const d = new Date(item.available_date);
           // משתמשים בפונקציות Local שמחזירות את התאריך לפי שעון ישראל
           // גם אם השעה היא 21:00 ב-16 לחודש UTC, בישראל זה כבר ה-17!
@@ -47,7 +47,7 @@ export default function Calendar({ role, user }) {
             allDay: false,
           };
         });
-        setEvents(formattedEvents);
+        setWorksHour(formattedWorksHour);
       }
     } catch (error) {
       if (error.response) {
@@ -62,9 +62,9 @@ export default function Calendar({ role, user }) {
       else {
         console.error("Error setting up request:", error.message);
       }
-      setEvents([]);
+      setWorksHour([]);
       console.error("Error fetching calendar:", error);
-      setEvents([]);
+      setWorksHour([]);
     }
   };
   useEffect(() => {
@@ -72,7 +72,6 @@ export default function Calendar({ role, user }) {
   }, []);
 
   const handleSelect = (info) => {
-    console.log(info);
     const start = info.start;
     const end = info.end;
     // בדיקה שלא נבחר זמן בעבר (כולל שעה!)
@@ -130,6 +129,41 @@ export default function Calendar({ role, user }) {
     setAvailableData((prev) => ({ ...prev, [name]: value }));
   }
 
+  useEffect(() => {
+    const fetchgetAllEventsApproved = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3030/provider/AllEventsApproved",
+          { withCredentials: true },
+        );
+        console.log("ApproveEvents: ", response.data.data);
+        const dataFromDB = response.data.data || [];
+        const formattedEvents = dataFromDB.map((item) => {
+          const d = new Date(item.requested_date);
+          // משתמשים בפונקציות Local שמחזירות את התאריך לפי שעון ישראל
+          // גם אם השעה היא 21:00 ב-16 לחודש UTC, בישראל זה כבר ה-17!
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+          const localDate = `${year}-${month}-${day}`;
+          return {
+            title: "Event",
+            start: `${localDate}T${item.start_time}`,
+            end: `${localDate}T${item.end_time}`,
+            backgroundColor: "#2889a7",
+            borderColor: "#c4687f",
+            allDay: false,
+          };
+        });
+        setEvents(formattedEvents);
+      } catch (error) {
+        console.log(error);
+        setEvents([])
+      }
+    };
+    fetchgetAllEventsApproved();
+  }, []);
+
   return (
     <>
       {(role === "Chief" || role === "Hall_Owner") && (
@@ -142,11 +176,11 @@ export default function Calendar({ role, user }) {
                 initialView="timeGridWeek"
                 selectable={true}
                 editable={false}
-                events={events}
+                events={[...worksHour, ...events]}
                 select={handleSelect}
                 allDaySlot={false}
-                slotDuration="00:15:00"
-                slotLabelInterval="01:00" // Labels every hour, grid every 15 mins
+                // slotDuration="00:15:00"
+                // slotLabelInterval="01:00" // Labels every hour, grid every 15 mins
                 slotMinTime="08:00:00"
                 slotMaxTime="24:00:00"
                 nowIndicator={true} // Shows current time line
@@ -219,7 +253,7 @@ export default function Calendar({ role, user }) {
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="timeGridWeek"
             editable={false}
-            events={events}
+            events={worksHour}
             allDaySlot={false}
             slotMinTime="08:00:00"
             slotMaxTime="24:00:00"
@@ -240,7 +274,7 @@ export default function Calendar({ role, user }) {
             initialView="timeGridWeek"
             selectable={true}
             editable={false}
-            events={events}
+            events={worksHour}
             select={handleSelect}
             allDaySlot={false}
             slotMinTime="08:00:00"

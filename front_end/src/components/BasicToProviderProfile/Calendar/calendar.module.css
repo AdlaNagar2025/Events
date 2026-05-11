@@ -1,148 +1,163 @@
-/* מיכל ראשי */
+/* מיכל היומן הראשי */
 .calendarContainer {
-    padding: 20px;
-    background-color: #fcfcfc;
-    border-radius: 15px;
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    max-width: 1100px;
-    margin: 0 auto;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin: 20px auto;
+  max-width: 1100px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.calendarContainer h2 {
-    color: #2c3e50;
-    margin-bottom: 10px;
-    font-weight: 700;
-    text-align: center;
-}
-
-/* עיצוב המעטפת של היומן */
 .calendarWrapper {
-    min-height: 650px;
-    background-color: white;
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
-    border: 1px solid #f0f0f0;
+  margin-bottom: 30px;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
 }
 
-/* התאמת צבעים ל-FullCalendar - שימוש ב-Global כדי לדרוס את הסגנון של הספרייה */
-:global(.fc) {
-    --fc-border-color: #f0f0f0;
-    --fc-today-bg-color: rgba(212, 175, 55, 0.05);
+/* עיצוב כותרת היומן והכפתורים */
+:global(.fc-header-toolbar) {
+  padding: 15px;
+  background-color: #f8fafc;
+  margin-bottom: 0 !important;
+  border-bottom: 1px solid #edf2f7;
 }
 
-:global(.fc .fc-button-primary) {
-    background-color: #2c3e50 !important;
-    border-color: #2c3e50 !important;
-    font-weight: 600 !important;
-    padding: 8px 16px !important;
-    transition: all 0.2s ease !important;
+:global(.fc-toolbar-title) {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: #2d3748;
 }
 
-:global(.fc .fc-button-primary:hover) {
-    background-color: #d4af37 !important;
-    border-color: #d4af37 !important;
-    color: #2c3e50 !important;
+/* כפתורים */
+:global(.fc-button) {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #4a5568 !important;
+  font-weight: 600 !important;
+  text-transform: capitalize !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+  transition: all 0.2s ease !important;
 }
 
-:global(.fc .fc-button-active) {
-    background-color: #d4af37 !important;
-    border-color: #d4af37 !important;
-    color: #2c3e50 !important;
+:global(.fc-button-primary:not(:disabled):active),
+:global(.fc-button-primary:not(:disabled).fc-button-active) {
+  background-color: #4a90e2 !important;
+  color: white !important;
+  border-color: #4a90e2 !important;
 }
 
-:global(.fc-col-header-cell) {
-    background-color: #f8f9fa;
-    padding: 10px 0 !important;
+:global(.fc-button:hover) {
+  background-color: #f7fafc !important;
+  border-color: #cbd5e0 !important;
 }
 
+/* עיצוב רשת הזמן (TimeGrid) */
+:global(.fc-timegrid-slot) {
+  height: 3em !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+:global(.fc-timegrid-axis-cushion), :global(.fc-timegrid-slot-label-cushion) {
+  color: #718096 !important;
+  font-size: 0.85rem;
+}
+
+/* עיצוב האירועים */
 :global(.fc-event) {
-    cursor: pointer;
-    border-radius: 4px !important;
-    padding: 2px 5px !important;
-    font-size: 0.85rem !important;
+  border-radius: 6px !important;
+  padding: 2px 4px !important;
+  font-size: 0.85rem !important;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
 }
 
-/* תיבת אישור זמנים */
+:global(.fc-event-main) {
+  padding: 2px;
+}
+
+/* עיצוב אזור האינפוטים והאישור למטה */
+.inputGroup {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 25px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.inputGroup label {
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.inputGroup input {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.inputGroup input:focus {
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+}
+
+/* תיבת אישור חלון חדש */
 .confirmBox {
-    margin-top: 25px;
-    padding: 25px;
-    background: #ffffff;
-    border-left: 6px solid #d4af37; /* דגש זהב בצד */
-    border-radius: 12px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    animation: slideIn 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  margin-top: 20px;
+  padding: 20px;
+  border: 2px dashed #4a90e2;
+  border-radius: 12px;
+  text-align: center;
+  background-color: #ebf8ff;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 .confirmBox h4 {
-    margin: 0;
-    color: #2c3e50;
-    font-size: 1.2rem;
+  margin-top: 0;
+  color: #2b6cb0;
 }
 
-.confirmBox p {
-    margin: 0;
-    color: #5d6d7e;
-    font-size: 1.05rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* מיכל כפתורים בתוך תיבת האישור */
-.actionButtons {
-    display: flex;
-    gap: 12px;
-    margin-top: 10px;
-}
-
-/* כפתור שמירה */
 .saveBtn {
-    padding: 12px 30px;
-    cursor: pointer;
-    background-color: #2c3e50;
-    color: #d4af37; /* טקסט בזהב על רקע כהה */
-    border: 2px solid #2c3e50;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 15px;
-    transition: all 0.3s ease;
+  background-color: #48bb78;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: background 0.2s;
 }
 
-.saveBtn:hover:not(:disabled) {
-    background-color: #d4af37;
-    color: #2c3e50;
-    border-color: #d4af37;
-    transform: translateY(-2px);
+.saveBtn:hover {
+  background-color: #38a169;
 }
 
-/* כפתור ביטול */
 .cancelBtn {
-    padding: 12px 25px;
-    cursor: pointer;
-    background-color: transparent;
-    color: #95a5a6;
-    border: 1px solid #dcdde1;
-    border-radius: 8px;
-    font-weight: 600;
-    transition: all 0.2s ease;
+  background-color: #e53e3e;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
 .cancelBtn:hover {
-    background-color: #f8f9fa;
-    color: #e74c3c;
-    border-color: #e74c3c;
+  background-color: #c53030;
 }
 
-.saveBtn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-@keyframes slideIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

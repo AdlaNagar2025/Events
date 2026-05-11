@@ -6,20 +6,20 @@ import ImageUpload from "../BasicToProviderProfile/ImagesCode/ImageUpload";
 import Calendar from "../BasicToProviderProfile/Calendar/Calendar";
 
 export default function BusinessProfile({ user, provider }) {
-  console.log(provider);
+  // console.log(provider);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      console.log("I AM IN BUSINESSPROFILE LINE 15" + user?.role);
+      // console.log("I AM IN BUSINESSPROFILE LINE 15" + user?.role);
       try {
         const rolePath = user.role.toLowerCase();
         const url = `http://localhost:3030/${rolePath}/Profile/${provider.id}`;
 
         const response = await axios.get(url, { withCredentials: true });
         setData(response.data.data);
-        console.log("I am in BusinessProfile Componenta ", response.data.data);
+        // console.log("I am in BusinessProfile Componenta ", response.data.data);
       } catch (error) {
         console.error("Error fetching profile:", error);
       } finally {

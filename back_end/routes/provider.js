@@ -24,6 +24,7 @@ const {
 const {
   getAllEvents,
   changeStatusEvent,
+  getAllEventsApproved,
 } = require("../database/queries/providersFunc");
 
 /**
@@ -166,7 +167,6 @@ router.get("/getMyCalendar", async (req, res) => {
 router.get("/MyProfile", async (req, res) => {
   try {
     const providerId = req.session.user.id;
-    console.log(providerId);
     const result = await getProfile(providerId);
     res.json({ success: true, data: result });
   } catch (error) {
@@ -252,7 +252,6 @@ router.get("/MyBusinessStatus", async (req, res) => {
 });
 
 router.post("/approve-business", async (req, res) => {
-  console.log(req.body);
   const { type, id, newStatus } = req.body;
   if (!type || !id || !newStatus) {
     return res
@@ -269,16 +268,24 @@ router.post("/approve-business", async (req, res) => {
 
 router.get("/myEventsData", async (req, res) => {
   const result = await getAllEvents(req.session.user.id);
-  return res.json({data:result});
+  return res.json({ data: result });
 });
 
+router.put("/changeEventStatus/:eventId", async (req, res) => {
+  const eventId = req.params.eventId;
 
+  const status = req.body.status;
+  const result = changeStatusEvent(req.session.user.id, eventId, status);
+  return res.json({ data: result });
+});
 
-router.put("/changeEventStatus/:eventId" ,async(req,res)=>{
-  const eventId=req.params.eventId
-
-  const status=req.body.status
-  const result = changeStatusEvent(req.session.user.id,eventId,status)
-  return res.json({data:result})
-} )
+router.get("/AllEventsApproved", async (req, res) => {
+  try {
+    const result = await getAllEventsApproved(req.session.user.id);
+    return res.json({ data: result });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
 module.exports = router;
