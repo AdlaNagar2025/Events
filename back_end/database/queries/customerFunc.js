@@ -36,7 +36,7 @@ async function getResultSearching(dataToSearch) {
     : null;
 
   // 1. זמינות (Availability)
-  let availSql = `SELECT provider_id FROM availability WHERE available_date = ? AND is_available = 1`;
+  let availSql = `SELECT provider_id FROM availability WHERE available_date = ?  `;
   finalValues.push(dataToSearch.requested_date);
 
   if (dataToSearch.start_time) {
