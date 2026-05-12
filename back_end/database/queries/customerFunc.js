@@ -1,5 +1,5 @@
 const doQuery = require("../query");
-const { getRole, getStatusEvent } = require("./helpingFunc");
+const { getRole, getStatusEvent, AvailToEvent } = require("./helpingFunc");
 /**
  * מבצעת חיפוש דינמי של ספקים (אולמות ושפים) לפי זמינות וקריטריונים.
  * הפונקציה בודקת ולידציה של תאריך (לא בעבר) וזמנים (התחלה לפני סוף),
@@ -7,91 +7,106 @@ const { getRole, getStatusEvent } = require("./helpingFunc");
  * @param {Object} dataToSearch - אובייקט המכיל: date, startTime, endTime, city, price, capacity.
  * @returns {Promise<Array>} - מערך של ספקים שעומדים בכל תנאי החיפוש.
  */
-async function getResultSearching(dataToSearch) {
-  let finalValues = [];
+function validateDataToSearch(dataToSearch) {
   if (
     !dataToSearch.requested_date ||
     !dataToSearch.guest_number ||
     !dataToSearch.start_time ||
     !dataToSearch.end_time
-  ) {
-    throw new Error("Missing search data");
-  }
+  )
+    return { success: false, message: "Missing search data" };
+
   const today = new Date().toISOString().split("T")[0];
-  if (dataToSearch.requested_date < today) {
-    console.log("Validation Error: Cannot search for past dates");
+  if (dataToSearch.requested_date < today)
+    return {
+      success: false,
+      message: "Validation Error: Cannot search for past dates",
+    };
+
+  if (dataToSearch.start_time >= dataToSearch.end_time)
+    return {
+      success: false,
+      message: "Validation Error: Start time is after end time",
+    };
+
+  if (dataToSearch.guest_number <= 0)
+    return {
+      success: false,
+      message: "Validation Error: Guest Number Can not be negative",
+    };
+
+  return {
+    success: true,
+    message: "All Validation",
+  };
+}
+
+async function getPotentialProviders(dataToSearch) {
+  const sql = `
+        SELECT DISTINCT a.provider_id
+        FROM availability a
+        JOIN (
+            SELECT capacity, chief_id AS id FROM chiefs
+            UNION 
+            SELECT capacity, hall_id AS id FROM halls
+        ) AS c ON a.provider_id = c.id
+        WHERE a.available_date = ?
+          AND a.start_time <= ?
+          AND a.end_time >= ?
+          AND c.capacity >= ?`;
+
+  const providers = await doQuery(sql, [
+    dataToSearch.requested_date,
+    dataToSearch.start_time,
+    dataToSearch.end_time,
+    dataToSearch.guest_number,
+  ]);
+
+  return providers.map((p) => p.provider_id);
+}
+
+async function getResultSearching(dataToSearch) {
+  const validation = validateDataToSearch(dataToSearch);
+  if (!validation.success) {
+    console.error(validation.message);
     return [];
   }
 
-  if (dataToSearch.start_time && dataToSearch.end_time) {
-    if (dataToSearch.start_time >= dataToSearch.end_time) {
-      console.log("Validation Error: Start time is after end time");
-      return [];
-    }
-  }
+  try {
+    const potentialIds = await getPotentialProviders(dataToSearch);
 
-  const price = dataToSearch.price ? parseInt(dataToSearch.price) : null;
-  const capacity = dataToSearch.guest_number
-    ? parseInt(dataToSearch.guest_number)
-    : null;
+    if (potentialIds.length === 0) return [];
 
-  // 1. זמינות (Availability)
-  let availSql = `SELECT provider_id FROM availability WHERE available_date = ?  `;
-  finalValues.push(dataToSearch.requested_date);
+    // 3. בדיקת זמינות מדויקת (AvailToEvent) במקביל לכולם
+    const availabilityChecks = await Promise.all(
+      potentialIds.map(async (id) => {
+        const isAvailable = await AvailToEvent(
+          dataToSearch.requested_date,
+          id,
+          dataToSearch.start_time,
+          dataToSearch.end_time,
+        );
+        console.log(isAvailable)
+        return isAvailable ? id : null;
+      }),
+    );
 
-  if (dataToSearch.start_time) {
-    availSql += " AND start_time <= ?";
-    finalValues.push(dataToSearch.start_time);
-  }
-  if (dataToSearch.end_time) {
-    availSql += " AND end_time >= ?";
-    finalValues.push(dataToSearch.end_time);
-  }
+    // סינון ה-nulls (אלו שלא היו זמינים באמת)
+    const finalIds = availabilityChecks.filter((id) => id !== null);
 
-  // 2. תנאים לאולמות
-  let hallCond = "";
-  if (dataToSearch.city) {
-    hallCond += " AND city = ?";
-    finalValues.push(dataToSearch.city);
-  }
-  if (price) {
-    hallCond += " AND price <= ?";
-    finalValues.push(dataToSearch.price);
-  }
-  if (capacity) {
-    hallCond += " AND capacity >= ?";
-    finalValues.push(dataToSearch.guest_number);
-  }
+    if (finalIds.length === 0) return [];
 
-  // 3. תנאים לשפים
-  let chiefCond = "";
-  if (dataToSearch.city) {
-    chiefCond += " AND city = ?";
-    finalValues.push(dataToSearch.city);
-  }
-  if (price) {
-    chiefCond += " AND price_per_hour <= ?";
-    finalValues.push(dataToSearch.price);
-  }
-  if (capacity) {
-    chiefCond += " AND capacity >= ?";
-    finalValues.push(dataToSearch.guest_number);
-  }
+    // 4. שליפת המידע המלא מה-Users עבור ה-IDs שנשארו
+    // שימוש ב- ? עבור כל ID כדי למנוע SQL Injection
+    const placeholders = finalIds.map(() => "?").join(",");
+    const sqlUsers = `SELECT *, role AS provider_type FROM users WHERE id IN (${placeholders})`;
+    const finalResults = await doQuery(sqlUsers, finalIds);
 
-  // 4. השאילתה הסופית
-  const finalSql = `
-        SELECT *, role AS provider_type FROM users
-        WHERE id IN (${availSql})
-        AND (
-            id IN (SELECT hall_id FROM halls WHERE 1=1 AND status="APPROVED"  ${hallCond})
-            OR 
-            id IN (SELECT chief_id FROM chiefs WHERE 1=1 AND status="APPROVED" ${chiefCond})
-        )
-    `;
-
-  const result = await doQuery(finalSql, finalValues);
-  console.log("The Result💯 ", result);
-  return result;
+    return finalResults;
+  } catch (error) {
+    console.error("Search failed:", error);
+    return [];
+  }
 }
 
 async function getEventData(Data, customerId) {
@@ -103,7 +118,7 @@ async function getEventData(Data, customerId) {
   let values = [
     customerId,
     hallId || null,
-    dataToEvent.requested_date, // ודאי שזה השם שנשלח מה-Search
+    dataToEvent.requested_date,
     dataToEvent.start_time,
     dataToEvent.end_time,
     dataToEvent.notes || " ",
@@ -115,7 +130,7 @@ async function getEventData(Data, customerId) {
 (?,?)`;
   if (selectedChiefsId && selectedChiefsId.length > 0) {
     for (const pId of selectedChiefsId) {
-      await doQuery(sql1, [result.insertId, pId]); 
+      await doQuery(sql1, [result.insertId, pId]);
     }
   }
 
@@ -267,10 +282,10 @@ async function getAllEventsData(customerId) {
 async function updateEventData(updatingData, customerId, eventId) {
   try {
     console.log(updatingData);
-    console.log(updatingData.searchParams)
-    console.log(updatingData.searchParams.start_time)
-    console.log(updatingData.hallId)
-    console.log(updatingData.ChiefsIds)
+    console.log(updatingData.searchParams);
+    console.log(updatingData.searchParams.start_time);
+    console.log(updatingData.hallId);
+    console.log(updatingData.ChiefsIds);
     await doQuery("START TRANSACTION");
     // בדיקה ראשונית
     const currentEvent = await validateAndGetEvent(customerId, eventId);
@@ -336,7 +351,12 @@ async function handleEventBasicUpdate(updatingData, currentEvent, eventId) {
   let isCritical = false;
 
   // רשימת השדות שאנחנו בודקים אם השתנו
-  const relevantFields = ["requested_date", "start_time", "end_time", "guest_number"];
+  const relevantFields = [
+    "requested_date",
+    "start_time",
+    "end_time",
+    "guest_number",
+  ];
 
   relevantFields.forEach((field) => {
     const newValue = updatingData.searchParams[field]; // גישה נכונה למפתח דינמי
@@ -352,12 +372,12 @@ async function handleEventBasicUpdate(updatingData, currentEvent, eventId) {
   if (fields.length > 0) {
     fields.push("status = ?");
     values.push("PENDING");
-    
+
     values.push(eventId); // ה-ID עבור ה-WHERE
 
     await doQuery(
       `UPDATE events SET ${fields.join(", ")} WHERE event_id = ?`,
-      values
+      values,
     );
   }
 
@@ -365,7 +385,7 @@ async function handleEventBasicUpdate(updatingData, currentEvent, eventId) {
     // איפוס סטטוס לכל הספקים של האירוע כי הפרטים השתנו
     await doQuery(
       `UPDATE event_providers SET status = 'pending' WHERE event_id = ?`,
-      [eventId]
+      [eventId],
     );
   }
   return isCritical;
@@ -391,7 +411,7 @@ async function handleEventBasicUpdate(updatingData, currentEvent, eventId) {
 
 //   // מחיקה
 //   if (newChiefsIds.length > 0) {
-//     const placeholders = newChiefsIds.map(() => "?").join(",");    
+//     const placeholders = newChiefsIds.map(() => "?").join(",");
 //     await doQuery(
 //       `DELETE FROM event_providers WHERE event_id = ? AND provider_id NOT IN (${placeholders})`,
 //       [eventId, ...newChiefsIds],

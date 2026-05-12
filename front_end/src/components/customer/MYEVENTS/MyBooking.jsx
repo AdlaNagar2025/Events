@@ -6,73 +6,70 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EventData from "../BOOKEVENT/EventData";
 
-
 export default function MyBooking({ user }) {
-  const navigate =useNavigate()
-  const [eventData,setEventData]=useState()
+  const navigate = useNavigate();
+  // const [eventData, setEventData] = useState();
   const [events, setEvents] = useState([]);
-      let rolePath = user?.role.toLowerCase();
-      if (rolePath === "chief" || rolePath === "hall_owner")
-        rolePath = "provider";
-      console.log(rolePath);
-    const fetchAllEvents = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:3030/${rolePath}/myEventsData`,
-          { withCredentials: true },
+  let rolePath = user?.role.toLowerCase();
+  if (rolePath === "chief" || rolePath === "hall_owner") rolePath = "provider";
+  console.log(rolePath);
+  const fetchAllEvents = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3030/${rolePath}/myEventsData`,
+        { withCredentials: true },
+      );
+
+      const rawData = response.data.data;
+
+      const grouped = rawData.reduce((acc, current) => {
+        const existingEvent = acc.find(
+          (item) => item.event_id === current.event_id,
         );
 
-        const rawData = response.data.data;
+        if (existingEvent) {
+          // אם האירוע כבר קיים, רק נוסיף את השף לרשימה שלו
+          if (!existingEvent.chiefs) existingEvent.chiefs = [];
+          existingEvent.chiefs.push({
+            id: current.chief_id,
+            name: current.chief_name,
+            status: current.chief_status,
+            price: (
+              calculateDuration(current.start_time, current.end_time) *
+              current.price_per_hour
+            ).toFixed(2),
+          });
+        } else {
+          // אם זה אירוע חדש, ניצור אותו עם מערך שפים התחלתי
+          acc.push({
+            ...current,
+            chiefs: [
+              {
+                id: current.chief_id,
+                name: current.chief_name,
+                status: current.chief_status,
+                price: (
+                  calculateDuration(current.start_time, current.end_time) *
+                  current.price_per_hour
+                ).toFixed(2),
+              },
+            ],
+          });
+        }
+        return acc;
+      }, []);
 
-        const grouped = rawData.reduce((acc, current) => {
-          const existingEvent = acc.find(
-            (item) => item.event_id === current.event_id,
-          );
-
-          if (existingEvent) {
-            // אם האירוע כבר קיים, רק נוסיף את השף לרשימה שלו
-            if (!existingEvent.chiefs) existingEvent.chiefs = [];
-            existingEvent.chiefs.push({
-              id: current.chief_id,
-              name: current.chief_name,
-              status: current.chief_status,
-              price: (
-                calculateDuration(current.start_time, current.end_time) *
-                current.price_per_hour
-              ).toFixed(2),
-            });
-          } else {
-            // אם זה אירוע חדש, ניצור אותו עם מערך שפים התחלתי
-            acc.push({
-              ...current,
-              chiefs: [
-                {
-                  id: current.chief_id,
-                  name: current.chief_name,
-                  status: current.chief_status,
-                  price: (
-                    calculateDuration(current.start_time, current.end_time) *
-                    current.price_per_hour
-                  ).toFixed(2),
-                },
-              ],
-            });
-          }
-          return acc;
-        }, []);
-
-        setEvents(grouped); // שומרים ב-State את המערך הנקי ללא כפילויות
-      } catch (error) {
-        console.log(error);
-      }
-    };
+      setEvents(grouped); // שומרים ב-State את המערך הנקי ללא כפילויות
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
-
     fetchAllEvents();
   }, [user, rolePath]);
 
-  function update(e){
+  function update(e) {
     navigate("/findavendor", {
       state: {
         Event: e,
@@ -82,48 +79,49 @@ export default function MyBooking({ user }) {
     });
   }
 
- const calculateDuration = (start, end) => {
-   if (!start || !end) return 0;
+  const calculateDuration = (start, end) => {
+    if (!start || !end) return 0;
 
-   // הפיכת HH:MM למערך של מספרים
-   const [startHours, startMinutes] = start.split(":").map(Number);
-   const [endHours, endMinutes] = end.split(":").map(Number);
+    // הפיכת HH:MM למערך של מספרים
+    const [startHours, startMinutes] = start.split(":").map(Number);
+    const [endHours, endMinutes] = end.split(":").map(Number);
 
-   const startTotalMinutes = startHours * 60 + startMinutes;
-  const endTotalMinutes = endHours * 60 + endMinutes;
+    const startTotalMinutes = startHours * 60 + startMinutes;
+    const endTotalMinutes = endHours * 60 + endMinutes;
 
-  // חישוב ההפרש בשעות (דקות חלקי 60)
-let diffInMinutes = endTotalMinutes - startTotalMinutes;
+    // חישוב ההפרש בשעות (דקות חלקי 60)
+    let diffInMinutes = endTotalMinutes - startTotalMinutes;
 
-// טיפול במקרה של מעבר חצות (למשל מ-22:00 עד 02:00)
-if (diffInMinutes < 0) {
-  diffInMinutes += 24 * 60; // מוסיפים 1440 דקות
-}
+    // טיפול במקרה של מעבר חצות (למשל מ-22:00 עד 02:00)
+    if (diffInMinutes < 0) {
+      diffInMinutes += 24 * 60; // מוסיפים 1440 דקות
+    }
 
-const durationInHours = diffInMinutes / 60;
-  // החזרת מספר חיובי (למקרה שהזמנים הוזנו הפוך)
-  return Math.max(0, durationInHours);
- };
+    const durationInHours = diffInMinutes / 60;
+    // החזרת מספר חיובי (למקרה שהזמנים הוזנו הפוך)
+    return Math.max(0, durationInHours);
+  };
 
- async function  handlechangeStatus(eventId,status){
-  try{
-    const response = await axios.put(
-      `http://localhost:3030/provider/changeEventStatus/${eventId}`,
-      { status: status},
-      { withCredentials: true },
-    );
-    console.log(response.data.data)
-    fetchAllEvents()
+  //UPDATE event_providers SET status="PENDING" where event_providers.event_id=6
+
+  async function handlechangeStatus(event, eventId, status) {
+    try {
+      const response = await axios.put(
+        `http://localhost:3030/provider/changeEventStatus/${eventId}`,
+        { status: status, eventData: event },
+        { withCredentials: true },
+      );
+      alert(response.data.success);
+      fetchAllEvents();
+    } catch (error) {
+      console.log(error);
+    }
   }
-  catch(error)
-  {console.log(error)}
- }
 
   return (
     <div className={classes.event}>
-   
       {events.map((e) => {
-        console.log( "hhhh" ,e)
+        console.log("hhhh122MyBooking/MYEVENTS/CUST", e);
         const hours = calculateDuration(e.start_time, e.end_time);
         const totalPrice = (e.price_per_hour * hours).toFixed(2); // עיגול ל-2 ספרות
 
@@ -177,12 +175,16 @@ const durationInHours = diffInMinutes / 60;
                 {rolePath === "provider" && (
                   <div>
                     <button
-                      onClick={() => handlechangeStatus(e.event_id, "APPROVED")}
+                      onClick={() =>
+                        handlechangeStatus(e, e.event_id, "APPROVED")
+                      }
                     >
                       Approve
                     </button>
                     <button
-                      onClick={() => handlechangeStatus(e.event_id, "REJECTED")}
+                      onClick={() =>
+                        handlechangeStatus(e, e.event_id, "REJECTED")
+                      }
                     >
                       Reject
                     </button>

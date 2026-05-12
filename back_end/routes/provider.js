@@ -273,10 +273,15 @@ router.get("/myEventsData", async (req, res) => {
 
 router.put("/changeEventStatus/:eventId", async (req, res) => {
   const eventId = req.params.eventId;
-
   const status = req.body.status;
-  const result = changeStatusEvent(req.session.user.id, eventId, status);
-  return res.json({ data: result });
+  const eventData = req.body.eventData;
+  const result = changeStatusEvent(
+    req.session.user.id,
+    eventId,
+    status,
+    eventData,
+  );
+  return res.json(result);
 });
 
 router.get("/AllEventsApproved", async (req, res) => {
