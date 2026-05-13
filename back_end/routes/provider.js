@@ -275,13 +275,20 @@ router.put("/changeEventStatus/:eventId", async (req, res) => {
   const eventId = req.params.eventId;
   const status = req.body.status;
   const eventData = req.body.eventData;
-  const result = changeStatusEvent(
-    req.session.user.id,
-    eventId,
-    status,
-    eventData,
-  );
-  return res.json(result);
+
+  try {
+    const result = await changeStatusEvent(
+      req.session.user.id,
+      eventId,
+      status,
+      eventData,
+    );
+
+    return res.json(result);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 router.get("/AllEventsApproved", async (req, res) => {

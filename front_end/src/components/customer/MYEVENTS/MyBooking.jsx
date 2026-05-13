@@ -6,9 +6,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EventData from "../BOOKEVENT/EventData";
 
-export default function MyBooking({ user }) {
+export default function MyBooking({ user, onStatusChange }) {
   const navigate = useNavigate();
-  // const [eventData, setEventData] = useState();
   const [events, setEvents] = useState([]);
   let rolePath = user?.role.toLowerCase();
   if (rolePath === "chief" || rolePath === "hall_owner") rolePath = "provider";
@@ -21,7 +20,6 @@ export default function MyBooking({ user }) {
       );
 
       const rawData = response.data.data;
-
       const grouped = rawData.reduce((acc, current) => {
         const existingEvent = acc.find(
           (item) => item.event_id === current.event_id,
@@ -104,6 +102,18 @@ export default function MyBooking({ user }) {
 
   //UPDATE event_providers SET status="PENDING" where event_providers.event_id=6
 
+  // async function handlechangeStatus(event, eventId, status) {
+  //   try {
+  //     const response = await axios.put(
+  //       `http://localhost:3030/provider/changeEventStatus/${eventId}`,
+  //       { status: status, eventData: event },
+  //       { withCredentials: true },
+  //     );
+  //     alert(response.data.success);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }
   async function handlechangeStatus(event, eventId, status) {
     try {
       const response = await axios.put(
@@ -111,94 +121,110 @@ export default function MyBooking({ user }) {
         { status: status, eventData: event },
         { withCredentials: true },
       );
-      alert(response.data.success);
-      fetchAllEvents();
+      console.log("RESPONSE:", response.data.data);
+      if (response.data.success) {
+        alert("Status updated successfully!");
+        // 1. רענון הרשימה המקומית ב-MyBooking
+        fetchAllEvents();
+        // 2. הפעלת הריענון ב-Calendar דרך רכיב האב
+        if (onStatusChange) {
+          onStatusChange();
+        }
+      }
     } catch (error) {
       console.log(error);
     }
   }
 
-  return (
-    <div className={classes.event}>
-      {events.map((e) => {
-        console.log("hhhh122MyBooking/MYEVENTS/CUST", e);
-        const hours = calculateDuration(e.start_time, e.end_time);
-        const totalPrice = (e.price_per_hour * hours).toFixed(2); // עיגול ל-2 ספרות
+return (
+  <div className={classes.event}>
+    {events.map((e) => {
+      const hours = calculateDuration(e.start_time, e.end_time);
+      // חישוב המחיר הכולל לפי שעות
+      const totalPrice = (e.price_per_hour * hours).toFixed(2);
 
-        return (
-          <div key={e.event_id} className={classes.eventCard}>
-            <div key={e.event_id}>
-              {rolePath === "customer" && (
-                <p className={classes[e.finalStatus.toLowerCase()]}>
-                  Status: {e.finalStatus}
-                </p>
-              )}
-              {rolePath === "provider" && (
-                <p className={classes[e.status.toLowerCase()]}>
-                  Status: {e.status}
-                </p>
-              )}
-              <div>
-                <p>Event Details</p>
-                <strong>Date:</strong>
-                <p>{e.requested_date}</p>
-                <strong>Start Time:</strong>
-                <p>{e.start_time}</p>
-                <strong>End Time:</strong>
-                <p>{e.end_time}</p>
-                <strong>Guest Number:</strong>
-                <p>{e.guest_number}</p>
-                {rolePath !== "provider" && (
-                  <div>
-                    <strong>Hall Detail:</strong>
-                    <p>
-                      {e?.hall_name} & {e?.price} & {e?.status}
-                    </p>
-                    <strong>Chiefs Detail:</strong>
-                    {e.chiefs.map((chief) => (
-                      <p key={chief.id}>
-                        {chief.name} | Total: ₪{chief.price} | Status:{" "}
-                        {chief.status}
-                      </p>
-                    ))}
-                  </div>
-                )}
-                {/* <div> */}
-                {/* <EventData dataToEvent={e} hallData={e} chiefsData={e}/> */}
-                {rolePath === "customer" && (
-                  <div>
-                    <button onClick={() => update(e)}>Update</button>{" "}
-                    <button>Cancel</button>
-                  </div>
-                )}
+      return (
+        <div key={e.event_id} className={classes.eventCard}>
+          {/* תצוגת סטטוס עליונה */}
+          <p className={classes[e.status?.toLowerCase()] || classes.pending}>
+            Status: {rolePath === "customer" ? e.finalStatus : e.status}
+          </p>
 
-                {rolePath === "provider" && (
-                  <div>
+          <div>
+            <p>
+              <strong>Event Details</strong>
+            </p>
+            <p>Date: {e.requested_date}</p>
+            <p>
+              Time: {e.start_time} - {e.end_time} ({hours} hours)
+            </p>
+            <p>Guests: {e.guest_number}</p>
+
+            {rolePath !== "provider" && (
+              <div className={classes.detailsSection}>
+                <strong>Hall:</strong> {e.hall_name} (₪{e.price})
+                <br />
+                <strong>Chiefs:</strong>
+                {e.chiefs.map((chief) => (
+                  <p key={chief.id} className={classes.smallText}>
+                    {chief.name} | ₪{chief.price} | {chief.status}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {/* כפתורים ללקוח */}
+            {rolePath === "customer" && (
+              <div className={classes.actions}>
+                <button onClick={() => update(e)}>Update</button>
+                <button className={classes.cancelBtn}>Cancel</button>
+              </div>
+            )}
+
+            {/* כפתורים לספק (Provider) */}
+            {rolePath === "provider" && (
+              <div className={classes.actions}>
+                {/* הצגת כפתורים רק אם הסטטוס עדיין לא הוכרע */}
+                {e.status !== "APPROVED" && (
+                  <>
                     <button
+                      className={classes.approveBtn}
                       onClick={() =>
                         handlechangeStatus(e, e.event_id, "APPROVED")
                       }
                     >
                       Approve
                     </button>
-                    <button
+                    </>)}
+                    {e.status !== "REJECTED" && 
+                    (<>
+                            <button
+                      className={classes.rejectBtn}
                       onClick={() =>
                         handlechangeStatus(e, e.event_id, "REJECTED")
                       }
                     >
                       Reject
-                    </button>
-                  </div>
-                )}
-                <hr />
-                {e.requested_date < new Date() && e.status === "APPROVED" && (
-                  <button>Write a Review</button>
-                )}
+                    </button></>)
+                    }
+              {/* <br/>
+                  <span className={classes.statusFixed}>
+                    {e.status === "APPROVED" ? "Confirmed ✓" : "Rejected ✗"}
+                  </span> */}
+      
               </div>
-            </div>
+            )}
+
+            <hr />
+            {/* ביקורת - רק אם האירוע עבר והיה מאושר */}
+            {rolePath === "customer" &&
+              new Date(e.requested_date) < new Date() &&
+              e.finalStatus === "APPROVED" && (
+                <button className={classes.reviewBtn}>Write a Review</button>
+              )}
           </div>
-        );
-      })}
-    </div>
-  );
-}
+        </div>
+      );
+    })}
+  </div>
+);}

@@ -86,7 +86,7 @@ async function getResultSearching(dataToSearch) {
           dataToSearch.start_time,
           dataToSearch.end_time,
         );
-        console.log(isAvailable)
+        console.log(isAvailable);
         return isAvailable ? id : null;
       }),
     );
@@ -157,7 +157,8 @@ async function getAllEventsData(customerId) {
   LEFT JOIN event_providers ep ON e.event_id = ep.event_id
   LEFT JOIN chiefs c ON ep.provider_id = c.chief_id
   LEFT JOIN users u ON c.chief_id = u.id
-  WHERE e.user_id = ?`;
+  WHERE e.user_id = ?
+  ORDER BY e.requested_date , e.start_time ASC`;
   const result = await doQuery(sql, [customerId]);
   const fresult = []; // מערך חדש וריק
 

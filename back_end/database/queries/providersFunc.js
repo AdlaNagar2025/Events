@@ -2,9 +2,9 @@ const doQuery = require("../query");
 const { getRole } = require("./helpingFunc");
 
 async function getAllEvents(providerId) {
-  let sql = `SELECT * FROM events WHERE hall_id=?`;
+  let sql = `SELECT * FROM events WHERE hall_id=? ORDER BY events.requested_date , events.start_time ASC`;
   if ((await getRole(providerId)) === "Chief")
-    sql = `SELECT events.event_id,events.requested_date,events.start_time,events.end_time,events.guest_number,events.notes,event_providers.status FROM events JOIN event_providers ON event_providers.event_id=events.event_id  and provider_id=? ORDER BY events.requested_date DESC;
+    sql = `SELECT events.event_id,events.requested_date,events.start_time,events.end_time,events.guest_number,events.notes,event_providers.status FROM events JOIN event_providers ON event_providers.event_id=events.event_id  and provider_id=? ORDER BY events.requested_date , events.start_time ASC;
 `;
   const result = await doQuery(sql, [providerId]);
   return result;
@@ -78,16 +78,22 @@ async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
 
 //CHIEFS
 async function getAllEventsApproved(providerId) {
-  const sql = `SELECT requested_date, start_time, end_time 
+  const role = await getRole(providerId);
+  let sql = `SELECT requested_date, start_time, end_time 
       FROM events 
     WHERE
        event_id IN (
           SELECT event_id FROM event_providers 
           WHERE provider_id = ? AND status = 'APPROVED'
       ) 
-      ORDER BY start_time ASC`;
+      ORDER BY requested_date , start_time ASC`;
+
+  if (role === "Hall_Owner")
+    sql = `SELECT requested_date, start_time, end_time 
+      FROM events 
+          WHERE hall_id = ? AND status = 'APPROVED'
+      ORDER BY requested_date, start_time ASC`;
   const result = await doQuery(sql, [providerId]);
-  console.log(result);
   return result;
 }
 
