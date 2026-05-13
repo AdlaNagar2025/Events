@@ -48,13 +48,13 @@ export default function FindAVendor({ user }) {
   // --- Effect 2: אתחול נתונים במצב עדכון (מגיע מ-My Booking) ---
   useEffect(() => {
     if (eventToUpdate) {
-      console.log("Setting up update mode for event:", eventToUpdate.event_id);
       setSearchParams({
         city: "",
         guest_number: eventToUpdate.guest_number || "",
         requested_date: eventToUpdate.requested_date || "",
         start_time: eventToUpdate.start_time || "",
         end_time: eventToUpdate.end_time || "",
+        event_id: eventToUpdate.event_id || null,
       });
       setIsUpdating(true);
       setIsSearch(true);
@@ -65,6 +65,8 @@ export default function FindAVendor({ user }) {
 
   // --- Effect 3: "הניקוי השקט" - מוודא שהבחירה מסונכרנת עם תוצאות החיפוש ---
   useEffect(() => {
+  (isLoading)
+  return;
     // מריצים את הניקוי רק אם המשתמש ביצע חיפוש אקטיבי ויש תוצאות
     if (!isSearch || providers.length === 0) return;
     const visibleIds = providers.map((p) => p.id);

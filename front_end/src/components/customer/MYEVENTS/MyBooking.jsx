@@ -142,6 +142,13 @@ return (
       const hours = calculateDuration(e.start_time, e.end_time);
       // חישוב המחיר הכולל לפי שעות
       const totalPrice = (e.price_per_hour * hours).toFixed(2);
+      
+      const CurrentTime=new Date().toTimeString().slice(0,5)
+      const start_time = e.start_time.slice(0, 5);
+      const end_time = e.end_time.slice(0, 5);
+
+
+
 
       return (
         <div key={e.event_id} className={classes.eventCard}>
@@ -156,13 +163,13 @@ return (
             </p>
             <p>Date: {e.requested_date}</p>
             <p>
-              Time: {e.start_time} - {e.end_time} ({hours} hours)
+              Time: {start_time} - {end_time} ({hours} hours)
             </p>
             <p>Guests: {e.guest_number}</p>
 
             {rolePath !== "provider" && (
               <div className={classes.detailsSection}>
-                <strong>Hall:</strong> {e.hall_name} (₪{e.price})
+                <strong>Hall:</strong> {e.hall_name} (₪{e.hall_price})
                 <br />
                 <strong>Chiefs:</strong>
                 {e.chiefs.map((chief) => (
@@ -195,34 +202,36 @@ return (
                     >
                       Approve
                     </button>
-                    </>)}
-                    {e.status !== "REJECTED" && 
-                    (<>
-                            <button
+                  </>
+                )}
+                {e.status !== "REJECTED" && (
+                  <>
+                    <button
                       className={classes.rejectBtn}
                       onClick={() =>
                         handlechangeStatus(e, e.event_id, "REJECTED")
                       }
                     >
                       Reject
-                    </button></>)
-                    }
-              {/* <br/>
+                    </button>
+                  </>
+                )}
+                {/* <br/>
                   <span className={classes.statusFixed}>
                     {e.status === "APPROVED" ? "Confirmed ✓" : "Rejected ✗"}
                   </span> */}
-      
               </div>
             )}
 
-            <hr />
             {/* ביקורת - רק אם האירוע עבר והיה מאושר */}
             {rolePath === "customer" &&
               new Date(e.requested_date) < new Date() &&
-              e.finalStatus === "APPROVED" && (
+              e.finalStatus === "APPROVED" &&
+              e.end_time < CurrentTime && (
                 <button className={classes.reviewBtn}>Write a Review</button>
               )}
           </div>
+          <hr />
         </div>
       );
     })}

@@ -81,6 +81,7 @@ async function getResultSearching(dataToSearch) {
     const availabilityChecks = await Promise.all(
       potentialIds.map(async (id) => {
         const isAvailable = await AvailToEvent(
+          dataToSearch.event_id,
           dataToSearch.requested_date,
           id,
           dataToSearch.start_time,

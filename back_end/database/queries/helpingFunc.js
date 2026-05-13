@@ -27,9 +27,8 @@ async function getStatusEvent(eventId) {
   return statusList.length > 0 ? "APPROVED" : "PENDING";
 }
 
-
-async function AvailToEvent(date, providerId, event_start, event_end) {
-  const availTimes = await getTimeAvail(date, providerId);
+async function AvailToEvent(eventId, date, providerId, event_start, event_end) {
+  const availTimes = await getTimeAvail(eventId, date, providerId);
 
   // פונקציית עזר פנימית לנרמול זמן ל-HH:mm
   const normalize = (timeStr) => timeStr.substring(0, 5);
@@ -48,9 +47,7 @@ async function AvailToEvent(date, providerId, event_start, event_end) {
   return false;
 }
 
-
-
-async function getTimeAvail(date, providerId) {
+async function getTimeAvail(eventId, date, providerId) {
   try {
     const availSql = `
             SELECT start_time, end_time FROM availability 
@@ -60,7 +57,7 @@ async function getTimeAvail(date, providerId) {
 
     let eventSql = `
             SELECT start_time, end_time FROM events 
-            WHERE requested_date = ? AND hall_id = ? AND status = 'APPROVED'
+            WHERE requested_date = ? AND hall_id = ? AND status = 'APPROVED' AND event_id !=?
             ORDER BY start_time ASC`;
 
     if ((await getRole(providerId)) === "Chief") {
@@ -69,12 +66,12 @@ async function getTimeAvail(date, providerId) {
                 WHERE requested_date = ? 
                 AND event_id IN (
                     SELECT event_id FROM event_providers 
-                    WHERE provider_id = ? AND status = 'APPROVED'
+                    WHERE provider_id = ? AND status = 'APPROVED' AND event_id !=?
                 ) 
                 ORDER BY start_time ASC`;
     }
 
-    const bookedEvents = await doQuery(eventSql, [date, providerId]);
+    const bookedEvents = await doQuery(eventSql, [date, providerId, eventId]);
     const finalFreeTimes = [];
 
     availabilityBlocks.forEach((block) => {
