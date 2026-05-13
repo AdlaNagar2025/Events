@@ -1,5 +1,5 @@
 import React from "react";
-import { useState , useEffect} from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import classes from "./findavendor.module.css";
 
@@ -10,7 +10,7 @@ export default function Search({
   setSearchParams,
   searchParams,
   setIsSearch,
-  validation
+  validation,
 }) {
   useEffect(() => {
     if (
@@ -34,13 +34,17 @@ export default function Search({
   };
 
   const handleSearch = async () => {
+    const currentTime = new Date().toTimeString().slice(0, 5);
+    const today = new Date().toISOString().split("T")[0];
+
     const { requested_date, start_time, end_time, guest_number } = searchParams;
     if (
       !requested_date ||
       !start_time ||
       !end_time ||
       guest_number <= 0 ||
-      start_time >= end_time
+      start_time >= end_time ||
+      (requested_date === today && start_time <= currentTime)
     ) {
       return;
     }
@@ -58,7 +62,7 @@ export default function Search({
     } finally {
       setIsLoading(false);
     }
-  };;
+  };
   return (
     <div className={classes.container}>
       <h2>Find Your Event Team: Unified Vendor Search</h2>

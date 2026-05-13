@@ -9,6 +9,10 @@ export default function FindAVendor({ user }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+
+      const currentTime = new Date().toTimeString().slice(0, 5);
+      const today = new Date().toISOString().split("T")[0];
+
   // --- States ---
   const [selectedHallId, setSelectedHallId] = useState(null);
   const [selectedChiefIds, setSelectedChiefIds] = useState([]);
@@ -65,10 +69,9 @@ export default function FindAVendor({ user }) {
 
   // --- Effect 3: "הניקוי השקט" - מוודא שהבחירה מסונכרנת עם תוצאות החיפוש ---
   useEffect(() => {
-  (isLoading)
-  return;
+    if (isLoading || !isSearch || providers.length === 0) return;
     // מריצים את הניקוי רק אם המשתמש ביצע חיפוש אקטיבי ויש תוצאות
-    if (!isSearch || providers.length === 0) return;
+
     const visibleIds = providers.map((p) => p.id);
     // ניקוי אולם
     if (selectedHallId && !visibleIds.includes(selectedHallId)) {
@@ -98,15 +101,23 @@ export default function FindAVendor({ user }) {
   };
 
   const validation = () => {
+
+
     const { requested_date, start_time, end_time, guest_number } = searchParams;
     if (!requested_date || !start_time || !end_time) {
       alert("Please fill in all date and time fields.");
       return false;
     }
+
     if (start_time >= end_time) {
       alert("End time must be after start time.");
       return false;
     }
+    if (requested_date == today && start_time <= currentTime) {
+      alert("Time is pass");
+      return false;
+    }
+
     if (!guest_number || guest_number <= 0) {
       alert("Capacity must be greater than 0.");
       return false;

@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import EventData from "../BOOKEVENT/EventData";
 
 export default function MyBooking({ user, onStatusChange }) {
+  const currentTime = new Date().toTimeString().slice(0, 5);
+  const today = new Date().toISOString().split("T")[0];
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   let rolePath = user?.role.toLowerCase();
@@ -136,64 +138,65 @@ export default function MyBooking({ user, onStatusChange }) {
     }
   }
 
-return (
-  <div className={classes.event}>
-    {events.map((e) => {
-      const hours = calculateDuration(e.start_time, e.end_time);
-      // חישוב המחיר הכולל לפי שעות
-      const totalPrice = (e.price_per_hour * hours).toFixed(2);
-      
-      const CurrentTime=new Date().toTimeString().slice(0,5)
-      const start_time = e.start_time.slice(0, 5);
-      const end_time = e.end_time.slice(0, 5);
+  return (
+    <div className={classes.event}>
+      {" "}
+      {/* כדאי לעטוף ב-div הראשי שלך */}
+      {events.map((e) => {
+        const hours = calculateDuration(e.start_time, e.end_time);
+        const start_time = e.start_time.slice(0, 5);
+        const end_time = e.end_time.slice(0, 5);
 
+        // --- לוגיקה לבדיקה אם האירוע בעתיד ---
+        const isFuture =
+          e.requested_date > today ||
+          (e.requested_date === today && start_time > currentTime);
 
+        // האם הספק יכול לאשר/לדחות?
+        const canProviderAction = rolePath === "provider" && isFuture;
 
-
-      return (
-        <div key={e.event_id} className={classes.eventCard}>
-          {/* תצוגת סטטוס עליונה */}
-          <p className={classes[e.status?.toLowerCase()] || classes.pending}>
-            Status: {rolePath === "customer" ? e.finalStatus : e.status}
-          </p>
-
-          <div>
-            <p>
-              <strong>Event Details</strong>
+        return (
+          <div key={e.event_id} className={classes.eventCard}>
+            {/* סטטוס */}
+            <p className={classes[e.status?.toLowerCase()] || classes.pending}>
+              Status: {rolePath === "customer" ? e.finalStatus : e.status}
             </p>
-            <p>Date: {e.requested_date}</p>
-            <p>
-              Time: {start_time} - {end_time} ({hours} hours)
-            </p>
-            <p>Guests: {e.guest_number}</p>
 
-            {rolePath !== "provider" && (
-              <div className={classes.detailsSection}>
-                <strong>Hall:</strong> {e.hall_name} (₪{e.hall_price})
-                <br />
-                <strong>Chiefs:</strong>
-                {e.chiefs.map((chief) => (
-                  <p key={chief.id} className={classes.smallText}>
-                    {chief.name} | ₪{chief.price} | {chief.status}
-                  </p>
-                ))}
-              </div>
-            )}
+            <div>
+              <p>
+                <strong>Event Details</strong>
+              </p>
+              {rolePath !== "customer" && <p>{e.first_name}</p>}
+              <p>Date: {e.requested_date}</p>
+              <p>
+                Time: {start_time} - {end_time} ({hours} hours)
+              </p>
 
-            {/* כפתורים ללקוח */}
-            {rolePath === "customer" && (
-              <div className={classes.actions}>
-                <button onClick={() => update(e)}>Update</button>
-                <button className={classes.cancelBtn}>Cancel</button>
-              </div>
-            )}
+              {/* פרטי אולם ושפים (ללקוח בלבד) */}
+              {rolePath !== "provider" && (
+                <div className={classes.detailsSection}>
+                  <strong>Hall:</strong> {e.hall_name} <br />
+                  <strong>Chiefs:</strong>
+                  {e.chiefs.map((chief) => (
+                    <p key={chief.id} className={classes.smallText}>
+                      {chief.name} | {chief.status}
+                    </p>
+                  ))}
+                </div>
+              )}
 
-            {/* כפתורים לספק (Provider) */}
-            {rolePath === "provider" && (
-              <div className={classes.actions}>
-                {/* הצגת כפתורים רק אם הסטטוס עדיין לא הוכרע */}
-                {e.status !== "APPROVED" && (
-                  <>
+              {/* כפתורי לקוח */}
+              {rolePath === "customer" && isFuture && (
+                <div className={classes.actions}>
+                  <button onClick={() => update(e)}>Update</button>
+                  <button className={classes.cancelBtn}>Cancel</button>
+                </div>
+              )}
+
+              {/* כפתורי ספק */}
+              {canProviderAction && (
+                <div className={classes.actions}>
+                  {e.status !== "APPROVED" && (
                     <button
                       className={classes.approveBtn}
                       onClick={() =>
@@ -202,10 +205,8 @@ return (
                     >
                       Approve
                     </button>
-                  </>
-                )}
-                {e.status !== "REJECTED" && (
-                  <>
+                  )}
+                  {e.status !== "REJECTED" && (
                     <button
                       className={classes.rejectBtn}
                       onClick={() =>
@@ -214,26 +215,29 @@ return (
                     >
                       Reject
                     </button>
-                  </>
-                )}
-                {/* <br/>
-                  <span className={classes.statusFixed}>
-                    {e.status === "APPROVED" ? "Confirmed ✓" : "Rejected ✗"}
-                  </span> */}
-              </div>
-            )}
-
-            {/* ביקורת - רק אם האירוע עבר והיה מאושר */}
-            {rolePath === "customer" &&
-              new Date(e.requested_date) < new Date() &&
-              e.finalStatus === "APPROVED" &&
-              e.end_time < CurrentTime && (
-                <button className={classes.reviewBtn}>Write a Review</button>
+                  )}
+                </div>
               )}
+
+              {/* הודעה לספק אם האירוע עבר */}
+              {rolePath === "provider" &&
+                !isFuture &&
+                e.status === "PENDING" && (
+                  <p className={classes.expiredNote}>Event time has passed</p>
+                )}
+
+              {/* כפתור ביקורת */}
+              {rolePath === "customer" &&
+                !isFuture &&
+                e.finalStatus === "APPROVED" && (
+                  <button className={classes.reviewBtn}>Write a Review</button>
+                )}
+            </div>
+            <hr />
           </div>
-          <hr />
-        </div>
-      );
-    })}
-  </div>
-);}
+        ); // סגירת return של ה-map
+      })}{" "}
+      {/* סגירת ה-map */}
+    </div> // סגירת ה-div הראשי
+  ); // סגירת return של הקומפוננטה
+} // סגירת פונקציית MyBooking

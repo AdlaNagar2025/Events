@@ -1,18 +1,123 @@
-.event{
-  background-color: bisque;
-  color: brown;
+.event {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 1rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-.event div{
-  margin-bottom: 3px;
 
+.eventCard {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  border-right: 6px solid #ccc; /* ברירת מחדל */
+  transition: transform 0.2s;
 }
-.pending{
-  color: rgb(138, 182, 155);
 
+.eventCard:hover {
+  transform: translateY(-3px);
 }
-.rejected{
-  color: red;
+
+/* עיצוב סטטוסים - צבעים לפי שם הסטטוס */
+.approved {
+  color: #27ae60;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.9rem;
 }
-.approve{
-  color: pink;
+
+.rejected {
+  color: #e74c3c;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+.pending {
+  color: #f39c12;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+/* פרטי האירוע */
+.eventDetails p {
+  margin: 0.5rem 0;
+  color: #34495e;
+}
+
+.detailsSection {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  font-size: 0.95rem;
+}
+
+.smallText {
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  margin-left: 10px;
+}
+
+/* כפתורים */
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 1.5rem;
+}
+
+.actions button, .reviewBtn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s, opacity 0.3s;
+}
+
+.approveBtn {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.approveBtn:hover {
+  background-color: #27ae60;
+}
+
+.rejectBtn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.rejectBtn:hover {
+  background-color: #c0392b;
+}
+
+.cancelBtn {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.reviewBtn {
+  background-color: #3498db;
+  color: white;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.expiredNote {
+  color: #7f8c8d;
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+/* קו מפריד */
+hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin-top: 1.5rem;
 }
