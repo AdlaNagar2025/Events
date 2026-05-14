@@ -13,7 +13,6 @@ async function getStatusEvent(eventId) {
     UNION ALL
     SELECT status FROM event_providers WHERE event_id = ?`;
 
-  // 2. שליחת ה-eventId פעמיים (עבור שני סימני השאלה)
   const rows = await doQuery(allStatusesSql, [eventId, eventId]);
 
   // 3. הפיכת מערך האובייקטים למערך של טקסט פשוט (Strings)
@@ -23,6 +22,7 @@ async function getStatusEvent(eventId) {
   // 4. הבדיקה על ה-statusList הפשוט
   if (statusList.includes("REJECTED")) return "REJECTED";
   if (statusList.includes("PENDING")) return "PENDING";
+    if (statusList.includes("CANCELLED")) return "CANCELLED";
 
   return statusList.length > 0 ? "APPROVED" : "PENDING";
 }

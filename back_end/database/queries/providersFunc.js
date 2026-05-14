@@ -1,14 +1,6 @@
 const doQuery = require("../query");
 const { getRole } = require("./helpingFunc");
 
-// async function getAllEvents(providerId) {
-//   let sql = `SELECT * , users.first_name FROM events JOIN users ON users.id=events.user_id WHERE hall_id=? ORDER BY events.requested_date , events.start_time , events.status="PENDING" ASC`;
-//   if ((await getRole(providerId)) === "Chief")
-//     sql = `SELECT events.event_id,events.requested_date,events.start_time,events.end_time,events.guest_number,events.notes,event_providers.status , users.first_name FROM events JOIN event_providers ON event_providers.event_id=events.event_id  and provider_id=? JOIN users ON users.id= events.user_id ORDER BY events.requested_date , events.start_time , event_providers.status="PENDING" ASC;
-// `;
-//   const result = await doQuery(sql, [providerId]);
-//   return result;
-// }
 async function getAllEvents(providerId) {
   // באולם - המיון קודם לפי הסטטוס (מה שממתין ראשון) ואז לפי תאריך ושעה
   let sql = `
@@ -32,6 +24,7 @@ async function getAllEvents(providerId) {
   const result = await doQuery(sql, [providerId]);
   return result;
 }
+
 async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
   const role = await getRole(providerId);
   let checkSql = "";
@@ -98,7 +91,6 @@ async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
   };
 }
 
-//CHIEFS
 async function getAllEventsApproved(providerId) {
   const role = await getRole(providerId);
   let sql = `SELECT requested_date, start_time, end_time 

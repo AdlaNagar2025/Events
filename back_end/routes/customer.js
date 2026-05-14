@@ -11,6 +11,7 @@ const {
   getEventData,
   getAllEventsData,
   updateEventData,
+  cancelEvent,
 } = require("../database/queries/customerFunc");
 const { getProviderCardData } = require("../database/queries/businessAccount");
 const router = express.Router();
@@ -112,13 +113,25 @@ router.get("/myEventsData", async (req, res) => {
 
 router.put("/updateEventData/:id", async (req, res) => {
   try {
-    const eventId=req.params.id
+    const eventId = req.params.id;
     const result = await updateEventData(
       req.body,
       req.session.user.id,
       eventId,
     );
     return res.json({ success: true });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+router.put("/cancelEvent/:id", async (req, res) => {
+  try {
+    console.log(req.session.user);
+    const eventId = req.params.id;
+    const result = await cancelEvent(eventId);
+    return res.json(result);
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ success: false, message: "Server error" });

@@ -466,9 +466,20 @@ async function handleHallUpdate(updatingHallId, currentHallId, eventId) {
   }
 }
 
+async function cancelEvent(eventId) {
+  const sql = `UPDATE events SET status = 'CANCELLED' WHERE event_id = ?`;
+  await doQuery(sql, [eventId]);
+
+  const sqlProviders = `UPDATE event_providers SET status = 'CANCELLED' WHERE event_id = ?`;
+  await doQuery(sqlProviders, [eventId]);
+
+  return { success: true };
+}
+
 module.exports = {
   getResultSearching,
   getEventData,
   getAllEventsData,
   updateEventData,
+  cancelEvent,
 };

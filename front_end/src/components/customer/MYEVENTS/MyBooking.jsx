@@ -138,6 +138,32 @@ export default function MyBooking({ user, onStatusChange }) {
     }
   }
 
+  async function handleCancel(event) {
+    // כדאי להוסיף אישור מהמשתמש
+    if (!window.confirm("Are you sure you want to cancel this event?")) return;
+
+    try {
+      const eventId = event.event_id;
+      const response = await axios.put(
+        `http://localhost:3030/customer/cancelEvent/${eventId}`,
+        {},
+        { withCredentials: true },
+      );
+
+      if (response.data.success) {
+        alert("Event Cancelled Successfully"); // הוספת גרשיים
+        fetchAllEvents(); // ריענון הרשימה כדי שהסטטוס ישתנה/ייעלם
+
+        if (onStatusChange) {
+          onStatusChange(); // עדכון הלוח שנה אם צריך
+        }
+      }
+    } catch (error) {
+      console.log("Error cancelling event:", error);
+      alert("Failed to cancel event");
+    }
+  }
+
   return (
     <div className={classes.event}>
       {" "}
@@ -153,7 +179,8 @@ export default function MyBooking({ user, onStatusChange }) {
           (e.requested_date === today && start_time > currentTime);
 
         // האם הספק יכול לאשר/לדחות?
-        const canProviderAction = rolePath === "provider" && isFuture;
+        const canProviderAction =
+          rolePath === "provider" && isFuture && e.status !== "CANCELLED";
 
         return (
           <div key={e.event_id} className={classes.eventCard}>
@@ -189,7 +216,14 @@ export default function MyBooking({ user, onStatusChange }) {
               {rolePath === "customer" && isFuture && (
                 <div className={classes.actions}>
                   <button onClick={() => update(e)}>Update</button>
-                  <button className={classes.cancelBtn}>Cancel</button>
+                  {e.finalStatus != "CANCELLED" &&
+                    <button
+                      className={classes.cancelBtn}
+                      onClick={() => handleCancel(e)}
+                    >
+                      Cancel
+                    </button>
+                  }
                 </div>
               )}
 
