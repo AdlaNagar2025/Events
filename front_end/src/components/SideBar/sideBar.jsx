@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import classes from "./sideBar.module.css";
 
 export default function SideBar({ user }) {
-  
   return (
     <>
       {user?.role === "Customer" && (
@@ -10,10 +9,10 @@ export default function SideBar({ user }) {
           <Link to="/findavendor">🔍Find a vendor</Link>
           {/* <Link to="/allApprovedServices">Vendors</Link> */}
           {/* <Link to="/bookEvent">BooK Event Team </Link> */}
-          {/* <Link to="/servicesapprovals">Services Approvals</Link> */}
           <Link to="/myBooking">My Booking</Link>
           {/* <p>My Booking</p> */}
-          <p>❤️favorite</p>
+          <Link to="/MyFavoriteProviders">❤️favorite</Link>
+
           <Link to="/account">My Account</Link>
           <p>✏️Write a review</p>
         </div>

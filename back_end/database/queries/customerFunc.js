@@ -476,10 +476,50 @@ async function cancelEvent(eventId) {
   return { success: true };
 }
 
+//FAVORITE
+
+async function addFavorite(userId, providerId) {
+  const sql = `INSERT IGNORE INTO favorites (user_id, provider_id) VALUES (?, ?)`;
+  await doQuery(sql, [userId, providerId]);
+  return { success: true };
+}
+
+async function removeFavorite(userId, providerId) {
+  const sql = `DELETE FROM favorites WHERE user_id = ? AND provider_id = ?`;
+  await doQuery(sql, [userId, providerId]);
+  return { success: true };
+}
+
+async function getAllFavorites(userId) {
+  const sql = `SELECT provider_id FROM favorites WHERE user_id = ?`;
+  const result = await doQuery(sql, [userId]);
+  return result.map((r) => r.provider_id);
+}
+async function getAllFavoritesProviders(userId) {
+  const sql = `SELECT 
+    u.id, 
+    u.first_name, 
+    u.last_name, 
+    u.email, 
+    u.role AS provider_type,
+    COALESCE(h.status, c.status) AS status
+FROM favorites f
+JOIN users u ON f.provider_id = u.id
+LEFT JOIN halls h ON u.id = h.hall_id
+LEFT JOIN chiefs c ON u.id = c.chief_id
+WHERE f.user_id = ?`;
+  const result = await doQuery(sql, [userId]);
+  return result;
+}
+
 module.exports = {
   getResultSearching,
   getEventData,
   getAllEventsData,
   updateEventData,
   cancelEvent,
+  addFavorite,
+  removeFavorite,
+  getAllFavorites,
+  getAllFavoritesProviders,
 };

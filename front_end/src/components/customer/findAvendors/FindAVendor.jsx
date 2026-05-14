@@ -8,10 +8,10 @@ import Search from "./Search";
 export default function FindAVendor({ user }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [providersFavorite, setProvidersFavorite] = useState([]);
 
-
-      const currentTime = new Date().toTimeString().slice(0, 5);
-      const today = new Date().toISOString().split("T")[0];
+  const currentTime = new Date().toTimeString().slice(0, 5);
+  const today = new Date().toISOString().split("T")[0];
 
   // --- States ---
   const [selectedHallId, setSelectedHallId] = useState(null);
@@ -30,22 +30,22 @@ export default function FindAVendor({ user }) {
   });
 
   const eventToUpdate = location.state?.Event;
+  const fetchAllServices = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:3030/customer/AllServices",
+        { withCredentials: true },
+      );
+      if (response.data.success) {
+        setProviders(response.data.data);
+      }
+    } catch (error) {
+      console.error("Fetch failed:", error.message);
+    }
+  };
 
   // --- Effect 1: טעינה ראשונית של כל הספקים ---
   useEffect(() => {
-    const fetchAllServices = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:3030/customer/AllServices",
-          { withCredentials: true },
-        );
-        if (response.data.success) {
-          setProviders(response.data.data);
-        }
-      } catch (error) {
-        console.error("Fetch failed:", error.message);
-      }
-    };
     fetchAllServices();
   }, []);
 
@@ -101,8 +101,6 @@ export default function FindAVendor({ user }) {
   };
 
   const validation = () => {
-
-
     const { requested_date, start_time, end_time, guest_number } = searchParams;
     if (!requested_date || !start_time || !end_time) {
       alert("Please fill in all date and time fields.");
@@ -160,6 +158,40 @@ export default function FindAVendor({ user }) {
     }
   };
 
+  async function fetchAllFavoriteProviders() {
+    const response = await axios.get(
+      "http://localhost:3030/customer/AllFavoritesProvidersId",
+      { withCredentials: true },
+    );
+    setProvidersFavorite(response.data.data);
+  }
+
+  useEffect(() => {
+    fetchAllFavoriteProviders();
+  }, []);
+
+  async function handleFavorite(provider) {
+    console.log("aaaa" ,provider)
+    const providerId = provider.id
+    console.log(providerId)
+    try {
+      if (providersFavorite.includes(provider.id)) {
+        await axios.delete(
+          `http://localhost:3030/customer/removeFavoriteProvider/${providerId}`,
+          { withCredentials: true },
+        );
+      } else {
+        await axios.post(
+          "http://localhost:3030/customer/addFavoriteProvider",
+          { providerId: providerId },
+          { withCredentials: true },
+        );
+      }
+      fetchAllFavoriteProviders();
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
+  }
   return (
     <div>
       <Search
@@ -194,7 +226,12 @@ export default function FindAVendor({ user }) {
                 <span>Select</span>
               </div>
             )}
-            <ServiceCard user={user} provider={p} />
+            <ServiceCard
+              user={user}
+              provider={p}
+              isFavorite={providersFavorite.includes(p.id)}
+              handleFavorite={handleFavorite}
+            />
           </div>
         ))}
       </div>

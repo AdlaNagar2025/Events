@@ -3,8 +3,15 @@ import classes from "./serviceCard.module.css"; // בואי נוסיף עיצו�
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import BusinessProfile from "../CommonComponents/BusinessProfile";
+import { MdOutlineFavoriteBorder } from "react-icons/md";
+import { MdFavorite } from "react-icons/md";
 
-export default function ServiceCard({ user, provider }) {
+export default function ServiceCard({
+  user,
+  provider,
+  isFavorite,
+  handleFavorite,
+}) {
   const [showProfile, setShowProfile] = useState(false);
   const [cardData, setCardData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,6 +67,12 @@ export default function ServiceCard({ user, provider }) {
 
       {/* הכרטיס המקורי שלך */}
       <div className={classes.card}>
+        {!isFavorite ? (
+          <MdOutlineFavoriteBorder onClick={() => handleFavorite(provider)} />
+        ) : (
+          <MdFavorite color="red" onClick={() => handleFavorite(provider)} />
+        )}
+
         <div className={classes.imageSection}>
           {cardData?.main_image ? (
             <img
@@ -93,9 +106,9 @@ export default function ServiceCard({ user, provider }) {
             >
               View Details
             </button>
+          </div>
+        </div>
       </div>
-    </div>
-    </div>
     </>
   );
 }

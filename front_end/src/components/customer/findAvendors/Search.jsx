@@ -134,14 +134,6 @@ export default function Search({
             onChange={handleInputChange}
           />
         </div>
-        {/* 
-        <button
-          onClick={handleSearch}
-          disabled={isLoading}
-          className={classes.searchBtn}
-        >
-          {isLoading ? "Searching..." : "Search"}
-        </button> */}
       </div>
     </div>
   );

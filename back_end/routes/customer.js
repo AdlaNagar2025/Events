@@ -12,6 +12,10 @@ const {
   getAllEventsData,
   updateEventData,
   cancelEvent,
+  addFavorite,
+  removeFavorite,
+  getAllFavorites,
+  getAllFavoritesProviders,
 } = require("../database/queries/customerFunc");
 const { getProviderCardData } = require("../database/queries/businessAccount");
 const router = express.Router();
@@ -136,6 +140,32 @@ router.put("/cancelEvent/:id", async (req, res) => {
     console.error("Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
+});
+
+// --- Routes ---
+
+router.get("/AllFavoritesProvidersId", async (req, res) => {
+  const providerIds = await getAllFavorites(req.session.user.id);
+  return res.json({ success: true, data: providerIds });
+});
+
+router.post("/addFavoriteProvider", async (req, res) => {
+  const providerId = req.body.providerId;
+  const result = await addFavorite(req.session.user.id, req.body.providerId);
+  return res.json(result);
+});
+
+router.delete("/removeFavoriteProvider/:providerId", async (req, res) => {
+  const result = await removeFavorite(
+    req.session.user.id,
+    req.params.providerId,
+  );
+  return res.json(result);
+});
+
+router.get("/AllFavoritesProviders", async (req, res) => {
+  const providers = await getAllFavoritesProviders(req.session.user.id);
+  return res.json({ success: true, data: providers });
 });
 
 module.exports = router;

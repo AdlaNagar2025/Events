@@ -22,6 +22,7 @@ import FindAVendor from "../components/customer/findAvendors/FindAVendor";
 import BookEvent from "../components/customer/BOOKEVENT/BookEvent";
 import MyBooking from "../components/customer/MYEVENTS/MyBooking";
 import MyEventsACalender from "../components/provider/Events/MyEventsACalender";
+import FavoriteProviders from "../components/customer/FavoriteProviders";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -92,7 +93,10 @@ function App() {
                 path="/businessAccount"
                 element={<DetailsOFbusiness user={user} />}
               />
-              <Route path="/myEventsAndCalendar"  element={<MyEventsACalender user={user}/>}/>
+              <Route
+                path="/myEventsAndCalendar"
+                element={<MyEventsACalender user={user} />}
+              />
               <Route path="/usersmanagment" element={<UsersManagment />} />
               <Route
                 path="/servicesapprovals"
@@ -101,6 +105,10 @@ function App() {
               <Route
                 path="/findavendor"
                 element={<FindAVendor user={user} />}
+              />
+              <Route
+                path="/MyFavoriteProviders"
+                element={<FavoriteProviders user={user} />}
               />
               <Route path="/bookEvent" element={<BookEvent user={user} />} />
               <Route path="/myBooking" element={<MyBooking user={user} />} />
