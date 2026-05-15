@@ -16,6 +16,7 @@ const {
   removeFavorite,
   getAllFavorites,
   getAllFavoritesProviders,
+  ReviewProvider,
 } = require("../database/queries/customerFunc");
 const { getProviderCardData } = require("../database/queries/businessAccount");
 const router = express.Router();
@@ -166,6 +167,19 @@ router.delete("/removeFavoriteProvider/:providerId", async (req, res) => {
 router.get("/AllFavoritesProviders", async (req, res) => {
   const providers = await getAllFavoritesProviders(req.session.user.id);
   return res.json({ success: true, data: providers });
+});
+
+router.post("/ReviewProvider", async (req, res) => {
+  try {
+    console.log(req.body)
+    const result = await ReviewProvider(req.body, req.session.user.id);
+    return res.json(result);
+  } catch (error) {
+    console.error("Error adding review:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to add review" });
+  }
 });
 
 module.exports = router;

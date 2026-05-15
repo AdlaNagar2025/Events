@@ -512,6 +512,19 @@ WHERE f.user_id = ?`;
   return result;
 }
 
+
+
+
+async function ReviewProvider(ReviewData, userId) {
+  const { eventId, providerId, rating, comment } = ReviewData;
+
+  const sql = `INSERT INTO reviews (event_id, user_id, provider_id, rating, comment) 
+               VALUES (?, ?, ?, ?, ?)`;
+
+  await doQuery(sql, [eventId, userId, providerId, rating, comment]);
+  return { success: true };
+}
+
 module.exports = {
   getResultSearching,
   getEventData,
@@ -522,4 +535,5 @@ module.exports = {
   removeFavorite,
   getAllFavorites,
   getAllFavoritesProviders,
+  ReviewProvider,
 };

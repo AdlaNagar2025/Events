@@ -115,9 +115,12 @@
   margin-top: 10px;
 }
 
-/* קו מפריד */
-hr {
-  border: none;
-  border-top: 1px solid #eee;
-  margin-top: 1.5rem;
+
+.eventList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+  padding: 20px;
+  background-color: #f9f9f9;
+  min-height: 100vh;
 }

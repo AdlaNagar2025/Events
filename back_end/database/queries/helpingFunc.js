@@ -22,7 +22,7 @@ async function getStatusEvent(eventId) {
   // 4. הבדיקה על ה-statusList הפשוט
   if (statusList.includes("REJECTED")) return "REJECTED";
   if (statusList.includes("PENDING")) return "PENDING";
-    if (statusList.includes("CANCELLED")) return "CANCELLED";
+  if (statusList.includes("CANCELLED")) return "CANCELLED";
 
   return statusList.length > 0 ? "APPROVED" : "PENDING";
 }
@@ -106,4 +106,12 @@ async function getTimeAvail(eventId, date, providerId) {
   }
 }
 
-module.exports = { getRole, getStatusEvent, AvailToEvent };
+async function getProviderRating(providerId) {
+  // שימוש ב-ROUND כדי לקבל ספרה אחת אחרי הנקודה (למשל 4.5)
+  const sql = `SELECT ROUND(AVG(rating), 1) as avg_rating FROM reviews WHERE provider_id = ?`;
+  const result = await doQuery(sql, [providerId]);
+
+  return result[0].avg_rating || 0;
+}
+
+module.exports = { getRole, getStatusEvent, AvailToEvent, getProviderRating };
