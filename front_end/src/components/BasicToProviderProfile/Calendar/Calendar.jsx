@@ -64,7 +64,6 @@ export default function Calendar({ role, user  }) {
       }
       setWorksHour([]);
       console.error("Error fetching calendar:", error);
-      setWorksHour([]);
     }
   };
   useEffect(() => {
@@ -130,35 +129,37 @@ export default function Calendar({ role, user  }) {
   }
 
       const fetchgetAllEventsApproved = async () => {
-        try {
-          const response = await axios.get(
-            "http://localhost:3030/provider/AllEventsApproved",
-            { withCredentials: true },
-          );
-          console.log("ApproveEvents: ", response.data.data);
-          const dataFromDB = response.data.data || [];
-          const formattedEvents = dataFromDB.map((item) => {
-            const d = new Date(item.requested_date);
-            // משתמשים בפונקציות Local שמחזירות את התאריך לפי שעון ישראל
-            // גם אם השעה היא 21:00 ב-16 לחודש UTC, בישראל זה כבר ה-17!
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, "0");
-            const day = String(d.getDate()).padStart(2, "0");
-            const localDate = `${year}-${month}-${day}`;
-            return {
-              title: "Event",
-              start: `${localDate}T${item.start_time}`,
-              end: `${localDate}T${item.end_time}`,
-              backgroundColor: "#2889a7",
-              borderColor: "#c4687f",
-              allDay: false,
-            };
-          });
-          setEvents(formattedEvents);
-        } catch (error) {
-          console.log(error);
-          setEvents([]);
-        }
+          if (role != "Chief" || role != "Hall_Owner")
+            return;
+            try {
+              const response = await axios.get(
+                "http://localhost:3030/provider/AllEventsApproved",
+                { withCredentials: true },
+              );
+              console.log("ApproveEvents: ", response.data.data);
+              const dataFromDB = response.data.data || [];
+              const formattedEvents = dataFromDB.map((item) => {
+                const d = new Date(item.requested_date);
+                // משתמשים בפונקציות Local שמחזירות את התאריך לפי שעון ישראל
+                // גם אם השעה היא 21:00 ב-16 לחודש UTC, בישראל זה כבר ה-17!
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, "0");
+                const day = String(d.getDate()).padStart(2, "0");
+                const localDate = `${year}-${month}-${day}`;
+                return {
+                  title: "Event",
+                  start: `${localDate}T${item.start_time}`,
+                  end: `${localDate}T${item.end_time}`,
+                  backgroundColor: "#2889a7",
+                  borderColor: "#c4687f",
+                  allDay: false,
+                };
+              });
+              setEvents(formattedEvents);
+            } catch (error) {
+              console.log(error);
+              setEvents([]);
+            }
       };
   useEffect(() => {
     fetchgetAllEventsApproved();

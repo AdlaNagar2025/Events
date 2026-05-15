@@ -4,24 +4,37 @@ const { getRole } = require("./helpingFunc");
 async function getAllEvents(providerId) {
   // באולם - המיון קודם לפי הסטטוס (מה שממתין ראשון) ואז לפי תאריך ושעה
   let sql = `
-    SELECT events.*, users.first_name 
-    FROM events 
-    JOIN users ON users.id = events.user_id 
-    WHERE hall_id = ? 
-    ORDER BY (events.status = "PENDING") DESC, events.requested_date ASC, events.start_time ASC`;
+    SELECT 
+    events.*, 
+    users.first_name, 
+    reviews.rating, 
+    reviews.comment
+FROM events 
+JOIN users ON users.id = events.user_id 
+LEFT JOIN reviews ON events.event_id = reviews.event_id 
+    AND reviews.provider_id = ?   
+WHERE events.hall_id = ?
+ORDER BY 
+    (events.status = "PENDING") DESC, 
+    events.requested_date ASC, 
+    events.start_time ASC;`;
 
   if ((await getRole(providerId)) === "Chief") {
     // בשף - אותו דבר, משתמשים בסטטוס מטבלת הקישור
     sql = `
-      SELECT events.event_id, events.requested_date, events.start_time, events.end_time, 
-             events.guest_number, events.notes, event_providers.status, users.first_name 
+   
+       SELECT events.event_id, events.requested_date, events.start_time, events.end_time, 
+             events.guest_number, events.notes, event_providers.status, users.first_name , reviews.rating, 
+    reviews.comment
       FROM events 
       JOIN event_providers ON event_providers.event_id = events.event_id AND provider_id = ? 
       JOIN users ON users.id = events.user_id 
+      LEFT JOIN reviews ON reviews.event_id=events.event_id
+       AND reviews.provider_id = ?  
       ORDER BY (event_providers.status = "PENDING") DESC, events.requested_date ASC, events.start_time ASC`;
   }
 
-  const result = await doQuery(sql, [providerId]);
+  const result = await doQuery(sql, [providerId, providerId]);
   return result;
 }
 

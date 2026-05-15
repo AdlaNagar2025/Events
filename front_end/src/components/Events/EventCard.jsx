@@ -1,5 +1,6 @@
 import ReviewSection from "./ReviewSection";
 import classes from "./eventCard.module.css";
+import { Rating } from "@mui/material";
 // EventCard.js
 export default function EventCard({
   event,
@@ -11,7 +12,7 @@ export default function EventCard({
 }) {
   const startTime = event.start_time.slice(0, 5);
   const endTime = event.end_time.slice(0, 5);
-  console.log(" {event.status}" ,event)
+  console.log(" {event.status}", event);
 
   const canProviderAction =
     rolePath === "provider" && isFuture && event.status !== "CANCELLED";
@@ -91,6 +92,14 @@ export default function EventCard({
       {!isFuture &&
         rolePath === "customer" &&
         event.finalStatus === "APPROVED" && <ReviewSection event={event} />}
+
+      {event.rating && (
+        <div className={classes.reviewReceived}>
+          <h4>Client Review</h4>
+          <Rating value={event.rating} readOnly />
+          <p>"{event.comment}"</p>
+        </div>
+      )}
     </div>
   );
 }

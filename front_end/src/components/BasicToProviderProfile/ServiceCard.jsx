@@ -65,7 +65,6 @@ export default function ServiceCard({
         </div>
       )}
 
-      {/* הכרטיס המקורי שלך */}
       <div className={classes.card}>
         {!isFavorite ? (
           <MdOutlineFavoriteBorder onClick={() => handleFavorite(provider)} />
@@ -88,6 +87,12 @@ export default function ServiceCard({
           <h3>
             {provider.first_name} {provider.last_name}
           </h3>
+          <div className={classes.ratingSection}>
+            <span className={classes.stars}>⭐ {cardData?.avgRating}</span>
+            <span className={classes.reviewCount}>
+              ({cardData?.totalReviews} reviews)
+            </span>
+          </div>
           <p className={classes.roleBadge}>{provider.role}</p>
 
           <div className={classes.details}>

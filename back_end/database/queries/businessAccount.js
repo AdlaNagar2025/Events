@@ -146,22 +146,55 @@ async function checkStatus(providerId, role) {
   return result[0]?.status || "NOT_STARTED";
 }
 
+// async function getProviderCardData(providerId) {
+//   const role= await getRole(providerId);
+//   const tableName = role === "Chief" ? "chiefs" : "halls";
+//   const idColumn = role === "Chief" ? "chief_id" : "hall_id";
+//   const priceColumn = role === "Chief" ? "price_per_hour" : "price";
+//   const sql = `
+//     SELECT b.*, b.${priceColumn} AS display_price, i.image_path AS main_image
+//     FROM ${tableName} b
+//     LEFT JOIN provider_images i ON b.${idColumn} = i.provider_id AND i.is_main = 1
+//     WHERE b.${idColumn} = ?`;
+
+//   const result = await doQuery(sql, [providerId]);
+//   console.log("ServiceCard of Provider", result);
+//   return result && result.length > 0 ? result[0] : null;
+// }
+
+
+// backend function
+
+
 async function getProviderCardData(providerId) {
-  const role= await getRole(providerId);
+  const role = await getRole(providerId);
   const tableName = role === "Chief" ? "chiefs" : "halls";
   const idColumn = role === "Chief" ? "chief_id" : "hall_id";
   const priceColumn = role === "Chief" ? "price_per_hour" : "price";
+
   const sql = `
-    SELECT b.*, b.${priceColumn} AS display_price, i.image_path AS main_image
+    SELECT 
+        b.*, 
+        b.${priceColumn} AS display_price, 
+        i.image_path AS main_image,
+        (SELECT AVG(rating) FROM reviews WHERE provider_id = b.${idColumn}) AS avgRating,
+        (SELECT COUNT(rating) FROM reviews WHERE provider_id = b.${idColumn}) AS totalReviews
     FROM ${tableName} b
     LEFT JOIN provider_images i ON b.${idColumn} = i.provider_id AND i.is_main = 1
     WHERE b.${idColumn} = ?`;
 
   const result = await doQuery(sql, [providerId]);
-  console.log("ServiceCard of Provider", result);
-  return result && result.length > 0 ? result[0] : null;
+  
+  if (result && result.length > 0) {
+    const data = result[0];
+    return {
+      ...data,
+      avgRating: data.avgRating ? parseFloat(data.avgRating).toFixed(1) : 0,
+      totalReviews: data.totalReviews || 0
+    };
+  }
+  return null;
 }
-
 module.exports = {
   createBusinessProfile,
   checkStatus,

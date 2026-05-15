@@ -107,8 +107,7 @@ async function getTimeAvail(eventId, date, providerId) {
 }
 
 async function getProviderRating(providerId) {
-  // שימוש ב-ROUND כדי לקבל ספרה אחת אחרי הנקודה (למשל 4.5)
-  const sql = `SELECT ROUND(AVG(rating), 1) as avg_rating FROM reviews WHERE provider_id = ?`;
+  const sql = `SELECT ROUND(AVG(rating), 1) , COUNT(rating) as avg_rating FROM reviews WHERE provider_id = ?`;
   const result = await doQuery(sql, [providerId]);
 
   return result[0].avg_rating || 0;
