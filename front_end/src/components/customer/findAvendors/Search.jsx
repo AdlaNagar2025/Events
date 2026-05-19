@@ -2,6 +2,7 @@ import React from "react";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import classes from "./findavendor.module.css";
+import CitySelect from "../../provider/CitySelect";
 
 export default function Search({
   setProviders,
@@ -102,15 +103,13 @@ export default function Search({
         </div>
 
         <div className={classes.inputGroup}>
-          <label htmlFor="city">Location:</label>
-          <input
-            id="city"
-            type="text"
-            value={searchParams.city}
-            name="city"
-            onChange={handleInputChange}
-            placeholder="Enter city..."
-          />
+            <label htmlFor="city">Location:</label>
+            <CitySelect
+              selectedCity={searchParams.city}
+              onCityChange={(val) =>
+                handleInputChange({ target: { name: "city", value: val } })
+              }
+            />
         </div>
 
         <div className={classes.inputGroup}>

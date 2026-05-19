@@ -17,7 +17,6 @@ import SideBar from "../components/SideBar/sideBar";
 import UsersManagment from "../components/admin/UsersManagment";
 import ServicesApprovals from "../components/admin/ServicesApprovals";
 import axios from "axios";
-// import CitySelect from "../components/provider/CitySelect";
 import FindAVendor from "../components/customer/findAvendors/FindAVendor";
 import BookEvent from "../components/customer/BOOKEVENT/BookEvent";
 import MyBooking from "../components/customer/MYEVENTS/MyBooking";
@@ -74,7 +73,6 @@ function App() {
 
           {/* צד ימין: התוכן המשתנה של הדפים */}
           <main className={styles.contentArea}>
-            {/* <CitySelect /> */}
             <Routes>
               <Route path="/" element={<Home />} />
               <Route

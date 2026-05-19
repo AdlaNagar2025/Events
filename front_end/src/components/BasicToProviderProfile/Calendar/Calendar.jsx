@@ -129,8 +129,7 @@ export default function Calendar({ role, user  }) {
   }
 
       const fetchgetAllEventsApproved = async () => {
-          if (role != "Chief" || role != "Hall_Owner")
-            return;
+  
             try {
               const response = await axios.get(
                 "http://localhost:3030/provider/AllEventsApproved",

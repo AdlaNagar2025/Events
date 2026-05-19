@@ -30,8 +30,7 @@ export default function SideBar({ user }) {
       {(user?.role === "Chief" || user?.role === "Hall_Owner") && (
         <div className={classes.sideBar}>
           <p>DashBoard</p>
-          <p>Calender && Bookings</p>
-          <Link to="/myEventsAndCalendar">My Booking</Link>
+          <Link to="/myEventsAndCalendar">Calender && Bookings</Link>
           <p>Clients && Reviews</p>
           <Link to="/account">My Account</Link>
           <Link to="/businessAccount">Profile Setting</Link>

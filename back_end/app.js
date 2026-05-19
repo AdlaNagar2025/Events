@@ -3,6 +3,8 @@ const cors = require("cors");
 const session = require("express-session");
 const port = process.env.PORT || 3030;
 
+const {fetchAllLocalities} = require("./database/queries/cities");
+
 const app = express();
 // 1. מאפשר גישה ממקורות שונים (מונע שגיאות CORS כשנחבר את ה-React)
 app.use(
@@ -45,6 +47,22 @@ app.use("/user", userRoutes);
 app.use("/provider", providerRoutes);
 app.use("/admin", adminRoutes);
 app.use("/customer", customerRoutes);
+
+app.get("/api/localities", async (req, res) => {
+  try {
+    const data = await fetchAllLocalities();
+    res.json({
+      success: true,
+      count: data.length,
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 
 app.listen(port, () => {
   console.log(`The app is running in ${port}`);
