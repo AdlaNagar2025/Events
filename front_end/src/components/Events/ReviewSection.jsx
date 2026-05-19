@@ -1,6 +1,7 @@
 import Review from "../customer/Review";
 import classes from "../customer/review.module.css";
 export default function ReviewSection({ event }) {
+  console.log("REVIEW SECTIONNNNN" , event)
   const providers = [
     ...(event.hall_id ? [{ id: event.hall_id, name: event.hall_name }] : []),
     ...event.chiefs.map((c) => ({ id: c.id, name: c.name })),

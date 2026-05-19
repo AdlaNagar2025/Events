@@ -522,14 +522,27 @@ WHERE f.user_id = ?`;
   return result;
 }
 
+
+
 async function ReviewProvider(ReviewData, userId) {
   const { eventId, providerId, rating, comment } = ReviewData;
-
-  const sql = `INSERT INTO reviews (event_id, user_id, provider_id, rating, comment) 
-               VALUES (?, ?, ?, ?, ?)`;
+  const sql = `
+    INSERT INTO reviews (event_id, user_id, provider_id, rating, comment) 
+    VALUES (?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE 
+      rating = VALUES(rating),
+      comment = VALUES(comment)
+  `;
 
   await doQuery(sql, [eventId, userId, providerId, rating, comment]);
+
   return { success: true };
+}
+
+async function ReviewAndComment(eventId, userId, providerId) {
+  const sql = `SELECT * FROM reviews WHERE provider_id=? AND event_id=? AND user_id=?`;
+  const result = await doQuery(sql, [providerId, eventId, userId]);
+  return result;
 }
 
 module.exports = {
@@ -544,4 +557,5 @@ module.exports = {
   getAllFavoritesProviders,
   ReviewProvider,
   disCancelEvent,
+  ReviewAndComment,
 };

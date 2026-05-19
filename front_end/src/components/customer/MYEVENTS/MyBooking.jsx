@@ -106,7 +106,7 @@ export default function MyBooking({ user, onStatusChange }) {
         { status: status, eventData: event },
         { withCredentials: true },
       );
-      console.log("RESPONSE:", response.data.data);
+      
       if (response.data.success) {
         alert("Status updated successfully!");
         // 1. רענון הרשימה המקומית ב-MyBooking
@@ -116,6 +116,8 @@ export default function MyBooking({ user, onStatusChange }) {
           onStatusChange();
         }
       }
+      else
+      {alert(response.data.message);}
     } catch (error) {
       console.log(error);
     }
@@ -153,7 +155,7 @@ export default function MyBooking({ user, onStatusChange }) {
         { withCredentials: true },
       );
       if (response.data.success) {
-        alert("Event Dis  Cancelled Successfully");
+        alert("Event Dis Cancelled Successfully");
         fetchAllEvents(); // ריענון הרשימה כדי שהסטטוס ישתנה/ייעלם
         if (onStatusChange) {
           onStatusChange(); // עדכון הלוח שנה אם צריך

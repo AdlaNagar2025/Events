@@ -3,7 +3,7 @@ const { isConnected, isCustomer, isActive } = require("../Middleware/auth");
 const {
   getProfile,
   getMainFoto,
-  getAllEventsApproved
+  getAllEventsApproved,
 } = require("../database/queries/commonFunc");
 const { getAllImages } = require("../database/queries/uploadImages");
 const { getCalandar } = require("../database/queries/calendar");
@@ -21,7 +21,8 @@ const {
   getAllFavorites,
   getAllFavoritesProviders,
   ReviewProvider,
-  disCancelEvent
+  disCancelEvent,
+  ReviewAndComment,
 } = require("../database/queries/customerFunc");
 const { getProviderCardData } = require("../database/queries/businessAccount");
 const router = express.Router();
@@ -206,6 +207,23 @@ router.get("/ProviderEvents/:id", async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/EventComments/:id", async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    const userId = req.session.user.id;
+    const providerId = req.body.providerId;
+
+    if (!providerId) {
+      return res.status(400).json({ error: "providerId is required in body" });
+    }
+    const result = await ReviewAndComment(eventId, userId, providerId);
+    return res.json(result);
+  } catch (error) {
+    console.error("Backend error fetching comments:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

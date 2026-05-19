@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import axios from "axios";
 import classes from "./review.module.css";
@@ -9,9 +9,32 @@ export default function Review({ provider, eventId }) {
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
+  useEffect(() => {
+    if (!provider?.id || !eventId) return;
+    const fetchReviewsEvent = async () => {
+      try {
+        const response = await axios.post(
+          `http://localhost:3030/customer/EventComments/${eventId}`,
+          { providerId: provider.id },
+          { withCredentials: true },
+        );
+        console.log("Fetched review data:", response.data);
 
+        if (response.data && response.data.length > 0) {
+          setRating(response.data[0].rating || 0);
+          setComment(response.data[0].comment || "");
+        }
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      }
+    };
+
+    fetchReviewsEvent();
+  }, [provider, eventId]);
+
+  const handleSubmit = async () => {
+    if (!provider?.id) return alert("Provider details missing.");
+    setIsSubmitting(true);
     try {
       const finalReviewData = {
         rating,
@@ -24,18 +47,21 @@ export default function Review({ provider, eventId }) {
         finalReviewData,
         { withCredentials: true },
       );
-      if (response.data.success) alert("Review submitted!");
+      if (response.data.success) {
+        alert("Review submitted!");
+      }
     } catch (err) {
       console.error("Review failed", err);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+
   return (
     <div className={classes.reviewBox}>
-    
       <p>
-        Rate: <strong>{provider.name }</strong>
+        Rate: <strong>{provider.name}</strong>
       </p>
       <Rating
         value={rating}
@@ -51,7 +77,6 @@ export default function Review({ provider, eventId }) {
       <button onClick={handleSubmit} disabled={isSubmitting}>
         {isSubmitting ? "Sending..." : "Submit Review"}
       </button>
-   
     </div>
   );
 }
