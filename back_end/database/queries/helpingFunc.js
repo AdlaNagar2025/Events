@@ -106,11 +106,24 @@ async function getTimeAvail(eventId, date, providerId) {
   }
 }
 
-async function getProviderRating(providerId) {
-  const sql = `SELECT ROUND(AVG(rating), 1) , COUNT(rating) as avg_rating FROM reviews WHERE provider_id = ?`;
-  const result = await doQuery(sql, [providerId]);
 
-  return result[0].avg_rating || 0;
+async function getProviderRating(providerId) {
+  const sql = `
+    SELECT 
+      ROUND(AVG(rating), 1) AS averageRating, 
+      COUNT(rating) AS reviewCount 
+    FROM reviews 
+    WHERE provider_id = ?
+  `;
+  const result = await doQuery(sql, [providerId]);
+  if (result && result.length > 0 && result[0].averageRating !== null) {
+    return {
+      averageRating: parseFloat(result[0].averageRating),
+      reviewCount: result[0].reviewCount,
+    };
+  }
+  return { averageRating: 0, reviewCount: 0 };
 }
+
 
 module.exports = { getRole, getStatusEvent, AvailToEvent, getProviderRating };

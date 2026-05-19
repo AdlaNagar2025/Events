@@ -26,7 +26,7 @@ async function createBusinessProfile({ businessData, user }) {
     if (!specialty || !city || price_per_hour <= 0 || capacity <= 0) {
       return {
         success: false,
-        message: "Please fill in all required fields for your Chef profile.",
+        message: "Please fill in all required fields for your Cheif profile.",
       };
     }
 
@@ -140,7 +140,6 @@ async function createBusinessProfile({ businessData, user }) {
 async function checkStatus(providerId, role) {
   const tableName = role === "Chief" ? "chiefs" : "halls";
   const idColumn = role === "Chief" ? "chief_id" : "hall_id";
-
   const sql = `SELECT status FROM ${tableName} WHERE ${idColumn} = ?`;
   const result = await doQuery(sql, [providerId]);
   return result[0]?.status || "NOT_STARTED";

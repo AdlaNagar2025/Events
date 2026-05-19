@@ -9,6 +9,7 @@ import axios from "axios";
 function DetailsOFbusiness({ user }) {
   const [isDisable, setIsDisable] = useState(false);
   const [currentStatus, setCurrentStatus] = useState("");
+  const [currentRating, setCurrentRating] = useState("");
   const [check, setCheck] = useState(false);
   const [error, setError] = useState("");
 
@@ -16,12 +17,13 @@ function DetailsOFbusiness({ user }) {
     const getStatus = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3030/provider/MyBusinessStatus",
+          "http://localhost:3030/provider/MyBusinessStatusAndRating",
           { withCredentials: true },
         );
         if (response.data.success) {
-          const status = response.data.status;
-          setCurrentStatus(status);
+          console.log("Data" ,response.data)
+          setCurrentStatus(response.data.status);
+          setCurrentRating(response.data.avgRating)
           if (status === "PENDING") {
             setIsDisable(true);
           }
@@ -65,6 +67,7 @@ function DetailsOFbusiness({ user }) {
         <p>
           Status: <strong>{currentStatus || "NOT SUBMITTED"}</strong>
         </p>
+        <p>{currentRating > 0 ? currentRating > 0 `⭐` :""}</p>
       </header>
 
       <section className={classes.stepCard}>

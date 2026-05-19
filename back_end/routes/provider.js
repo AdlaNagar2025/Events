@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const router = express.Router();
+const { getProviderRating } = require("../database/queries/helpingFunc");
 const { isProvider, isConnected, isActive } = require("../Middleware/auth");
 const {
   createBusinessProfile,
@@ -241,12 +242,33 @@ router.post("/mainImage", async (req, res) => {
   }
 });
 
-router.get("/MyBusinessStatus", async (req, res) => {
+// router.get("/MyBusinessStatus", async (req, res) => {
+//   try {
+//     const { id, role } = req.session.user;
+//     const status = await checkStatus(id, role);
+//     const avgRating = await getProviderRating(id);
+//     console.log(avgRating )
+//     res.json({ success: true, status: status, avgRating: avgRating });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Error checking status" });
+//   }
+// });
+router.get("/MyBusinessStatusAndRating", async (req, res) => {
   try {
     const { id, role } = req.session.user;
-    const status = await checkStatus(id, role);
-    res.json({ success: true, status: status });
+    const [status, ratingData] = await Promise.all([
+      checkStatus(id, role),
+      getProviderRating(id),
+    ]);
+    console.log("Rating Data:", ratingData); // ידפיס למשל: { averageRating: 5, reviewCount: 1 }
+    res.json({
+      success: true,
+      status: status,
+      avgRating: ratingData.averageRating, // הממוצע האמיתי (למשל: 5.0)
+      reviewCount: ratingData.reviewCount, // כמות המדרגים (למשל: 1)
+    });
   } catch (error) {
+    console.error("Error in MyBusinessStatus:", error);
     res.status(500).json({ success: false, message: "Error checking status" });
   }
 });
@@ -300,7 +322,5 @@ router.get("/AllEventsApproved", async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 });
-
-
 
 module.exports = router;
