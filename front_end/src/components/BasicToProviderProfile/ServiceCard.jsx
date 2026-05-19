@@ -88,9 +88,12 @@ export default function ServiceCard({
             {provider.first_name} {provider.last_name}
           </h3>
           <div className={classes.ratingSection}>
-            <span className={classes.stars}>⭐ {cardData?.avgRating}</span>
-            <span className={classes.reviewCount}>
-              ({cardData?.totalReviews} reviews)
+            <span className={classes.stars}>
+              {cardData?.totalReviews > 0 && (
+                <span>
+                  {cardData.avgRating} ⭐ ({cardData.totalReviews} reviews)
+                </span>
+              )}
             </span>
           </div>
           <p className={classes.roleBadge}>{provider.role}</p>

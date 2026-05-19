@@ -19,7 +19,8 @@ async function getProfile(id) {
     sql = `SELECT chiefs.* , users.first_name , users.last_name FROM chiefs JOIN users ON chiefs.chief_id=users.id WHERE chief_id = ?`;
     result = await doQuery(sql, [id]);
     console.log(result[0].start_year);
-    result[0].experience_years =new Date().getFullYear()- result[0].start_year ;
+    result[0].experience_years =
+      new Date().getFullYear() - result[0].start_year;
   } else if (role === "Hall_Owner") {
     sql = `SELECT * FROM halls WHERE hall_id = ?`;
     result = await doQuery(sql, [id]);
@@ -31,7 +32,8 @@ async function getMainFoto(id) {
   const sql = `SELECT * FROM provider_images WHERE is_main=1 AND provider_id=?;`;
   const result = await doQuery(sql, [id]);
 
-  return result;6
+  return result;
+  6;
 }
 
 /**
@@ -54,4 +56,28 @@ async function updateBusinessStatus(type, id, newStatus) {
   }
 }
 
-module.exports = { updateBusinessStatus, getProfile, getMainFoto };
+async function getAllEventsApproved(providerId) {
+  const role = await getRole(providerId);
+  let sql = `SELECT requested_date, start_time, end_time 
+      FROM events 
+    WHERE
+       event_id IN (
+          SELECT event_id FROM event_providers 
+          WHERE provider_id = ? AND status = 'APPROVED'
+      ) 
+      ORDER BY requested_date , start_time ASC`;
+
+  if (role === "Hall_Owner")
+    sql = `SELECT requested_date, start_time, end_time 
+      FROM events 
+          WHERE hall_id = ? AND status = 'APPROVED'
+      ORDER BY requested_date, start_time ASC`;
+  const result = await doQuery(sql, [providerId]);
+  return result;
+}
+module.exports = {
+  updateBusinessStatus,
+  getProfile,
+  getMainFoto,
+  getAllEventsApproved
+};

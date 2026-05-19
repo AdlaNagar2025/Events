@@ -13,7 +13,11 @@ const {
   deactivateUser,
   getAllServicesAccordingToStatus,
 } = require("../database/queries/adminFunc");
-const {getProfile , updateBusinessStatus} =require("../database/queries/commonFunc");
+const {
+  getProfile,
+  updateBusinessStatus,
+  getAllEventsApproved,
+} = require("../database/queries/commonFunc");
 const { getAllImages } = require("../database/queries/uploadImages");
 const { getCalandar } = require("../database/queries/calendar");
 
@@ -201,6 +205,18 @@ router.get("/ProviderCalendar/:id", async (req, res) => {
   } catch (error) {
     console.error("Error fetching images:", error);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
+router.get("/ProviderEvents/:id", async (req, res) => {
+  try {
+    const providerId = req.params.id;
+    const result = await getAllEventsApproved(providerId);
+    return res.json({ data: result });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 

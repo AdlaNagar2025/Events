@@ -1,6 +1,10 @@
 const express = require("express");
 const { isConnected, isCustomer, isActive } = require("../Middleware/auth");
-const { getProfile, getMainFoto } = require("../database/queries/commonFunc");
+const {
+  getProfile,
+  getMainFoto,
+  getAllEventsApproved
+} = require("../database/queries/commonFunc");
 const { getAllImages } = require("../database/queries/uploadImages");
 const { getCalandar } = require("../database/queries/calendar");
 const {
@@ -171,7 +175,7 @@ router.get("/AllFavoritesProviders", async (req, res) => {
 
 router.post("/ReviewProvider", async (req, res) => {
   try {
-    console.log(req.body)
+    console.log(req.body);
     const result = await ReviewProvider(req.body, req.session.user.id);
     return res.json(result);
   } catch (error) {
@@ -179,6 +183,17 @@ router.post("/ReviewProvider", async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Failed to add review" });
+  }
+});
+
+router.get("/ProviderEvents/:id", async (req, res) => {
+  try {
+    const providerId = req.params.id;
+    const result = await getAllEventsApproved(providerId);
+    return res.json({ data: result });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 
