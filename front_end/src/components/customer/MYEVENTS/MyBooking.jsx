@@ -123,7 +123,6 @@ export default function MyBooking({ user, onStatusChange }) {
 
   async function handleCancel(event) {
     if (!window.confirm("Are you sure you want to cancel this event?")) return;
-
     try {
       const eventId = event.event_id;
       const response = await axios.put(
@@ -131,11 +130,31 @@ export default function MyBooking({ user, onStatusChange }) {
         {},
         { withCredentials: true },
       );
-
       if (response.data.success) {
         alert("Event Cancelled Successfully");
         fetchAllEvents(); // ריענון הרשימה כדי שהסטטוס ישתנה/ייעלם
+        if (onStatusChange) {
+          onStatusChange(); // עדכון הלוח שנה אם צריך
+        }
+      }
+    } catch (error) {
+      console.log("Error cancelling event:", error);
+      alert("Failed to cancel event");
+    }
+  }
 
+  async function handleDisCancel(event) {
+    if (!window.confirm("Are you sure you want to cancel this event?")) return;
+    try {
+      const eventId = event.event_id;
+      const response = await axios.put(
+        `http://localhost:3030/customer/disCancelEvent/${eventId}`,
+        {},
+        { withCredentials: true },
+      );
+      if (response.data.success) {
+        alert("Event Dis  Cancelled Successfully");
+        fetchAllEvents(); // ריענון הרשימה כדי שהסטטוס ישתנה/ייעלם
         if (onStatusChange) {
           onStatusChange(); // עדכון הלוח שנה אם צריך
         }
@@ -164,8 +183,9 @@ export default function MyBooking({ user, onStatusChange }) {
           key={e.event_id}
           event={e}
           rolePath={rolePath}
-          isFuture={checkIfFuture(e)} // פונקציה חיצונית
+          isFuture={checkIfFuture(e)}
           onCancel={handleCancel}
+          onDisCancel={handleDisCancel}
           onUpdate={update}
           onChangeStatus={handlechangeStatus}
         />

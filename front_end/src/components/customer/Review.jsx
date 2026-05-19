@@ -33,8 +33,9 @@ export default function Review({ provider, eventId }) {
   };
   return (
     <div className={classes.reviewBox}>
+    
       <p>
-        Rate: <strong>{provider.hall_name || provider.chief_name}</strong>
+        Rate: <strong>{provider.name }</strong>
       </p>
       <Rating
         value={rating}

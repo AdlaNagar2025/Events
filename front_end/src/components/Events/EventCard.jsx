@@ -8,6 +8,7 @@ export default function EventCard({
   isFuture,
   onUpdate,
   onCancel,
+  onDisCancel,
   onChangeStatus, // שם ה-Prop שקיבלת מ-MyBooking
 }) {
   const startTime = event.start_time.slice(0, 5);
@@ -58,6 +59,14 @@ export default function EventCard({
                 onClick={() => onCancel(event)}
               >
                 Cancel
+              </button>
+            )}
+            {event.finalStatus === "CANCELLED" && (
+              <button
+                className={classes.rejectBtn}
+                onClick={() => onDisCancel(event)}
+              >
+                DisCancel
               </button>
             )}
           </>

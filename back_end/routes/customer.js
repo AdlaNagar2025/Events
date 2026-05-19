@@ -21,6 +21,7 @@ const {
   getAllFavorites,
   getAllFavoritesProviders,
   ReviewProvider,
+  disCancelEvent
 } = require("../database/queries/customerFunc");
 const { getProviderCardData } = require("../database/queries/businessAccount");
 const router = express.Router();
@@ -140,6 +141,17 @@ router.put("/cancelEvent/:id", async (req, res) => {
     console.log(req.session.user);
     const eventId = req.params.id;
     const result = await cancelEvent(eventId);
+    return res.json(result);
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+router.put("/disCancelEvent/:id", async (req, res) => {
+  try {
+    console.log(req.session.user);
+    const eventId = req.params.id;
+    const result = await disCancelEvent(eventId);
     return res.json(result);
   } catch (error) {
     console.error("Error:", error);

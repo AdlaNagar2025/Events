@@ -476,6 +476,16 @@ async function cancelEvent(eventId) {
   return { success: true };
 }
 
+async function disCancelEvent(eventId) {
+  const sql = `UPDATE events SET status = 'PENDING' WHERE event_id = ?`;
+  await doQuery(sql, [eventId]);
+
+  const sqlProviders = `UPDATE event_providers SET status = 'PENDING' WHERE event_id = ?`;
+  await doQuery(sqlProviders, [eventId]);
+
+  return { success: true };
+}
+
 //FAVORITE
 
 async function addFavorite(userId, providerId) {
@@ -512,9 +522,6 @@ WHERE f.user_id = ?`;
   return result;
 }
 
-
-
-
 async function ReviewProvider(ReviewData, userId) {
   const { eventId, providerId, rating, comment } = ReviewData;
 
@@ -524,11 +531,6 @@ async function ReviewProvider(ReviewData, userId) {
   await doQuery(sql, [eventId, userId, providerId, rating, comment]);
   return { success: true };
 }
-
-
-
-
-
 
 module.exports = {
   getResultSearching,
@@ -541,4 +543,5 @@ module.exports = {
   getAllFavorites,
   getAllFavoritesProviders,
   ReviewProvider,
+  disCancelEvent,
 };
