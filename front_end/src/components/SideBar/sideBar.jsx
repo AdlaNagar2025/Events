@@ -14,7 +14,7 @@ export default function SideBar({ user }) {
           <Link to="/MyFavoriteProviders">❤️favorite</Link>
 
           <Link to="/account">My Account</Link>
-          <p>✏️Write a review</p>
+          <Link to="/Notifications">Notifications</Link>
         </div>
       )}
       {user?.role === "Admin" && (
@@ -23,6 +23,7 @@ export default function SideBar({ user }) {
           <Link to="/usersmanagment">Users Managment</Link>
           <Link to="/servicesapprovals">Services Approvals</Link>
           <Link to="/account">My Account</Link>
+          <Link to="/Notifications">Notifications</Link>
           <p>Content Moderation</p>
         </div>
       )}
@@ -34,6 +35,7 @@ export default function SideBar({ user }) {
           <p>Clients && Reviews</p>
           <Link to="/account">My Account</Link>
           <Link to="/businessAccount">Profile Setting</Link>
+          <Link to="/Notifications">Notifications</Link>
         </div>
       )}
     </>

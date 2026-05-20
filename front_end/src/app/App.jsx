@@ -22,6 +22,7 @@ import BookEvent from "../components/customer/BOOKEVENT/BookEvent";
 import MyBooking from "../components/customer/MYEVENTS/MyBooking";
 import MyEventsACalender from "../components/provider/Events/MyEventsACalender";
 import FavoriteProviders from "../components/customer/FavoriteProviders";
+import Notification from "../components/Notifications/Notification";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -110,6 +111,11 @@ function App() {
               />
               <Route path="/bookEvent" element={<BookEvent user={user} />} />
               <Route path="/myBooking" element={<MyBooking user={user} />} />
+
+              <Route
+                path="/Notifications"
+                element={<Notification user={user} />}
+              />
 
               <Route path="*" element={<h2>Page Not Found 404</h2>} />
             </Routes>

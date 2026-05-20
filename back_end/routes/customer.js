@@ -11,6 +11,11 @@ const {
   getAllServicesAccordingToStatus,
 } = require("../database/queries/adminFunc");
 const {
+  getAllNotification,
+  updateReadToNotification,
+  createNotification,
+} = require("../database/queries/notifications");
+const {
   getResultSearching,
   getEventData,
   getAllEventsData,
@@ -226,5 +231,29 @@ router.post("/EventComments/:id", async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
+router.get("/MyNotifications" , async(req,res)=>{
+  try{
+    const result=await getAllNotification(req.session.user.id)
+    return res.json({data:result})
+  }
+  catch(error)
+  {
+    console.log(error)
+  }
+
+})
+
+router.put("/updateNotification/:id", async (req, res) => {
+  try {
+    const notificationId=req.params.id
+    const result =await updateReadToNotification(req.session.user.id , notificationId);
+    return res.json({ data: result });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+
 
 module.exports = router;

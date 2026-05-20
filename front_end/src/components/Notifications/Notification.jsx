@@ -1,45 +1,69 @@
-// import { useState } from "react";
-// import axios from "axios";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
-// function NotificationForm() {
-//   const [email, setEmail] = useState("");
-//   const [phone, setPhone] = useState("");
-//   const [message, setMessage] = useState("");
+export default function Notification({ user }) {
+  const [messages, setMessages] = useState([]);
 
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     try {
-//       const response = await axios.post(
-//         "http://localhost:3030/api/send-notification",
-//         {
-//           email,
-//           phone,
-//           message,
-//         },
-//       );
-//       alert(response.data.message);
-//     } catch (error) {
-//       alert("נכשל בשליחה");
-//     }
-//   };
+  // 1. פונקציה קטנה שמחזירה את שם הראוט המתאים לפי התפקיד של המשתמש
+  const getRoleEndpoint = () => {
+    const currentRole = user?.role;
+    if (currentRole === "Chief" || currentRole === "Hall_Owner") {
+      return "provider";
+    }
+    return currentRole ? currentRole.toLowerCase() : "";
+  };
 
-//   return (
-//     <form onSubmit={handleSubmit}>
-//       <input
-//         type="email"
-//         placeholder="אימייל"
-//         onChange={(e) => setEmail(e.target.value)}
-//       />
-//       <input
-//         type="tel"
-//         placeholder="טלפון (למשל 97250...)"
-//         onChange={(e) => setPhone(e.target.value)}
-//       />
-//       <textarea
-//         placeholder="תוכן ההודעה"
-//         onChange={(e) => setMessage(e.target.value)}
-//       />
-//       <button type="submit">שלח הודעות</button>
-//     </form>
-//   );
-// }
+  const endpointRole = getRoleEndpoint();
+
+  const fetchAllNotifications = async () => {
+    if (!endpointRole) return; 
+
+    try {
+      const response = await axios.get(
+        `http://localhost:3030/${endpointRole}/MyNotifications`,
+        { withCredentials: true },
+      );
+      setMessages(response.data.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleChangeNotification = async (notificationId) => {
+    if (!endpointRole) return;
+
+    try {
+      await axios.put(
+        `http://localhost:3030/${endpointRole}/updateNotification/${notificationId}`,
+        {},
+        { withCredentials: true },
+      );
+      fetchAllNotifications(); 
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllNotifications();
+  }, [user]); 
+
+  return (
+    <div>
+      {messages.map((msg) => (
+        <p
+          key={msg.notification_id} // תיקון: תואם לשם השדה ב-SQL
+          className={msg.isRead === 0 ? "Red" : "Green"} // תיקון: הוספת גרשיים
+          onMouseEnter={() => handleChangeNotification(msg.notification_id)} // תיקון: תואם לשם השדה ב-SQL
+          style={{
+            cursor: "pointer",
+            padding: "5px",
+            borderBottom: "1px solid #ccc",
+          }} 
+        >
+          {msg.message}
+        </p>
+      ))}
+    </div>
+  );
+}

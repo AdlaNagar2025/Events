@@ -27,6 +27,11 @@ const {
   changeStatusEvent,
   getAllEventsApproved,
 } = require("../database/queries/providersFunc");
+const {
+  getAllNotification,
+  updateReadToNotification,
+  createNotification,
+} = require("../database/queries/notifications");
 
 /**
  * הגנה גלובלית על כל נתיבי ה-Provider:
@@ -322,5 +327,28 @@ router.get("/AllEventsApproved", async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 });
+
+router.get("/MyNotifications" , async(req,res)=>{
+  try{
+    const result= await getAllNotification(req.session.user.id)
+    return res.json({data:result})
+  }
+  catch(error)
+  {
+    console.log(error)
+  }
+
+})
+
+router.put("/updateNotification/:id", async (req, res) => {
+  try {
+    const notificationId=req.params.id
+    const result =await updateReadToNotification(req.session.user.id , notificationId);
+    return res.json({ data: result });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 
 module.exports = router;

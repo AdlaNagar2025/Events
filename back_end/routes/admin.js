@@ -21,6 +21,11 @@ const {
 const { getAllImages } = require("../database/queries/uploadImages");
 const { getCalandar } = require("../database/queries/calendar");
 
+const {
+  getAllNotification,
+  updateReadToNotification,
+  createNotification,
+} = require("../database/queries/notifications");
 
 const router = express.Router();
 
@@ -184,7 +189,6 @@ router.get("/Profile/:id", async (req, res) => {
   }
 });
 
-
 router.get("/ProviderImages/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -195,7 +199,6 @@ router.get("/ProviderImages/:id", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
 
 router.get("/ProviderCalendar/:id", async (req, res) => {
   try {
@@ -208,7 +211,6 @@ router.get("/ProviderCalendar/:id", async (req, res) => {
   }
 });
 
-
 router.get("/ProviderEvents/:id", async (req, res) => {
   try {
     const providerId = req.params.id;
@@ -220,6 +222,27 @@ router.get("/ProviderEvents/:id", async (req, res) => {
   }
 });
 
+router.get("/MyNotifications", async (req, res) => {
+  try {
+    const result = await getAllNotification(req.session.user.id);
+    return res.json({ data: result });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.put("/updateNotification/:id", async (req, res) => {
+  try {
+    const notificationId = req.params.id;
+    const result = await updateReadToNotification(
+      req.session.user.id,
+      notificationId,
+    );
+    return res.json({ data: result });
+  } catch (error) {
+    console.log(error);
+  }
+});
 
 
 module.exports = router;
