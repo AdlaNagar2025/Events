@@ -21,9 +21,9 @@ function DetailsOFbusiness({ user }) {
           { withCredentials: true },
         );
         if (response.data.success) {
-          console.log("Data" ,response.data)
+          console.log("Data", response.data);
           setCurrentStatus(response.data.status);
-          setCurrentRating(response.data.avgRating)
+          setCurrentRating(response.data.avgRating);
           if (status === "PENDING") {
             setIsDisable(true);
           }
@@ -67,7 +67,7 @@ function DetailsOFbusiness({ user }) {
         <p>
           Status: <strong>{currentStatus || "NOT SUBMITTED"}</strong>
         </p>
-        <p>{currentRating > 0 ? currentRating > 0 `⭐` :""}</p>
+        <p>{currentRating > 0 ? currentRating > 0`⭐` : ""}</p>
       </header>
 
       <section className={classes.stepCard}>

@@ -12,7 +12,6 @@ const initialChief = {
   description: "",
   capacity: "",
   city: "",
-  street: "",
 };
 
 const initialHall = {
@@ -39,7 +38,7 @@ const CHIEF_FIELDS = [
     type: "number",
     required: true,
   },
-  { label: "Start Year", name: "start_year", type: "number", required: false },
+  { label: "Start Year", name: "start_year", type: "number", required: true },
   { label: "Max Capacity", name: "capacity", type: "number", required: true },
   {
     label: "Phone",
@@ -49,7 +48,6 @@ const CHIEF_FIELDS = [
     extraProps: { pattern: "^05\\d{8}$" },
   },
   { label: "City", name: "city", required: true },
-  { label: "Street", name: "street", required: false },
 ];
 
 const HALL_FIELDS = [
@@ -68,7 +66,7 @@ const HALL_FIELDS = [
   { label: "Street", name: "street", required: false },
 ];
 
-export default function BusinessAccount({ user, isDisable }) {
+export default function BusinessAccount({ user, isDisable  }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [chiefData, setChiefData] = useState(initialChief);
   const [hallData, setHallData] = useState(initialHall);
@@ -113,8 +111,8 @@ export default function BusinessAccount({ user, isDisable }) {
     if (user?.id) {
       fetchProfile();
     }
-  }, [user?.id]); 
-  
+  }, [user?.id]);
+
   const submitProfile = async (e) => {
     e.preventDefault();
     if (data.description.length < 20) {

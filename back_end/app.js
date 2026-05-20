@@ -2,8 +2,13 @@ const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
 const port = process.env.PORT || 3030;
+// הפעלת מנגנון התזכורות האוטומטיות
+require("./database/queries/cronScheduler"); 
 
-const {fetchAllLocalities} = require("./database/queries/cities");
+const { sendEmail } = require("./database/queries/mail");
+const { sendSMS } = require("./database/queries/sms");
+
+const { fetchAllLocalities } = require("./database/queries/cities");
 
 const app = express();
 // 1. מאפשר גישה ממקורות שונים (מונע שגיאות CORS כשנחבר את ה-React)
@@ -61,6 +66,23 @@ app.get("/api/localities", async (req, res) => {
       success: false,
       message: error.message,
     });
+  }
+});
+
+// Express Route Example
+app.post("/api/send-notification", async (req, res) => {
+  const { email, phone, message } = req.body;
+
+  try {
+    // שליחת מייל
+    if (email) await sendEmail(email, "הודעה חדשה מהאתר", message);
+
+    // שליחת SMS
+    if (phone) await sendSMS(phone, message);
+
+    res.status(200).json({ message: "ההודעות נשלחו בהצלחה!" });
+  } catch (error) {
+    res.status(500).json({ error: "שגיאה בשליחת ההודעות" });
   }
 });
 
