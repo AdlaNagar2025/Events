@@ -3,10 +3,10 @@ const cors = require("cors");
 const session = require("express-session");
 const port = process.env.PORT || 3030;
 // הפעלת מנגנון התזכורות האוטומטיות
-require("./database/queries/cronScheduler"); 
+require("./database/queries/cronScheduler");
 
 const { sendEmail } = require("./database/queries/mail");
-const { sendSMS } = require("./database/queries/sms");
+// const { sendSMS } = require("./database/queries/sms");
 
 const { fetchAllLocalities } = require("./database/queries/cities");
 

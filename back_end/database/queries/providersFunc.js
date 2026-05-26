@@ -1,5 +1,6 @@
 const doQuery = require("../query");
 const { getRole } = require("./helpingFunc");
+const { createNotification } = require("./notifications");
 
 async function getAllEvents(providerId) {
   // באולם - המיון קודם לפי הסטטוס (מה שממתין ראשון) ואז לפי תאריך ושעה
@@ -39,6 +40,8 @@ ORDER BY
 }
 
 async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
+  console.log(eventData);
+  let providersName = "";
   const role = await getRole(providerId);
   let checkSql = "";
   let checkParams = [];
@@ -62,6 +65,12 @@ async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
       eventData.end_time, // סוף האירוע החדש
       eventData.start_time, // תחילת האירוע החדש
     ];
+
+    const eventChief = await doQuery(
+      `SELECT first_name  FROM users WHERE id=  ?`,
+      [providerId],
+    );
+    providersName = eventChief[0]?.first_name;
   } else {
     // לוגיקה לבעל אולם
     checkSql = `
@@ -79,6 +88,12 @@ async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
       eventData.end_time,
       eventData.start_time,
     ];
+
+    const eventhall = await doQuery(
+      `SELECT hall_name  FROM halls WHERE hall_id=  ?`,
+      [providerId],
+    );
+    providersName = eventhall[0]?.hall_name;
   }
 
   // 2. בדיקה האם קיים אירוע חופף
@@ -94,7 +109,21 @@ async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
       updateSql = `UPDATE events SET status=? WHERE hall_id=? AND event_id=?`;
     }
 
+    // 1. עדכון הסטטוס באותו אופן
     await doQuery(updateSql, [newStatus, providerId, eventId]);
+
+    // 2. שליפת ה-user_id האמיתי של הלקוח מהאירוע הזה
+    const eventOwner = await doQuery(
+      `SELECT user_id FROM events WHERE event_id = ?`,
+      [eventId],
+    );
+    const customerId = eventOwner[0]?.user_id;
+
+    // 3. יצירת ההתראה עם ה-ID האמיתי
+    await createNotification({
+      message: `Event was ${newStatus} by ${providersName}`,
+      userId: customerId,
+    });
     return { success: true };
   }
 

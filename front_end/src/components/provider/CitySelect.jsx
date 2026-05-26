@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import Select from "react-select"; // ייבוא של הרכיב החדש
 
 export default function CitySelect({ onCityChange, selectedCity }) {
   const [cities, setCities] = useState([]);
@@ -11,8 +12,9 @@ export default function CitySelect({ onCityChange, selectedCity }) {
         const response = await axios.get(
           "http://localhost:3030/api/localities",
         );
-        // response.data.data הוא עכשיו מערך של אובייקטים: [{value, label, region, nameEn}, ...]
-        setCities(response.data.data);
+        if (response.data.success) {
+          setCities(response.data.data);
+        }
       } catch (error) {
         console.error("Error fetching cities:", error);
       } finally {
@@ -24,66 +26,26 @@ export default function CitySelect({ onCityChange, selectedCity }) {
 
   if (loading) return <p>Loading cities...</p>;
 
+  const handleSelectChange = (selectedOption) => {
+    // selectedOption מכיל את האובייקט המלא של העיר שנבחרה
+    const cityName = selectedOption ? selectedOption.value : "";
+    const regionName = selectedOption ? selectedOption.region : "";
+
+    onCityChange(cityName, regionName);
+  };
+
+  // בשביל react-select, הערך הנבחר הנוכחי חייב להיות אובייקט של { value, label }
+  const currentInputValue =
+    cities.find((c) => c.value === selectedCity) || null;
+
   return (
-    <select
-      // וודאי שיש עיצוב שמתאים לשאר הקלט
-      value={selectedCity || ""}
-      onChange={(e) => onCityChange(e.target.value)}
-      required
-    >
-      <option value="">Select City</option>
-      {cities.map((city, index) => (
-        <option key={index} value={city.nameEn}>
-          {city.nameEn} {/* מוצג בעברית, נשמר ב-DB מה שמופיע ב-value */}
-        </option>
-      ))}
-    </select>
+    <Select
+      options={cities} // הוא מקבל את המערך שלך כי כבר בנית אותו בפורמט הנכון של value ו-label!
+      value={currentInputValue}
+      onChange={handleSelectChange}
+      placeholder="Search and select city..."
+      isClearable={true} // מאפשר לנקות את הבחירה בלחיצת X
+      isSearchable={true} // מאפשר להקליד אותיות ולחפש!
+    />
   );
 }
-
-// // הוספנו כאן את ה-Props בתוך סוגריים מסולסלים
-// export default function CitySelect({ onCityChange, selectedCity }) {
-//   const [cities, setCities] = useState([]);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     const fetchCities = async () => {
-//       try {
-//         const response = await axios.get(
-//           "http://localhost:3030/api/localities",
-//         );
-
-//         // מוודאים שאנחנו לוקחים רק את שמות הערים ומנקים כפילויות/ריקים
-//         const cityNames = response.data.data
-//           .map((item) => item.nameEn)
-//           .filter((name) => name && name.trim() !== "")
-//           .sort((a, b) => a.localeCompare("en"));
-
-//         setCities(cityNames);
-//       } catch (error) {
-//         console.error("Error fetching cities:", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchCities();
-//   }, []);
-
-//   if (loading) return <p>טוען רשימת ערים...</p>;
-
-//   return (
-//     <select
-//       name="city"
-//       value={selectedCity || ""} // משתמש ב-Prop שקיבלנו
-//       onChange={(e) => onCityChange(e.target.value)} // משתמש ב-Prop שקיבלנו
-//       required
-//     >
-//       <option value="">בחר עיר</option>
-//       {cities.map((city, index) => (
-//         <option key={index} value={city}>
-//           {city}
-//         </option>
-//       ))}
-//     </select>
-//   );
-// }

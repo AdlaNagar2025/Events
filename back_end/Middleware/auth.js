@@ -74,6 +74,8 @@ function isActive(req, res, next) {
 
 
 
+
+
 /**
  * Middleware שבודק אם הספק מאושר (status = 'approved')
  * הבדיקה מתבצעת מול טבלת chiefs או halls בהתאם לתפקיד המשתמש
@@ -107,4 +109,4 @@ async function isApproved(req, res, next) {
 
 
 
-module.exports = { isProvider, isConnected, isAdmin, isActive, isApproved , isCustomer };
+module.exports = { isProvider, isConnected, isAdmin, isActive, isApproved , isCustomer  };

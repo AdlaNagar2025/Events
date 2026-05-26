@@ -5,7 +5,12 @@ const path = require("path");
 
 const router = express.Router();
 const { getProviderRating } = require("../database/queries/helpingFunc");
-const { isProvider, isConnected, isActive } = require("../Middleware/auth");
+const {
+  isProvider,
+  isConnected,
+  isActive,
+  isApproved,
+} = require("../Middleware/auth");
 const {
   createBusinessProfile,
   checkStatus,
@@ -40,6 +45,7 @@ const {
 router.use(isConnected); // שלב 1: האם הוא בכלל מחובר?
 router.use(isActive); // שלב 2: האם החשבון שלו פעיל?
 router.use(isProvider); // שלב 3: האם הוא ספק (Chief/Hall_Owner)?
+// router.use(isApproved);
 /**
  *
  *
@@ -49,6 +55,7 @@ router.use(isProvider); // שלב 3: האם הוא ספק (Chief/Hall_Owner)?
  * @access  Private (Provider only)
  */
 router.post("/businessAccount", async (req, res) => {
+  console.log("Data received from frontend:", req.body);
   try {
     const result = await createBusinessProfile({
       businessData: req.body,
@@ -328,27 +335,26 @@ router.get("/AllEventsApproved", async (req, res) => {
   }
 });
 
-router.get("/MyNotifications" , async(req,res)=>{
-  try{
-    const result= await getAllNotification(req.session.user.id)
-    return res.json({data:result})
-  }
-  catch(error)
-  {
-    console.log(error)
-  }
-
-})
-
-router.put("/updateNotification/:id", async (req, res) => {
+router.get("/MyNotifications", async (req, res) => {
   try {
-    const notificationId=req.params.id
-    const result =await updateReadToNotification(req.session.user.id , notificationId);
+    const result = await getAllNotification(req.session.user.id);
     return res.json({ data: result });
   } catch (error) {
     console.log(error);
   }
 });
 
+router.put("/updateNotification/:id", async (req, res) => {
+  try {
+    const notificationId = req.params.id;
+    const result = await updateReadToNotification(
+      req.session.user.id,
+      notificationId,
+    );
+    return res.json({ data: result });
+  } catch (error) {
+    console.log(error);
+  }
+});
 
 module.exports = router;

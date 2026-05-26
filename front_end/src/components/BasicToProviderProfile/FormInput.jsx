@@ -12,18 +12,25 @@ const FormInput = ({
   placeholder,
   extraProps = {},
 }) => {
-  if (name === "city") {
-    return (
-      <div className={classes.fieldGroup}>
-        <label className={classes.label}>{label}</label>
-        <CitySelect
-          selectedCity={value}
-          onCityChange={(val) => onChange({ target: { name, value: val } })}
-
-        />
-      </div>
-    );
-  }
+if (name === "city") {
+  return (
+    <div className={classes.fieldGroup}>
+      <label className={classes.label}>{label}</label>
+      <CitySelect
+        selectedCity={value}
+        onCityChange={(val, reg) => {
+          // שולחים אירוע מדומה אחד עם שם מיוחד שמכיל גם עיר וגם מחוז
+          onChange({
+            target: {
+              name: "city_and_region",
+              value: { city: val, region: reg },
+            },
+          });
+        }}
+      />
+    </div>
+  );
+}
   return (
     <div className={classes.fieldGroup}>
       <label className={classes.label}>{label}</label>

@@ -1,5 +1,6 @@
 const doQuery = require("../query");
 const { getRole } = require("../queries/helpingFunc");
+const { createNotification } = require("./notifications");
 
 /**
  * שליפת פרופיל עסקי מלא לפי מזהה משתמש.
@@ -47,13 +48,17 @@ async function updateBusinessStatus(type, id, newStatus) {
   if (!allowedTypes.includes(type)) {
     throw new Error("Invalid table name");
   }
+  let sql = "";
   if (type === "chiefs") {
-    const sql = `UPDATE chiefs SET status = ?  WHERE chief_id = ?`;
-    return await doQuery(sql, [newStatus, id]);
+    sql = `UPDATE chiefs SET status = ?  WHERE chief_id = ?`;
   } else {
-    const sql = `UPDATE halls SET status = ? WHERE hall_id = ?`;
-    return await doQuery(sql, [newStatus, id]);
+    sql = `UPDATE halls SET status = ? WHERE hall_id = ?`;
   }
+  await createNotification({
+    message: `Admin was ${newStatus} the Profile`,
+    userId: id,
+  });
+  return await doQuery(sql, [newStatus, id]);
 }
 
 async function getAllEventsApproved(providerId) {
@@ -79,5 +84,5 @@ module.exports = {
   updateBusinessStatus,
   getProfile,
   getMainFoto,
-  getAllEventsApproved
+  getAllEventsApproved,
 };

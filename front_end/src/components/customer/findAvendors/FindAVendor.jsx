@@ -171,9 +171,9 @@ export default function FindAVendor({ user }) {
   }, []);
 
   async function handleFavorite(provider) {
-    console.log("aaaa" ,provider)
-    const providerId = provider.id
-    console.log(providerId)
+    console.log("aaaa", provider);
+    const providerId = provider.id;
+    console.log(providerId);
     try {
       if (providersFavorite.includes(provider.id)) {
         await axios.delete(

@@ -12,6 +12,7 @@ const initialChief = {
   description: "",
   capacity: "",
   city: "",
+  region: "",
 };
 
 const initialHall = {
@@ -23,6 +24,7 @@ const initialHall = {
   capacity: "",
   email: "",
   description: "",
+  region: "",
 };
 
 const CHIEF_FIELDS = [
@@ -66,7 +68,7 @@ const HALL_FIELDS = [
   { label: "Street", name: "street", required: false },
 ];
 
-export default function BusinessAccount({ user, isDisable  }) {
+export default function BusinessAccount({ user, isDisable }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [chiefData, setChiefData] = useState(initialChief);
   const [hallData, setHallData] = useState(initialHall);
@@ -79,8 +81,28 @@ export default function BusinessAccount({ user, isDisable  }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (isChief) setChiefData((prev) => ({ ...prev, [name]: value }));
-    else setHallData((prev) => ({ ...prev, [name]: value }));
+    if (name === "city_and_region") {
+      if (isChief) {
+        setChiefData((prev) => ({
+          ...prev,
+          city: value.city,
+          region: value.region,
+        }));
+      } else {
+        setHallData((prev) => ({
+          ...prev,
+          city: value.city,
+          region: value.region,
+        }));
+      }
+    } else {
+      // ג. שאר השדות הרגילים ממשיכים לעבוד כרגיל
+      if (isChief) {
+        setChiefData((prev) => ({ ...prev, [name]: value }));
+      } else {
+        setHallData((prev) => ({ ...prev, [name]: value }));
+      }
+    }
   };
 
   const fetchProfile = async () => {

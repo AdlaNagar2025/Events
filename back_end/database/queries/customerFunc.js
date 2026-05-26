@@ -42,26 +42,33 @@ function validateDataToSearch(dataToSearch) {
 }
 
 async function getPotentialProviders(dataToSearch) {
+  const cityFilter = dataToSearch.city ? "AND c.city = ?" : "";
+  const priceFilter = dataToSearch.price ? "AND c.price <= ?" : "";
   const sql = `
         SELECT DISTINCT a.provider_id
         FROM availability a
         JOIN (
-            SELECT capacity, chief_id AS id FROM chiefs
+            SELECT capacity, chief_id  AS id , city , price_per_hour AS price FROM chiefs
             UNION 
-            SELECT capacity, hall_id AS id FROM halls
+            SELECT capacity, hall_id AS id , city , price FROM halls
         ) AS c ON a.provider_id = c.id
         WHERE a.available_date = ?
           AND a.start_time <= ?
           AND a.end_time >= ?
-          AND c.capacity >= ?`;
+          AND c.capacity >= ?
+          ${cityFilter}
+          ${priceFilter}`;
 
-  const providers = await doQuery(sql, [
+  const queryParams = [
     dataToSearch.requested_date,
     dataToSearch.start_time,
     dataToSearch.end_time,
     dataToSearch.guest_number,
-  ]);
+  ];
 
+  if (dataToSearch.city) queryParams.push(dataToSearch.city);
+  if (dataToSearch.price) queryParams.push(dataToSearch.price);
+  const providers = await doQuery(sql, queryParams);
   return providers.map((p) => p.provider_id);
 }
 
@@ -123,7 +130,7 @@ async function getEventData(Data, customerId) {
     dataToEvent.start_time,
     dataToEvent.end_time,
     dataToEvent.notes || " ",
-    dataToEvent.guest_number, // ודאי שזה לא capacity
+    dataToEvent.guest_number,
   ];
   const result = await doQuery(sql, values);
 
@@ -521,8 +528,6 @@ WHERE f.user_id = ?`;
   const result = await doQuery(sql, [userId]);
   return result;
 }
-
-
 
 async function ReviewProvider(ReviewData, userId) {
   const { eventId, providerId, rating, comment } = ReviewData;
