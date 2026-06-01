@@ -8,33 +8,81 @@ const { createNotification } = require("./notifications");
  * @param {number} id - מזהה המשתמש
  */
 
+// async function getProfile(id) {
+//   const role = await getRole(id);
+
+//   let sql;
+//   let result;
+
+//   if (role === "Chief") {
+//     sql = `SELECT chiefs.* , users.first_name , users.last_name FROM chiefs JOIN users ON chiefs.chief_id=users.id WHERE chief_id = ?`;
+//     result = await doQuery(sql, [id]);
+//     result[0].experience_years =
+//       new Date().getFullYear() - result[0].start_year;
+//   } 
+//   else if (role === "Hall_Owner") {
+//     sql = `SELECT * FROM halls WHERE hall_id = ?`;
+//     result = await doQuery(sql, [id]);
+//   }
+
+//   return result && result.length > 0 ? result[0] : null;
+// }
 async function getProfile(id) {
   const role = await getRole(id);
-
-  console.log("The role is: " + role);
-
   let sql;
   let result;
 
   if (role === "Chief") {
-    sql = `SELECT chiefs.* , users.first_name , users.last_name FROM chiefs JOIN users ON chiefs.chief_id=users.id WHERE chief_id = ?`;
+    sql = `SELECT chiefs.*, users.first_name, users.last_name, users.role 
+           FROM users 
+           LEFT JOIN chiefs ON chiefs.chief_id = users.id 
+           WHERE users.id = ?`;
     result = await doQuery(sql, [id]);
-    console.log(result[0].start_year);
-    result[0].experience_years =
-      new Date().getFullYear() - result[0].start_year;
+
+    if (result && result.length > 0 && result[0].chief_id !== null) {
+      result[0].experience_years =
+        new Date().getFullYear() - result[0].start_year;
+    }
   } else if (role === "Hall_Owner") {
-    sql = `SELECT * FROM halls WHERE hall_id = ?`;
+    sql = `SELECT halls.*, users.first_name, users.last_name, users.role 
+           FROM users 
+           LEFT JOIN halls ON halls.hall_id = users.id 
+           WHERE users.id = ?`;
     result = await doQuery(sql, [id]);
   }
 
-  return result && result.length > 0 ? result[0] : null;
+  // מחזירים את התוצאה, ואם היא ריקה מחזירים אובייקט ריק מסומן
+  if (result && result.length > 0) {
+    // אם השדות של הפרופיל הראשי ריקים (LEFT JOIN החזיר NULL), זה אומר שזה משתמש חדש
+    const isNewProfile =
+      role === "Chief" ? !result[0].chief_id : !result[0].hall_id;
+
+    if (isNewProfile) {
+      return {
+        isNew: true,
+        role: result[0].role,
+        first_name: result[0].first_name,
+        last_name: result[0].last_name,
+      };
+    }
+
+    return result[0];
+  }
+
+  return null;
 }
+
+
+
+
+
+
 async function getMainFoto(id) {
   const sql = `SELECT * FROM provider_images WHERE is_main=1 AND provider_id=?;`;
   const result = await doQuery(sql, [id]);
 
   return result;
-  6;
+  
 }
 
 /**

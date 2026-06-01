@@ -285,26 +285,9 @@ async function checkStatus(providerId, role) {
   const idColumn = role === "Chief" ? "chief_id" : "hall_id";
   const sql = `SELECT status FROM ${tableName} WHERE ${idColumn} = ?`;
   const result = await doQuery(sql, [providerId]);
-  return result[0]?.status || "NOT_STARTED";
+  return result[0]?.status || "DRAFT";
 }
 
-// async function getProviderCardData(providerId) {
-//   const role= await getRole(providerId);
-//   const tableName = role === "Chief" ? "chiefs" : "halls";
-//   const idColumn = role === "Chief" ? "chief_id" : "hall_id";
-//   const priceColumn = role === "Chief" ? "price_per_hour" : "price";
-//   const sql = `
-//     SELECT b.*, b.${priceColumn} AS display_price, i.image_path AS main_image
-//     FROM ${tableName} b
-//     LEFT JOIN provider_images i ON b.${idColumn} = i.provider_id AND i.is_main = 1
-//     WHERE b.${idColumn} = ?`;
-
-//   const result = await doQuery(sql, [providerId]);
-//   console.log("ServiceCard of Provider", result);
-//   return result && result.length > 0 ? result[0] : null;
-// }
-
-// backend function
 
 async function getProviderCardData(providerId) {
   const role = await getRole(providerId);

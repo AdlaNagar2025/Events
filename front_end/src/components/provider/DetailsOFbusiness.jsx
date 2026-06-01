@@ -10,7 +10,8 @@ function DetailsOFbusiness({ user }) {
   const [isDisable, setIsDisable] = useState(false);
   const [currentStatus, setCurrentStatus] = useState("");
   const [currentRating, setCurrentRating] = useState("");
-  const [check, setCheck] = useState(false);
+  const [check, setCheck] = useState(false); // בדיקת תמונות
+  const [isProfileFilled, setIsProfileFilled] = useState(false); // ✨ בדיקת מילוי שדות העסק
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -21,31 +22,42 @@ function DetailsOFbusiness({ user }) {
           { withCredentials: true },
         );
         if (response.data.success) {
-          console.log("Data", response.data);
-          setCurrentStatus(response.data.status);
+          const statusFromServer = response.data.status;
+          setCurrentStatus(statusFromServer);
           setCurrentRating(response.data.avgRating);
-          if (status === "PENDING") {
+
+          if (statusFromServer === "PENDING") {
             setIsDisable(true);
           }
         }
       } catch (error) {
-        console.error("Failed to fetch status");
+        console.error("Failed to fetch status", error);
       }
     };
     getStatus();
   }, []);
 
-  console.log(user);
   async function handleStatusChange() {
     try {
+      // 1. בדיקה ראשונה: האם מולאו שדות החובה של פרופיל העסק ונשמרו?
+      if (!isProfileFilled) {
+        setError(
+          "You must fill out and save your business profile details before submitting.",
+        );
+        return;
+      }
+
+      // 2. בדיקה שנייה: האם הועלתה לפחות תמונה אחת?
       if (!check) {
         setError("You must upload at least one image before submitting.");
         return;
       }
+
       setError("");
       const tableName = user?.role === "Chief" ? "chiefs" : "halls";
       const id = user?.id;
       const newStatus = "PENDING";
+
       const response = await axios.post(
         "http://localhost:3030/provider/approve-business",
         { type: tableName, id, newStatus },
@@ -53,11 +65,13 @@ function DetailsOFbusiness({ user }) {
       );
 
       alert(response.data.message);
+      setCurrentStatus("PENDING");
       setIsDisable(true);
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("Error updating status:", error);
     }
   }
+
   return (
     <div
       className={`${classes.mainContainer} ${isDisable ? classes.disabledArea : ""}`}
@@ -65,14 +79,27 @@ function DetailsOFbusiness({ user }) {
       <header className={classes.header}>
         <h1>Business Setup</h1>
         <p>
-          Status: <strong>{currentStatus || "NOT SUBMITTED"}</strong>
+          Status:{" "}
+          <strong className={classes[currentStatus]}>{currentStatus}</strong>
         </p>
-        <p>{currentRating > 0 ? currentRating > 0`⭐` : ""}</p>
+        {currentRating > 0 && <p>{currentRating} ⭐</p>}
       </header>
+
+      {currentStatus === "PENDING" && (
+        <div className={classes.infoMessage}>
+          ℹ️ Your profile is currently under review by our admin team. Changes
+          are disabled during this time.
+        </div>
+      )}
 
       <section className={classes.stepCard}>
         <div className={classes.stepNumber}>1</div>
-        <BusinessAccount user={user} isDisable={isDisable} />
+        {/* ✨ מעבירים את ה-Setter כדי ש-BusinessAccount יעדכן אותו */}
+        <BusinessAccount
+          user={user}
+          isDisable={isDisable}
+          setIsProfileFilled={setIsProfileFilled}
+        />
       </section>
 
       <div className={classes.divider} />
@@ -88,17 +115,25 @@ function DetailsOFbusiness({ user }) {
       </section>
 
       <div className={classes.divider} />
+
       <section className={classes.stepCard}>
         <div className={classes.stepNumber}>3</div>
         <Calendar role={user?.role} user={user} isDisable={isDisable} />
       </section>
+
       <button
         onClick={handleStatusChange}
         disabled={isDisable}
         className={classes.submitBtn}
       >
-        {isDisable ? "Waiting for Approval..." : "Submit To Admin"}
+        {currentStatus === "PENDING" && "⏳ Waiting for Approval..."}
+        {currentStatus === "APPROVED" && "✅ Profile Approved"}
+        {(currentStatus === "DRAFT" ||
+          currentStatus === "DENY" ||
+          !currentStatus) &&
+          "Submit To Admin"}
       </button>
+
       {error && (
         <div className={classes.errorMessage}>
           <span>{error}</span>
@@ -110,4 +145,5 @@ function DetailsOFbusiness({ user }) {
     </div>
   );
 }
+
 export default DetailsOFbusiness;

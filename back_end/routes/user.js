@@ -29,12 +29,6 @@ router.post("/login", async (req, res) => {
     if (!result.success) {
       return res.json(result);
     }
-    if (result.user.is_active === 0) {
-      return res.status(403).json({
-        success: false,
-        message: "Your account is disabled. Please contact the administrator.",
-      });
-    }
     req.session.user = result.user;
     return res.json(result);
   } catch (error) {

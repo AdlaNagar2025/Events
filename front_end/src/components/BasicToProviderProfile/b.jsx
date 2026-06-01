@@ -68,11 +68,7 @@ const HALL_FIELDS = [
   { label: "Street", name: "street", required: false },
 ];
 
-export default function BusinessAccount({
-  user,
-  isDisable,
-  setIsProfileFilled,
-}) {
+export default function BusinessAccount({ user, isDisable }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [chiefData, setChiefData] = useState(initialChief);
   const [hallData, setHallData] = useState(initialHall);
@@ -80,8 +76,9 @@ export default function BusinessAccount({
   const isChief = user?.role === "Chief";
   const data = isChief ? chiefData : hallData;
   const relevantFields = isChief ? CHIEF_FIELDS : HALL_FIELDS;
+  if (!user || !user.role)
+    return <div className={classes.loader}>Loading User...</div>;
 
-  // ✨ החזרת פונקציית handleChange שנמחקה בטעות
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "city_and_region") {
@@ -99,19 +96,13 @@ export default function BusinessAccount({
         }));
       }
     } else {
+      // ג. שאר השדות הרגילים ממשיכים לעבוד כרגיל
       if (isChief) {
         setChiefData((prev) => ({ ...prev, [name]: value }));
       } else {
         setHallData((prev) => ({ ...prev, [name]: value }));
       }
     }
-  };
-
-  const checkIsProfileComplete = (profileData) => {
-    if (!profileData) return false;
-    return isChief
-      ? !!profileData.specialty && !!profileData.city
-      : !!profileData.hall_name && !!profileData.city;
   };
 
   const fetchProfile = async () => {
@@ -122,16 +113,13 @@ export default function BusinessAccount({
       );
 
       if (response.data.success && response.data.data) {
-        const profileData = response.data.data;
         if (isChief) {
-          setChiefData(profileData);
+          setChiefData(response.data.data);
         } else {
-          setHallData(profileData);
+          setHallData(response.data.data);
         }
-        setIsProfileFilled(checkIsProfileComplete(profileData));
       } else {
         console.log("No existing profile found, starting fresh.");
-        setIsProfileFilled(false);
       }
     } catch (error) {
       console.error("Failed to fetch profile:", error.message);
@@ -165,7 +153,6 @@ export default function BusinessAccount({
         "Please enter valid positive values for price and capacity.",
       );
     }
-
     setIsSubmitting(true);
     const loadingId = toast.loading("Saving your business profile...");
     try {
@@ -178,7 +165,6 @@ export default function BusinessAccount({
         toast.success(response.data.message || "Saved successfully! ✨", {
           id: loadingId,
         });
-        setIsProfileFilled(true);
         fetchProfile();
       } else {
         toast.error(response.data.message || "Failed to save details.", {
@@ -194,9 +180,7 @@ export default function BusinessAccount({
       setIsSubmitting(false);
     }
   };
-
-  if (!user || !user.role)
-    return <div className={classes.loader}>Loading User...</div>;
+  if (!user) return <div className={classes.loader}>Loading...</div>;
 
   const hasExistingData = isChief
     ? !!chiefData.specialty

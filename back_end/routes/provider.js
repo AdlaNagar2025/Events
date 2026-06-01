@@ -153,20 +153,28 @@ router.post("/fillCalendar", async (req, res) => {
   }
 });
 
+
+
 router.get("/Profile/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const result = await getProfile(id);
-    if (!result)
-      return res.status(404).json({ success: false, msg: "Profile not found" });
+
+    if (!result) {
+      return res.status(404).json({ success: false, msg: "User not found" });
+    }
+
     return res.json({ success: true, data: result });
   } catch (error) {
     console.error("Get Profile Error:", error);
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
-// routes/provider.js
 
+
+
+
+// routes/provider.js
 router.get("/getMyCalendar", async (req, res) => {
   try {
     const providerId = req.session.user.id;
@@ -268,6 +276,7 @@ router.post("/mainImage", async (req, res) => {
 router.get("/MyBusinessStatusAndRating", async (req, res) => {
   try {
     const { id, role } = req.session.user;
+    console.log(req.session.user);
     const [status, ratingData] = await Promise.all([
       checkStatus(id, role),
       getProviderRating(id),
