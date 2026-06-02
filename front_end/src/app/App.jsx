@@ -118,7 +118,9 @@ function App() {
               />
               <Route
                 path="/myCommentsAndReviews"
-                element={<CommentsAndReviews />}
+                element={
+                  <CommentsAndReviews role={user?.role} user={user?.id} />
+                }
               />
               <Route path="*" element={<h2>Page Not Found 404</h2>} />
             </Routes>

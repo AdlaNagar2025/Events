@@ -2,16 +2,21 @@ import React from "react";
 import axios from "axios";
 import { useState, useEffect } from "react";
 
-export default function ClientsAndReviews() {
+export default function CommentsAndReviews({ role, user }) {
   const [data, setData] = useState([
     { reviews: "", comments: "", Date: "", ClientName: "" },
   ]);
   const [reviewsList, setReviewsList] = useState([]);
 
+
   const fetchAllComments = async () => {
     try {
+      let url="http://localhost:3030/provider/allCommentsAndReviews"
+      if(role==="Customer")
+        url = `http://localhost:3030/customer/allCommentsAndReviews/${user?.id}`;
       const response = await axios.get(
-        "http://localhost:3030/provider/allCommentsAndReviews",
+        url
+        ,
         { withCredentials: true },
       );
 

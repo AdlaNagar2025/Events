@@ -4,6 +4,7 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import ImageUpload from "../BasicToProviderProfile/ImagesCode/ImageUpload";
 import Calendar from "../BasicToProviderProfile/Calendar/Calendar";
+import CommentsAndReviews from "../provider/CommentsAndReviews";
 
 export default function BusinessProfile({ user, provider }) {
   const [data, setData] = useState(null);
@@ -83,6 +84,10 @@ export default function BusinessProfile({ user, provider }) {
 
       <section className={classes.calendarSection}>
         <Calendar role={user?.role} user={provider} />
+      </section>
+
+      <section className={classes.calendarSection}>
+        <CommentsAndReviews role={user?.role} user={provider} />
       </section>
     </div>
   );
