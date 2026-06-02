@@ -28,6 +28,7 @@ export default function Search({
       return () => clearTimeout(delayDebounceFn);
     }
   }, [searchParams]);
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setIsSearch(false);

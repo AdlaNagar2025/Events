@@ -121,18 +121,19 @@ function DetailsOFbusiness({ user }) {
         <Calendar role={user?.role} user={user} isDisable={isDisable} />
       </section>
 
-      <button
-        onClick={handleStatusChange}
-        disabled={isDisable}
-        className={classes.submitBtn}
-      >
-        {currentStatus === "PENDING" && "⏳ Waiting for Approval..."}
-        {currentStatus === "APPROVED" && "✅ Profile Approved"}
-        {(currentStatus === "DRAFT" ||
-          currentStatus === "DENY" ||
-          !currentStatus) &&
-          "Submit To Admin"}
-      </button>
+      {currentStatus !== "APPROVED" && (
+        <button
+          onClick={handleStatusChange}
+          disabled={isDisable}
+          className={classes.submitBtn}
+        >
+          {currentStatus === "PENDING" && "⏳ Waiting for Approval..."}
+          {(currentStatus === "DRAFT" ||
+            currentStatus === "DENY" ||
+            !currentStatus) &&
+            "Submit To Admin"}
+        </button>
+      )}
 
       {error && (
         <div className={classes.errorMessage}>

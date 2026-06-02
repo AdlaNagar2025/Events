@@ -117,11 +117,46 @@ async function getResultSearching(dataToSearch) {
   }
 }
 
+// async function getEventData(Data, customerId) {
+//   const { dataToEvent, hallId, selectedChiefsId } = Data;
+//   console.log(dataToEvent);
+//   const sql = `INSERT INTO events (user_id,hall_id,requested_date,start_time,end_time,notes,guest_number) VALUES
+// (?,?,?,?,?,?,?)`;
+
+//   let values = [
+//     customerId,
+//     hallId || null,
+//     dataToEvent.requested_date,
+//     dataToEvent.start_time,
+//     dataToEvent.end_time,
+//     dataToEvent.guest_number,
+//   ];
+//   const result = await doQuery(sql, values);
+
+//   const sql1 = `INSERT INTO event_providers (event_id , provider_id ) VALUES
+// (?,?)`;
+//   if (selectedChiefsId && selectedChiefsId.length > 0) {
+//     for (const pId of selectedChiefsId) {
+//       await doQuery(sql1, [result.insertId, pId]);
+//     }
+//   }
+
+//   return { success: true }; // תיקון איות
+// }
+
 async function getEventData(Data, customerId) {
-  const { dataToEvent, hallId, selectedChiefsId } = Data;
-  console.log(dataToEvent);
-  const sql = `INSERT INTO events (user_id,hall_id,requested_date,start_time,end_time,notes,guest_number) VALUES
-(?,?,?,?,?,?,?)`;
+  const {
+    dataToEvent,
+    hallId,
+    selectedChiefsId,
+    location,
+    notesToHall,
+    noteToChef,
+  } = Data;
+
+  // 2. עדכון שאילתת ה-events: החלפת notes ב-notesToHall
+  const sql = `INSERT INTO events (user_id, hall_id, requested_date, start_time, end_time, notesToHall, guest_number) 
+               VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
   let values = [
     customerId,
@@ -129,21 +164,70 @@ async function getEventData(Data, customerId) {
     dataToEvent.requested_date,
     dataToEvent.start_time,
     dataToEvent.end_time,
-    dataToEvent.notes || " ",
+    notesToHall || "",
     dataToEvent.guest_number,
   ];
-  const result = await doQuery(sql, values);
 
-  const sql1 = `INSERT INTO event_providers (event_id , provider_id ) VALUES
-(?,?)`;
+  const result = await doQuery(sql, values);
+  const newEventId = result.insertId;
+
+  const sql1 = `INSERT INTO event_providers (event_id, provider_id, noteToChef, location) 
+                VALUES (?, ?, ?, ?)`;
+
   if (selectedChiefsId && selectedChiefsId.length > 0) {
     for (const pId of selectedChiefsId) {
-      await doQuery(sql1, [result.insertId, pId]);
+      // שליפת ההערה הספציפית שנכתבה לשף הנוכחי בלולאה מתוך אובייקט ה-noteToChef
+      const specificChefNote =
+        noteToChef && noteToChef[pId] ? noteToChef[pId] : "";
+
+      await doQuery(sql1, [
+        newEventId,
+        pId,
+        specificChefNote, // ההערה הייחודית של השף הזה
+        location || null, // המיקום הפיזי (נשמר רק אם אין אולם)
+      ]);
     }
   }
 
-  return { success: true }; // תיקון איות
+  return { success: true };
 }
+
+
+// async function getAllEventsData(customerId) {
+//   const sql = `SELECT 
+//     e.event_id, 
+//     e.requested_date,
+//     e.start_time,
+//     e.end_time,
+//     e.guest_number,
+//     e.status AS hall_status,
+//     e.hall_id,
+//     h.hall_name,
+//     h.price AS hall_price,
+//     u.first_name AS chief_name,
+//     ep.provider_id AS chief_id,
+//     ep.status AS chief_status,
+//     c.price_per_hour
+//   FROM events e
+//   LEFT JOIN halls h ON e.hall_id = h.hall_id
+//   LEFT JOIN event_providers ep ON e.event_id = ep.event_id
+//   LEFT JOIN chiefs c ON ep.provider_id = c.chief_id
+//   LEFT JOIN users u ON c.chief_id = u.id
+//   WHERE e.user_id = ?
+//   ORDER BY e.requested_date , e.start_time ASC`;
+//   const result = await doQuery(sql, [customerId]);
+//   const fresult = []; // מערך חדש וריק
+
+//   for (const row of result) {
+//     const finalStatus = await getStatusEvent(row.event_id);
+//     row.finalStatus = finalStatus;
+//     fresult.push(row); // מוסיפים למערך רק אחרי שה-await הסתיים
+//   }
+
+//   console.log(fresult);
+//   return fresult;
+// }
+
 
 async function getAllEventsData(customerId) {
   const sql = `SELECT 
@@ -152,6 +236,7 @@ async function getAllEventsData(customerId) {
     e.start_time,
     e.end_time,
     e.guest_number,
+    e.notesToHall,            -- שליפת ההערות של האולם
     e.status AS hall_status,
     e.hall_id,
     h.hall_name,
@@ -159,6 +244,8 @@ async function getAllEventsData(customerId) {
     u.first_name AS chief_name,
     ep.provider_id AS chief_id,
     ep.status AS chief_status,
+    ep.noteToChef,            -- שליפת ההערה הספציפית של השף הזה
+    ep.location AS chef_event_location, -- שליפת מיקום האירוע עבור השף
     c.price_per_hour
   FROM events e
   LEFT JOIN halls h ON e.hall_id = h.hall_id
@@ -166,14 +253,15 @@ async function getAllEventsData(customerId) {
   LEFT JOIN chiefs c ON ep.provider_id = c.chief_id
   LEFT JOIN users u ON c.chief_id = u.id
   WHERE e.user_id = ?
-  ORDER BY e.requested_date , e.start_time ASC`;
+  ORDER BY e.requested_date ASC, e.start_time ASC`;
+
   const result = await doQuery(sql, [customerId]);
-  const fresult = []; // מערך חדש וריק
+  const fresult = [];
 
   for (const row of result) {
     const finalStatus = await getStatusEvent(row.event_id);
     row.finalStatus = finalStatus;
-    fresult.push(row); // מוסיפים למערך רק אחרי שה-await הסתיים
+    fresult.push(row);
   }
 
   console.log(fresult);
