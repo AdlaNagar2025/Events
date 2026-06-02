@@ -35,7 +35,7 @@ export default function SideBar({ user }) {
           <div className={classes.sideBar}>
             <p>DashBoard</p>
             <Link to="/myEventsAndCalendar">Calender && Bookings</Link>
-            <p>Clients && Reviews</p>
+            <Link to="/myCommentsAndReviews">Clients && Reviews</Link>
             <Link to="/account">My Account</Link>
             <Link to="/businessAccount">Profile Setting</Link>
             <Link to="/Notifications">Notifications</Link>

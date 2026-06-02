@@ -39,6 +39,289 @@ ORDER BY
   return result;
 }
 
+// async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
+//   console.log(eventData);
+//   let providersName = "";
+//   const role = await getRole(providerId);
+//   let checkSql = "";
+//   let checkParams = [];
+
+//   // 1. הגדרת שאילתת הבדיקה לפי תפקיד
+//   if (role === "Chief") {
+//     checkSql = `
+//       SELECT * FROM events e
+//       JOIN event_providers ep ON e.event_id = ep.event_id
+//       WHERE e.requested_date = ?
+//         AND ep.provider_id = ?
+//         AND ep.status = 'APPROVED'
+//         AND e.event_id != ?        -- חשוב: אל תמצא את האירוע הנוכחי שאתה מנסה לאשר
+//         AND e.start_time < ?       -- eventData.end_time
+//         AND e.end_time > ?         -- eventData.start_time
+//     `;
+//     checkParams = [
+//       eventData.requested_date,
+//       providerId,
+//       eventId,
+//       eventData.end_time, // סוף האירוע החדש
+//       eventData.start_time, // תחילת האירוע החדש
+//     ];
+
+//     const eventChief = await doQuery(
+//       `SELECT first_name  FROM users WHERE id=  ?`,
+//       [providerId],
+//     );
+//     providersName = eventChief[0]?.first_name;
+//   } else {
+//     // לוגיקה לבעל אולם
+//     checkSql = `
+//       SELECT * FROM events
+//       WHERE requested_date = ?
+//         AND hall_id = ?
+//         AND status = 'APPROVED'
+//         AND event_id != ?
+//         AND start_time < ?
+//         AND end_time > ?`;
+//     checkParams = [
+//       eventData.requested_date,
+//       providerId,
+//       eventId,
+//       eventData.end_time,
+//       eventData.start_time,
+//     ];
+
+//     const eventhall = await doQuery(
+//       `SELECT hall_name  FROM halls WHERE hall_id=  ?`,
+//       [providerId],
+//     );
+//     providersName = eventhall[0]?.hall_name;
+//   }
+
+//   // 2. בדיקה האם קיים אירוע חופף
+//   const overlaps = await doQuery(checkSql, checkParams);
+//   console.log("Overlapping events found:", overlaps.length);
+
+//   if (overlaps.length === 0 || newStatus === "REJECTED") {
+//     // 3. עדכון הסטטוס
+//     let updateSql = "";
+//     if (role === "Chief") {
+//       updateSql = `UPDATE event_providers SET status=? WHERE provider_id=? AND event_id=?`;
+//     } else {
+//       updateSql = `UPDATE events SET status=? WHERE hall_id=? AND event_id=?`;
+//     }
+
+//     // 1. עדכון הסטטוס באותו אופן
+//     await doQuery(updateSql, [newStatus, providerId, eventId]);
+
+//     // 2. שליפת ה-user_id האמיתי של הלקוח מהאירוע הזה
+//     const eventOwner = await doQuery(
+//       `SELECT user_id FROM events WHERE event_id = ?`,
+//       [eventId],
+//     );
+//     const customerId = eventOwner[0]?.user_id;
+
+//     async function changeStatusEvent(
+//       providerId,
+//       eventId,
+//       newStatus,
+//       eventData,
+//     ) {
+//       console.log(eventData);
+//       let providersName = "";
+//       const role = await getRole(providerId);
+//       let checkSql = "";
+//       let checkParams = [];
+
+//       // 1. הגדרת שאילתת הבדיקה לפי תפקיד
+//       if (role === "Chief") {
+//         checkSql = `
+//       SELECT * FROM events e
+//       JOIN event_providers ep ON e.event_id = ep.event_id
+//       WHERE e.requested_date = ?
+//         AND ep.provider_id = ?
+//         AND ep.status = 'APPROVED'
+//         AND e.event_id != ?        -- חשוב: אל תמצא את האירוע הנוכחי שאתה מנסה לאשר
+//         AND e.start_time < ?       -- eventData.end_time
+//         AND e.end_time > ?         -- eventData.start_time
+//     `;
+//         checkParams = [
+//           eventData.requested_date,
+//           providerId,
+//           eventId,
+//           eventData.end_time, // סוף האירוע החדש
+//           eventData.start_time, // תחילת האירוע החדש
+//         ];
+
+//         const eventChief = await doQuery(
+//           `SELECT first_name  FROM users WHERE id=  ?`,
+//           [providerId],
+//         );
+//         providersName = eventChief[0]?.first_name;
+//       } else {
+//         // לוגיקה לבעל אולם
+//         checkSql = `
+//       SELECT * FROM events
+//       WHERE requested_date = ?
+//         AND hall_id = ?
+//         AND status = 'APPROVED'
+//         AND event_id != ?
+//         AND start_time < ?
+//         AND end_time > ?`;
+//         checkParams = [
+//           eventData.requested_date,
+//           providerId,
+//           eventId,
+//           eventData.end_time,
+//           eventData.start_time,
+//         ];
+
+//         const eventhall = await doQuery(
+//           `SELECT hall_name  FROM halls WHERE hall_id=  ?`,
+//           [providerId],
+//         );
+//         providersName = eventhall[0]?.hall_name;
+//       }
+
+//       // 2. בדיקה האם קיים אירוע חופף
+//       const overlaps = await doQuery(checkSql, checkParams);
+//       console.log("Overlapping events found:", overlaps.length);
+
+//       if (overlaps.length === 0 || newStatus === "REJECTED") {
+//         // 3. עדכון הסטטוס
+//         let updateSql = "";
+//         if (role === "Chief") {
+//           updateSql = `UPDATE event_providers SET status=? WHERE provider_id=? AND event_id=?`;
+//         } else {
+//           updateSql = `UPDATE events SET status=? WHERE hall_id=? AND event_id=?`;
+//         }
+
+//         // 1. עדכון הסטטוס באותו אופן
+//         await doQuery(updateSql, [newStatus, providerId, eventId]);
+
+//         // 2. שליפת ה-user_id האמיתי של הלקוח מהאירוע הזה
+//         const eventOwner = await doQuery(
+//           `SELECT user_id FROM events WHERE event_id = ?`,
+//           [eventId],
+//         );
+//         const customerId = eventOwner[0]?.user_id;
+
+//         // 3. יצירת ההתראה עם ה-ID האמיתי
+//         await createNotification({
+//           message: `Event was ${newStatus} by ${providersName}`,
+//           userId: customerId,
+//         });
+//         return { success: true };
+//       }
+
+//       return {
+//         success: false,
+//         message: "Provider is already booked for this time range.",
+//       };
+//     }
+
+//     // 3. יצירת ההתראה עם ה-ID האמיתי
+//     await createNotification({
+//       message: `Event was ${newStatus} by ${providersName}`,
+//       userId: customerId,
+//     });
+//     return { success: true };
+//   }
+
+//   return {
+//     success: false,
+//     message: "Provider is already booked for this time range.",
+//   };
+// }
+
+// async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
+//   console.log(eventData);
+//   let providersName = "";
+//   const role = await getRole(providerId);
+//   let checkSql = "";
+//   let checkParams = []; // 1. הגדרת שאילתת הבדיקה לפי תפקיד
+
+//   if (role === "Chief") {
+//     checkSql = `
+//       SELECT * FROM events e
+//       JOIN event_providers ep ON e.event_id = ep.event_id
+//       WHERE e.requested_date = ?
+//         AND ep.provider_id = ?
+//         AND ep.status = 'APPROVED'
+//         AND e.event_id != ?        -- חשוב: אל תמצא את האירוע הנוכחי שאתה מנסה לאשר
+//         AND e.start_time < ?       -- eventData.end_time
+//         AND e.end_time > ?         -- eventData.start_time
+//     `;
+//     checkParams = [
+//       eventData.requested_date,
+//       providerId,
+//       eventId,
+//       eventData.end_time, // סוף האירוע החדש
+//       eventData.start_time, // תחילת האירוע החדש
+//     ];
+
+//     const eventChief = await doQuery(
+//       `SELECT first_name  FROM users WHERE id=  ?`,
+//       [providerId],
+//     );
+//     providersName = eventChief[0]?.first_name;
+//   } else {
+//     // לוגיקה לבעל אולם
+//     checkSql = `
+//       SELECT * FROM events 
+//       WHERE requested_date = ? 
+//         AND hall_id = ? 
+//         AND status = 'APPROVED' 
+//         AND event_id != ?
+//         AND start_time < ? 
+//         AND end_time > ?`;
+//     checkParams = [
+//       eventData.requested_date,
+//       providerId,
+//       eventId,
+//       eventData.end_time,
+//       eventData.start_time,
+//     ];
+
+//     const eventhall = await doQuery(
+//       `SELECT hall_name  FROM halls WHERE hall_id=  ?`,
+//       [providerId],
+//     );
+//     providersName = eventhall[0]?.hall_name;
+//   } // 2. בדיקה האם קיים אירוע חופף
+
+//   const overlaps = await doQuery(checkSql, checkParams);
+//   console.log("Overlapping events found:", overlaps.length);
+
+//   if (overlaps.length === 0 || newStatus === "REJECTED") {
+//     // 3. עדכון הסטטוס
+//     let updateSql = "";
+//     if (role === "Chief") {
+//       updateSql = `UPDATE event_providers SET status=? WHERE provider_id=? AND event_id=?`;
+//     } else {
+//       updateSql = `UPDATE events SET status=? WHERE hall_id=? AND event_id=?`;
+//     } // 1. עדכון הסטטוס באותו אופן
+
+//     await doQuery(updateSql, [newStatus, providerId, eventId]); // 2. שליפת ה-user_id האמיתי של הלקוח מהאירוע הזה
+
+//     const eventOwner = await doQuery(
+//       `SELECT user_id FROM events WHERE event_id = ?`,
+//       [eventId],
+//     );
+//     const customerId = eventOwner[0]?.user_id; // 3. יצירת ההתראה עם ה-ID האמיתי
+
+//     await createNotification({
+//       message: `Event was ${newStatus} by ${providersName}`,
+//       userId: customerId,
+//     });
+//     return { success: true };
+//   }
+
+//   return {
+//     success: false,
+//     message: "Provider is already booked for this time range.",
+//   };
+// }
+
+
 async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
   console.log(eventData);
   let providersName = "";
@@ -67,10 +350,10 @@ async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
     ];
 
     const eventChief = await doQuery(
-      `SELECT first_name  FROM users WHERE id=  ?`,
+      `SELECT first_name FROM users WHERE id = ?`,
       [providerId],
     );
-    providersName = eventChief[0]?.first_name;
+    providersName = eventChief[0]?.first_name || "The Chef";
   } else {
     // לוגיקה לבעל אולם
     checkSql = `
@@ -90,43 +373,70 @@ async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
     ];
 
     const eventhall = await doQuery(
-      `SELECT hall_name  FROM halls WHERE hall_id=  ?`,
+      `SELECT hall_name FROM halls WHERE hall_id = ?`,
       [providerId],
     );
-    providersName = eventhall[0]?.hall_name;
+    providersName = eventhall[0]?.hall_name || "The Venue";
   }
 
   // 2. בדיקה האם קיים אירוע חופף
   const overlaps = await doQuery(checkSql, checkParams);
   console.log("Overlapping events found:", overlaps.length);
 
-  if (overlaps.length === 0 || newStatus === "REJECTED") {
-    // 3. עדכון הסטטוס
+  // מאשרים את השינוי רק אם אין חפיפה, או אם הספק מבצע דחייה (REJECTED)
+  if (overlaps.length === 0 || newStatus.toUpperCase() === "REJECTED") {
+    // 3. עדכון הסטטוס בטבלה המתאימה
     let updateSql = "";
     if (role === "Chief") {
-      updateSql = `UPDATE event_providers SET status=? WHERE provider_id=? AND event_id=?`;
+      updateSql = `UPDATE event_providers SET status = ? WHERE provider_id = ? AND event_id = ?`;
     } else {
-      updateSql = `UPDATE events SET status=? WHERE hall_id=? AND event_id=?`;
+      updateSql = `UPDATE events SET status = ? WHERE hall_id = ? AND event_id = ?`;
     }
 
-    // 1. עדכון הסטטוס באותו אופן
     await doQuery(updateSql, [newStatus, providerId, eventId]);
 
-    // 2. שליפת ה-user_id האמיתי של הלקוח מהאירוע הזה
+    // 4. שליפת ה-user_id האמיתי של הלקוח מהאירוע הזה
     const eventOwner = await doQuery(
       `SELECT user_id FROM events WHERE event_id = ?`,
       [eventId],
     );
     const customerId = eventOwner[0]?.user_id;
 
-    // 3. יצירת ההתראה עם ה-ID האמיתי
+    if (!customerId) {
+      console.error("Could not find customer ID for event:", eventId);
+      return {
+        success: true,
+        message: "Status updated, but notification could not be sent.",
+      };
+    }
+
+    // 5. בניית הודעת התראה מותאמת אישית וברורה לפי הסטטוס החדש
+    let notificationMessage = "";
+    const cleanDate = eventData.requested_date
+      ? eventData.requested_date.split("T")[0]
+      : "the requested date";
+
+    switch (newStatus.toUpperCase()) {
+      case "APPROVED":
+        notificationMessage = `Great news! Your booking for ${cleanDate} has been APPROVED by ${providersName}.`;
+        break;
+      case "REJECTED":
+        notificationMessage = `Notice: ${providersName} has DECLINED the request for ${cleanDate}. You can explore alternative options in the system.`;
+        break;
+      default:
+        notificationMessage = `The status of your event on ${cleanDate} was updated to ${newStatus} by ${providersName}.`;
+    }
+
+    // 6. יצירת ההתראה ללקוח
     await createNotification({
-      message: `Event was ${newStatus} by ${providersName}`,
+      message: notificationMessage,
       userId: customerId,
     });
+
     return { success: true };
   }
 
+  // אם נמצאה חפיפה והספק ניסה לאשר (APPROVE)
   return {
     success: false,
     message: "Provider is already booked for this time range.",

@@ -20,9 +20,10 @@ import axios from "axios";
 import FindAVendor from "../components/customer/findAvendors/FindAVendor";
 import BookEvent from "../components/customer/BOOKEVENT/BookEvent";
 import MyBooking from "../components/customer/MYEVENTS/MyBooking";
-import MyEventsACalender from "../components/provider/Events/MyEventsACalender";
+import MyEventsACalender from "../components/Events/MyEventsACalender";
 import FavoriteProviders from "../components/customer/FavoriteProviders";
 import Notification from "../components/Notifications/Notification";
+import CommentsAndReviews from "../components/provider/CommentsAndReviews";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -111,12 +112,14 @@ function App() {
               />
               <Route path="/bookEvent" element={<BookEvent user={user} />} />
               <Route path="/myBooking" element={<MyBooking user={user} />} />
-
               <Route
                 path="/Notifications"
                 element={<Notification user={user} />}
               />
-
+              <Route
+                path="/myCommentsAndReviews"
+                element={<CommentsAndReviews />}
+              />
               <Route path="*" element={<h2>Page Not Found 404</h2>} />
             </Routes>
           </main>

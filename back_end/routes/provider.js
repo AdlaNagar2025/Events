@@ -26,6 +26,7 @@ const { fillCalendar, getCalandar } = require("../database/queries/calendar");
 const {
   getProfile,
   updateBusinessStatus,
+  getAllCommentsAndReviews,
 } = require("../database/queries/commonFunc");
 const {
   getAllEvents,
@@ -153,8 +154,6 @@ router.post("/fillCalendar", async (req, res) => {
   }
 });
 
-
-
 router.get("/Profile/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -170,9 +169,6 @@ router.get("/Profile/:id", async (req, res) => {
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
-
-
-
 
 // routes/provider.js
 router.get("/getMyCalendar", async (req, res) => {
@@ -360,6 +356,14 @@ router.put("/updateNotification/:id", async (req, res) => {
       req.session.user.id,
       notificationId,
     );
+    return res.json({ data: result });
+  } catch (error) {
+    console.log(error);
+  }
+});
+router.get("/allCommentsAndReviews", async (req, res) => {
+  try {
+    const result = await getAllCommentsAndReviews(req.session.user.id);
     return res.json({ data: result });
   } catch (error) {
     console.log(error);

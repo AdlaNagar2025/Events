@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import EventCard from "../../Events/EventCard";
+import EventRow from "../../Events/EventRow";
 
 export default function MyBooking({ user, onStatusChange }) {
   const navigate = useNavigate();
@@ -106,7 +107,7 @@ export default function MyBooking({ user, onStatusChange }) {
         { status: status, eventData: event },
         { withCredentials: true },
       );
-      
+
       if (response.data.success) {
         alert("Status updated successfully!");
         // 1. רענון הרשימה המקומית ב-MyBooking
@@ -115,9 +116,9 @@ export default function MyBooking({ user, onStatusChange }) {
         if (onStatusChange) {
           onStatusChange();
         }
+      } else {
+        alert(response.data.message);
       }
-      else
-      {alert(response.data.message);}
     } catch (error) {
       console.log(error);
     }
@@ -180,6 +181,34 @@ export default function MyBooking({ user, onStatusChange }) {
 
   return (
     <div className={classes.eventList}>
+      <table>
+        <thead>
+          <tr>
+            <th>Customer Name</th>
+            <th> Date</th>
+            <th> Time</th>
+            <th>Status</th>
+            <th>Guest Number</th>
+            <th>Notes</th>
+            {user.role === "Chief" && <th>Location</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {" "}
+          {events.map((e) => (
+            <EventRow
+              key={e.event_id}
+              event={e}
+              rolePath={rolePath}
+              isFuture={checkIfFuture(e)}
+              onCancel={handleCancel}
+              onDisCancel={handleDisCancel}
+              onUpdate={update}
+              onChangeStatus={handlechangeStatus}
+            />
+          ))}
+        </tbody>
+      </table>
       {events.map((e) => (
         <EventCard
           key={e.event_id}
