@@ -92,6 +92,60 @@ async function getAllEvents(providerId) {
   return result;
 }
 
+async function getAllPendingEvents(providerId) {
+  let sql = "";
+  let params = [];
+
+  if ((await getRole(providerId)) === "Chief") {
+    // --- שאילתה עבור שף (שימוש ב-noteToChef מטבלת הקישור) ---
+    sql = `
+      SELECT 
+        events.event_id, 
+        events.requested_date, 
+        events.start_time, 
+        events.end_time, 
+        events.guest_number, 
+        event_providers.noteToChef AS notes, -- כאן שינינו! נותנים כינוי 'notes' כדי שהפרונטנד לא יישבר
+        event_providers.status, 
+        event_providers.location,
+        users.first_name, 
+        reviews.rating, 
+        reviews.comment
+      FROM events 
+      JOIN event_providers ON event_providers.event_id = events.event_id AND event_providers.provider_id = ? 
+      JOIN users ON users.id = events.user_id 
+      LEFT JOIN reviews ON reviews.event_id = events.event_id AND reviews.provider_id = ? 
+      WHERE events.requested_date >= CURDATE()
+      AND event_providers.status = "PENDING"  ORDER BY events.requested_date ASC, events.start_time ASC`;
+
+    params = [providerId, providerId];
+  } else {
+    // --- שאילתה עבור אולם (שימוש ב-notesToHall במקום *) ---
+    sql = `
+      SELECT 
+        events.event_id, 
+        events.requested_date, 
+        events.start_time, 
+        events.end_time, 
+        events.guest_number,
+        events.notesToHall AS notes, -- כאן שינינו! נותנים כינוי 'notes'
+        events.status, 
+        users.first_name, 
+        reviews.rating, 
+        reviews.comment
+      FROM events 
+      JOIN users ON users.id = events.user_id 
+      LEFT JOIN reviews ON events.event_id = reviews.event_id AND reviews.provider_id = ? 
+      WHERE events.hall_id = ?  AND events.requested_date >= CURDATE()
+      AND events.status = "PENDING"  ORDER BY events.requested_date ASC, events.start_time ASC`;
+
+    params = [providerId, providerId];
+  }
+
+  const result = await doQuery(sql, params);
+  return result;
+}
+
 // async function changeStatusEvent(providerId, eventId, newStatus, eventData) {
 //   console.log(eventData);
 //   let providersName = "";
@@ -646,4 +700,9 @@ async function getAllEventsApproved(providerId) {
   return result;
 }
 
-module.exports = { getAllEvents, changeStatusEvent, getAllEventsApproved };
+module.exports = {
+  getAllEvents,
+  changeStatusEvent,
+  getAllEventsApproved,
+  getAllPendingEvents,
+};

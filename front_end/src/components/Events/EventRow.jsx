@@ -16,10 +16,23 @@ export default function EventRow({
 
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
+
   const startTime = event.start_time?.slice(0, 5) || "";
   const endTime = event.end_time?.slice(0, 5) || "";
+  
   const canProviderAction =
     rolePath === "provider" && isFuture && event.status !== "CANCELLED";
+
+      const checkIfFuture = (event) => {
+    const today = new Date().toISOString().split("T")[0];
+    const currentTime = new Date().toTimeString().slice(0, 5);
+    const startTime = event.start_time.slice(0, 5);
+
+    return (
+      event.requested_date > today ||
+      (event.requested_date === today && startTime > currentTime)
+    );
+  };
 
   return (
     <>

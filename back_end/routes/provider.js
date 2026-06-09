@@ -32,6 +32,7 @@ const {
   getAllEvents,
   changeStatusEvent,
   getAllEventsApproved,
+  getAllPendingEvents,
 } = require("../database/queries/providersFunc");
 const {
   getAllNotification,
@@ -333,6 +334,15 @@ router.put("/changeEventStatus/:eventId", async (req, res) => {
 router.get("/AllEventsApproved", async (req, res) => {
   try {
     const result = await getAllEventsApproved(req.session.user.id);
+    return res.json({ data: result });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+router.get("/AllPendingEvents", async (req, res) => {
+  try {
+    const result = await getAllPendingEvents(req.session.user.id);
     return res.json({ data: result });
   } catch (error) {
     console.error(error);

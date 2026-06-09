@@ -27,7 +27,7 @@ export default function Login({ onLoginSuccess }) {
       const response = await axios.post(
         "http://localhost:3030/user/login",
         credentials,
-        { withCredentials: true }, 
+        { withCredentials: true },
       );
       if (response.data.success) {
         onLoginSuccess(response.data.user);
@@ -37,12 +37,8 @@ export default function Login({ onLoginSuccess }) {
           response.data.user?.role === "Chief" ||
           response.data.user?.role === "Hall_Owner"
         ) {
-          navigate("/businessAccount");
-        }
-        else if(
-          response.data.user?.role === "Admin"
-        )
-         navigate("/account");
+          navigate("/myDashboard");
+        } else if (response.data.user?.role === "Admin") navigate("/account");
       } else {
         alert(response.data.message);
       }
@@ -58,33 +54,32 @@ export default function Login({ onLoginSuccess }) {
   };
 
   return (
-      <form className={classes.form} onSubmit={handleLoginSubmit}>
-        <h2>Welcome Back</h2>
-        <p>Sign in to your EventHub account</p>
-        <h3>Login Details</h3>
-        <input
-          type="email"
-          name="email"
-          placeholder="Email Address"
-          required
-          value={credentials.email}
-          onChange={handleInputChange}
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          required
-          value={credentials.password}
-          onChange={handleInputChange}
-        />
-        <button type="submit" className={classes.loginBtn}>
-          Sign In
-        </button>
-        <p>
-          Don't have an account? <Link to="/register">Sign Up</Link>
-        </p>
-      </form>
-  
+    <form className={classes.form} onSubmit={handleLoginSubmit}>
+      <h2>Welcome Back</h2>
+      <p>Sign in to your EventHub account</p>
+      <h3>Login Details</h3>
+      <input
+        type="email"
+        name="email"
+        placeholder="Email Address"
+        required
+        value={credentials.email}
+        onChange={handleInputChange}
+      />
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        required
+        value={credentials.password}
+        onChange={handleInputChange}
+      />
+      <button type="submit" className={classes.loginBtn}>
+        Sign In
+      </button>
+      <p>
+        Don't have an account? <Link to="/register">Sign Up</Link>
+      </p>
+    </form>
   );
 }

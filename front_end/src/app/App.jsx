@@ -24,6 +24,7 @@ import MyEventsACalender from "../components/Events/MyEventsACalender";
 import FavoriteProviders from "../components/customer/FavoriteProviders";
 import Notification from "../components/Notifications/Notification";
 import CommentsAndReviews from "../components/provider/CommentsAndReviews";
+import Dashboard from "../components/provider/Dashboard";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -110,6 +111,7 @@ function App() {
                 path="/MyFavoriteProviders"
                 element={<FavoriteProviders user={user} />}
               />
+              <Route path="/myDashboard" element={<Dashboard user={user} />} />
               <Route path="/bookEvent" element={<BookEvent user={user} />} />
               <Route path="/myBooking" element={<MyBooking user={user} />} />
               <Route

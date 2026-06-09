@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 import classes from "./sideBar.module.css";
 
 export default function SideBar({ user }) {
-
-  console.log( "", user, "i am in sideBar")
+  console.log("", user, "i am in sideBar");
   return (
     <>
       {user?.role === "Customer" && (
@@ -33,7 +32,7 @@ export default function SideBar({ user }) {
       {(user?.role === "Chief" || user?.role === "Hall_Owner") &&
         user.status === "APPROVED" && (
           <div className={classes.sideBar}>
-            <p>DashBoard</p>
+            <Link to="/myDashboard">DashBoard</Link>
             <Link to="/myEventsAndCalendar">Calender && Bookings</Link>
             <Link to="/myCommentsAndReviews">Clients && Reviews</Link>
             <Link to="/account">My Account</Link>
