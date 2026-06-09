@@ -103,7 +103,6 @@ async function updateBusinessStatus(type, id, newStatus) {
 
   // 2. קביעת הודעה מתאימה לפי הסטטוס החדש
   let notificationMessage = "";
-
   switch (newStatus.toUpperCase()) {
     case "APPROVE":
     case "APPROVED":

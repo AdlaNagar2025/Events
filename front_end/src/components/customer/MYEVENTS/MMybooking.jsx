@@ -7,7 +7,6 @@ import EventCard from "../../Events/EventCard";
 import EventRow from "../../Events/EventRow";
 
 export default function MyBooking({ user, onStatusChange }) {
-  console.log(user, "in the Events hhhhhhhhhhhhh");
   const navigate = useNavigate();
 
   const [events, setEvents] = useState([]);
@@ -185,20 +184,17 @@ export default function MyBooking({ user, onStatusChange }) {
       <table>
         <thead>
           <tr>
-            {rolePath === "provider" && <th>Customer Name</th>}
+            <th>Customer Name</th>
             <th> Date</th>
             <th> Time</th>
-            {rolePath === "customer" && <th>Final Status</th>}
-            {rolePath === "provider" && <th> Status</th>}
+            <th>Status</th>
             <th>Guest Number</th>
-            {rolePath === "customer" && <th> provider&status</th>}
-            {user?.role === "Chief" && <th> Location</th>}
-            {rolePath === "provider" && <th> Notes</th>}
-
-            <th>Action</th>
+            <th>Notes</th>
+            {user.role === "Chief" && <th>Location</th>}
           </tr>
         </thead>
         <tbody>
+          {" "}
           {events.map((e) => (
             <EventRow
               key={e.event_id}

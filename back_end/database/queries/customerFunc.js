@@ -1,5 +1,7 @@
 const doQuery = require("../query");
 const { getRole, getStatusEvent, AvailToEvent } = require("./helpingFunc");
+const { createNotification } = require("./notifications");
+
 /**
  * מבצעת חיפוש דינמי של ספקים (אולמות ושפים) לפי זמינות וקריטריונים.
  * הפונקציה בודקת ולידציה של תאריך (לא בעבר) וזמנים (התחלה לפני סוף),
@@ -118,10 +120,18 @@ async function getResultSearching(dataToSearch) {
 }
 
 // async function getEventData(Data, customerId) {
-//   const { dataToEvent, hallId, selectedChiefsId } = Data;
-//   console.log(dataToEvent);
-//   const sql = `INSERT INTO events (user_id,hall_id,requested_date,start_time,end_time,notes,guest_number) VALUES
-// (?,?,?,?,?,?,?)`;
+//   const {
+//     dataToEvent,
+//     hallId,
+//     selectedChiefsId,
+//     location,
+//     notesToHall,
+//     noteToChef,
+//   } = Data;
+
+//   // 2. עדכון שאילתת ה-events: החלפת notes ב-notesToHall
+//   const sql = `INSERT INTO events (user_id, hall_id, requested_date, start_time, end_time, notesToHall, guest_number)
+//                VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
 //   let values = [
 //     customerId,
@@ -129,21 +139,33 @@ async function getResultSearching(dataToSearch) {
 //     dataToEvent.requested_date,
 //     dataToEvent.start_time,
 //     dataToEvent.end_time,
+//     notesToHall || "",
 //     dataToEvent.guest_number,
 //   ];
-//   const result = await doQuery(sql, values);
 
-//   const sql1 = `INSERT INTO event_providers (event_id , provider_id ) VALUES
-// (?,?)`;
+//   const result = await doQuery(sql, values);
+//   const newEventId = result.insertId;
+
+//   const sql1 = `INSERT INTO event_providers (event_id, provider_id, noteToChef, location)
+//                 VALUES (?, ?, ?, ?)`;
+
 //   if (selectedChiefsId && selectedChiefsId.length > 0) {
 //     for (const pId of selectedChiefsId) {
-//       await doQuery(sql1, [result.insertId, pId]);
+//       // שליפת ההערה הספציפית שנכתבה לשף הנוכחי בלולאה מתוך אובייקט ה-noteToChef
+//       const specificChefNote =
+//         noteToChef && noteToChef[pId] ? noteToChef[pId] : "";
+
+//       await doQuery(sql1, [
+//         newEventId,
+//         pId,
+//         specificChefNote, // ההערה הייחודית של השף הזה
+//         location || null, // המיקום הפיזי (נשמר רק אם אין אולם)
+//       ]);
 //     }
 //   }
 
-//   return { success: true }; // תיקון איות
+//   return { success: true };
 // }
-
 async function getEventData(Data, customerId) {
   const {
     dataToEvent,
@@ -154,7 +176,6 @@ async function getEventData(Data, customerId) {
     noteToChef,
   } = Data;
 
-  // 2. עדכון שאילתת ה-events: החלפת notes ב-notesToHall
   const sql = `INSERT INTO events (user_id, hall_id, requested_date, start_time, end_time, notesToHall, guest_number) 
                VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
@@ -176,58 +197,47 @@ async function getEventData(Data, customerId) {
 
   if (selectedChiefsId && selectedChiefsId.length > 0) {
     for (const pId of selectedChiefsId) {
-      // שליפת ההערה הספציפית שנכתבה לשף הנוכחי בלולאה מתוך אובייקט ה-noteToChef
       const specificChefNote =
         noteToChef && noteToChef[pId] ? noteToChef[pId] : "";
 
       await doQuery(sql1, [
         newEventId,
         pId,
-        specificChefNote, // ההערה הייחודית של השף הזה
-        location || null, // המיקום הפיזי (נשמר רק אם אין אולם)
+        specificChefNote,
+        location || null,
       ]);
     }
   }
 
+  // =================================================================
+  // ✨ הוספת התראות (Notifications) עבור יצירת אירוע חדש
+  // =================================================================
+  try {
+    // 1. שליחת התראה לבעל האולם (אם נבחר אולם)
+    if (hallId) {
+      await createNotification({
+        message: `You have received a new booking request for an event on ${dataToEvent.requested_date}. Please review and respond.`,
+        userId: hallId,
+      });
+    }
+
+    // 2. שליחת התראה לכל אחד מהשפים שנבחרו
+    if (selectedChiefsId && selectedChiefsId.length > 0) {
+      for (const pId of selectedChiefsId) {
+        await createNotification({
+          message: `A customer has requested your chef services for an event on ${dataToEvent.requested_date}.`,
+          userId: pId,
+        });
+      }
+    }
+  } catch (notifError) {
+    // תופסים שגיאה של התראות כדי שהיא לא תכשיל את יצירת האירוע עצמו
+    console.error("Failed to send creation notifications:", notifError);
+  }
+  // =================================================================
+
   return { success: true };
 }
-
-
-// async function getAllEventsData(customerId) {
-//   const sql = `SELECT 
-//     e.event_id, 
-//     e.requested_date,
-//     e.start_time,
-//     e.end_time,
-//     e.guest_number,
-//     e.status AS hall_status,
-//     e.hall_id,
-//     h.hall_name,
-//     h.price AS hall_price,
-//     u.first_name AS chief_name,
-//     ep.provider_id AS chief_id,
-//     ep.status AS chief_status,
-//     c.price_per_hour
-//   FROM events e
-//   LEFT JOIN halls h ON e.hall_id = h.hall_id
-//   LEFT JOIN event_providers ep ON e.event_id = ep.event_id
-//   LEFT JOIN chiefs c ON ep.provider_id = c.chief_id
-//   LEFT JOIN users u ON c.chief_id = u.id
-//   WHERE e.user_id = ?
-//   ORDER BY e.requested_date , e.start_time ASC`;
-//   const result = await doQuery(sql, [customerId]);
-//   const fresult = []; // מערך חדש וריק
-
-//   for (const row of result) {
-//     const finalStatus = await getStatusEvent(row.event_id);
-//     row.finalStatus = finalStatus;
-//     fresult.push(row); // מוסיפים למערך רק אחרי שה-await הסתיים
-//   }
-
-//   console.log(fresult);
-//   return fresult;
-// }
-
 
 async function getAllEventsData(customerId) {
   const sql = `SELECT 
@@ -376,26 +386,103 @@ async function getAllEventsData(customerId) {
 //     throw error; // זורקים את השגיאה הלאה למי שקרא לפונקציה
 //   }
 // }
+
+// async function updateEventData(updatingData, customerId, eventId) {
+//   try {
+//     console.log(updatingData);
+//     console.log(updatingData.searchParams);
+//     console.log(updatingData.searchParams.start_time);
+//     console.log(updatingData.hallId);
+//     console.log(updatingData.ChiefsIds);
+//     await doQuery("START TRANSACTION");
+//     // בדיקה ראשונית
+//     const currentEvent = await validateAndGetEvent(customerId, eventId);
+//     // עדכון פרטי אירוע ואיפוס אם צריך
+//     const isCritical = await handleEventBasicUpdate(
+//       updatingData,
+//       currentEvent,
+//       eventId,
+//     );
+//     // עדכון שפים
+//     await handleChiefsUpdate(updatingData.ChiefsIds, eventId);
+//     // עדכון אולם
+//     await handleHallUpdate(updatingData.hallId, currentEvent.hall_id, eventId);
+
+//     await doQuery("COMMIT");
+//     return { success: true };
+//   } catch (error) {
+//     await doQuery("ROLLBACK");
+//     throw error;
+//   }
+// }
+
 async function updateEventData(updatingData, customerId, eventId) {
   try {
     console.log(updatingData);
-    console.log(updatingData.searchParams);
-    console.log(updatingData.searchParams.start_time);
-    console.log(updatingData.hallId);
-    console.log(updatingData.ChiefsIds);
     await doQuery("START TRANSACTION");
+
     // בדיקה ראשונית
     const currentEvent = await validateAndGetEvent(customerId, eventId);
-    // עדכון פרטי אירוע ואיפוס אם צריך
+
+    // עדכון פרטי אירוע ואיפוס אם צריך (מחזיר true אם התאריך/שעה השתנו)
     const isCritical = await handleEventBasicUpdate(
       updatingData,
       currentEvent,
       eventId,
     );
+
     // עדכון שפים
     await handleChiefsUpdate(updatingData.ChiefsIds, eventId);
+
     // עדכון אולם
     await handleHallUpdate(updatingData.hallId, currentEvent.hall_id, eventId);
+
+    // =================================================================
+    // ✨ הוספת התראות עבור עדכון אירוע (לפני ה-COMMIT)
+    // =================================================================
+    try {
+      const eventDate =
+        updatingData.searchParams?.requested_date ||
+        currentEvent.requested_date;
+
+      // 1. אם היה שינוי קריטי בזמנים - מודיעים לכל הספקים הנוכחיים שהם צריכים לאשר מחדש
+      if (isCritical) {
+        // שליפת השפים הנוכחיים של האירוע
+        const currentChiefs = await doQuery(
+          `SELECT provider_id FROM event_providers WHERE event_id = ?`,
+          [eventId],
+        );
+
+        // התראה לאולם
+        if (currentEvent.hall_id) {
+          await createNotification({
+            message: `The details for the event on ${eventDate} have been updated. Please re-approve your availability.`,
+            userId: currentEvent.hall_id,
+          });
+        }
+
+        // התראה לשפים
+        for (const chef of currentChiefs) {
+          await createNotification({
+            message: `The details for the event on ${eventDate} have been updated. Please re-approve your availability.`,
+            userId: chef.provider_id,
+          });
+        }
+      }
+      // 2. אם לא היה שינוי קריטי בזמנים, אבל הוחלף אולם - נודיע לאולם החדש
+      else if (
+        updatingData.hallId &&
+        updatingData.hallId !== currentEvent.hall_id
+      ) {
+        await createNotification({
+          message: `You have been booked for a new event on ${eventDate}.`,
+          userId: updatingData.hallId,
+        });
+      }
+    } catch (notifError) {
+      console.error("Failed to send update notifications:", notifError);
+    }
+    // =================================================================
 
     await doQuery("COMMIT");
     return { success: true };
@@ -404,6 +491,7 @@ async function updateEventData(updatingData, customerId, eventId) {
     throw error;
   }
 }
+
 async function validateAndGetEvent(customerId, eventId) {
   const sql = `SELECT * FROM events WHERE user_id = ? AND event_id = ?`;
   const rows = await doQuery(sql, [customerId, eventId]);
@@ -561,27 +649,121 @@ async function handleHallUpdate(updatingHallId, currentHallId, eventId) {
   }
 }
 
+// async function cancelEvent(eventId) {
+//   const sql = `UPDATE events SET status = 'CANCELLED' WHERE event_id = ?`;
+//   await doQuery(sql, [eventId]);
+
+//   const sqlProviders = `UPDATE event_providers SET status = 'CANCELLED' WHERE event_id = ?`;
+//   await doQuery(sqlProviders, [eventId]);
+
+//   return { success: true };
+// }
+
 async function cancelEvent(eventId) {
+  // 1. שליפת פרטי האירוע והספקים שלו לצורך יצירת ההתראות
+  const eventRows = await doQuery(
+    `SELECT hall_id, requested_date FROM events WHERE event_id = ?`,
+    [eventId],
+  );
+  const providerRows = await doQuery(
+    `SELECT provider_id FROM event_providers WHERE event_id = ?`,
+    [eventId],
+  );
+
+  // 2. ביצוע עדכון הסטטוסים ב-DB
   const sql = `UPDATE events SET status = 'CANCELLED' WHERE event_id = ?`;
   await doQuery(sql, [eventId]);
 
   const sqlProviders = `UPDATE event_providers SET status = 'CANCELLED' WHERE event_id = ?`;
   await doQuery(sqlProviders, [eventId]);
 
+  // 3. שליחת ההתראות (רק אם מצאנו את האירוע)
+  if (eventRows.length > 0) {
+    const eventDate = eventRows[0].requested_date;
+    const hallId = eventRows[0].hall_id;
+
+    try {
+      // התראה לאולם
+      if (hallId) {
+        await createNotification({
+          message: `The event scheduled for ${eventDate} has been CANCELLED by the customer.`,
+          userId: hallId,
+        });
+      }
+
+      // התראה לשפים
+      for (const row of providerRows) {
+        await createNotification({
+          message: `The event scheduled for ${eventDate} has been CANCELLED by the customer.`,
+          userId: row.provider_id,
+        });
+      }
+    } catch (notifError) {
+      console.error("Failed to send cancellation notifications:", notifError);
+    }
+  }
+
   return { success: true };
 }
 
+// async function disCancelEvent(eventId) {
+//   const sql = `UPDATE events SET status = 'PENDING' WHERE event_id = ?`;
+//   await doQuery(sql, [eventId]);
+
+//   const sqlProviders = `UPDATE event_providers SET status = 'PENDING' WHERE event_id = ?`;
+//   await doQuery(sqlProviders, [eventId]);
+
+//   return { success: true };
+// }
+
+//FAVORITE
+
 async function disCancelEvent(eventId) {
+  // 1. שליפת פרטי האירוע והספקים לצורך יצירת ההתראות
+  const eventRows = await doQuery(
+    `SELECT hall_id, requested_date FROM events WHERE event_id = ?`,
+    [eventId],
+  );
+  const providerRows = await doQuery(
+    `SELECT provider_id FROM event_providers WHERE event_id = ?`,
+    [eventId],
+  );
+
+  // 2. עדכון הסטטוסים בחזרה ל-PENDING
   const sql = `UPDATE events SET status = 'PENDING' WHERE event_id = ?`;
   await doQuery(sql, [eventId]);
 
   const sqlProviders = `UPDATE event_providers SET status = 'PENDING' WHERE event_id = ?`;
   await doQuery(sqlProviders, [eventId]);
 
+  // 3. שליחת ההתראות
+  if (eventRows.length > 0) {
+    const eventDate = eventRows[0].requested_date;
+    const hallId = eventRows[0].hall_id;
+
+    try {
+      // התראה לאולם
+      if (hallId) {
+        await createNotification({
+          message: `The cancelled event for ${eventDate} has been reinstated and is pending your re-approval.`,
+          userId: hallId,
+        });
+      }
+
+      // התראה לשפים
+      for (const row of providerRows) {
+        await createNotification({
+          message: `The cancelled event for ${eventDate} has been reinstated and is pending your re-approval.`,
+          userId: row.provider_id,
+        });
+      }
+    } catch (notifError) {
+      console.error("Failed to send disCancel notifications:", notifError);
+    }
+  }
+
   return { success: true };
 }
-
-//FAVORITE
 
 async function addFavorite(userId, providerId) {
   const sql = `INSERT IGNORE INTO favorites (user_id, provider_id) VALUES (?, ?)`;
@@ -617,6 +799,21 @@ WHERE f.user_id = ?`;
   return result;
 }
 
+// async function ReviewProvider(ReviewData, userId) {
+//   const { eventId, providerId, rating, comment } = ReviewData;
+//   const sql = `
+//     INSERT INTO reviews (event_id, user_id, provider_id, rating, comment)
+//     VALUES (?, ?, ?, ?, ?)
+//     ON DUPLICATE KEY UPDATE
+//       rating = VALUES(rating),
+//       comment = VALUES(comment)
+//   `;
+
+//   await doQuery(sql, [eventId, userId, providerId, rating, comment]);
+
+//   return { success: true };
+// }
+
 async function ReviewProvider(ReviewData, userId) {
   const { eventId, providerId, rating, comment } = ReviewData;
   const sql = `
@@ -628,6 +825,19 @@ async function ReviewProvider(ReviewData, userId) {
   `;
 
   await doQuery(sql, [eventId, userId, providerId, rating, comment]);
+
+  // =================================================================
+  // ✨ הוספת התראה לספק על ביקורת חדשה
+  // =================================================================
+  try {
+    await createNotification({
+      message: `A client left you a ${rating}-star review: "${comment.substring(0, 30)}..."`,
+      userId: providerId,
+    });
+  } catch (notifError) {
+    console.error("Failed to send review notification:", notifError);
+  }
+  // =================================================================
 
   return { success: true };
 }
@@ -652,3 +862,30 @@ module.exports = {
   disCancelEvent,
   ReviewAndComment,
 };
+
+// // 2. קביעת הודעה מתאימה לפי הסטטוס החדש
+// let notificationMessage = "";
+// switch (newStatus.toUpperCase()) {
+//   case "APPROVE":
+//   case "APPROVED":
+//     notificationMessage =
+//       "Your business profile has been approved! You now have full access to EventHub.";
+//     break;
+//   case "DENY":
+//   case "DENIED":
+//     notificationMessage =
+//       "Your business profile was rejected. Please review and update your details in Profile Settings.";
+//     break;
+//   case "PENDING":
+//     notificationMessage =
+//       "Your profile changes have been submitted and are currently pending review.";
+//     break;
+//   default:
+//     notificationMessage = `Your business profile status has been updated to ${newStatus}.`;
+// }
+
+// // 3. יוצרים את ההתראה רק אחרי שהעדכון ב-DB הצליח
+// await createNotification({
+//   message: notificationMessage,
+//   userId: id,
+// });
