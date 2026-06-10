@@ -8,17 +8,14 @@ export default function CommentsAndReviews({ role, user }) {
   ]);
   const [reviewsList, setReviewsList] = useState([]);
 
-
   const fetchAllComments = async () => {
     try {
-      let url="http://localhost:3030/provider/allCommentsAndReviews"
-      if(role==="Customer")
+      let url = "http://localhost:3030/provider/allCommentsAndReviews";
+      if (role === "Customer")
         url = `http://localhost:3030/customer/allCommentsAndReviews/${user?.id}`;
-      const response = await axios.get(
-        url
-        ,
-        { withCredentials: true },
-      );
+      if (role === "Admin")
+        url = `http://localhost:3030/admin/allCommentsAndReviews/${user?.id}`;
+      const response = await axios.get(url, { withCredentials: true });
 
       const rawReviews = response.data.data;
 

@@ -16,3 +16,24 @@
 .customtable tr:hover {
   background-color: #933939; /* Hover effect */
 }
+.roleBadge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.admin {
+  background: #ffe0e0;
+}
+
+.customer {
+  background: #e0f7ff;
+}
+
+.chief {
+  background: #fff4cc;
+}
+
+.hall_owner {
+  background: #e8ffe8;
+}

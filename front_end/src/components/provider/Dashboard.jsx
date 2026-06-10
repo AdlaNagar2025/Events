@@ -72,7 +72,7 @@ export default function Dashboard({ user, onStatusChange }) {
   const fetchAllPendingEvents = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:3030/provider/AllPendingEvents`,
+        `http://localhost:3030/provider/AllEventsAccordingToStatus/PENDING`,
         { withCredentials: true },
       );
 

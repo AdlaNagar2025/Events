@@ -8,7 +8,6 @@ export default function Review({ provider, eventId }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   useEffect(() => {
     if (!provider?.id || !eventId) return;
     const fetchReviewsEvent = async () => {
@@ -56,7 +55,6 @@ export default function Review({ provider, eventId }) {
       setIsSubmitting(false);
     }
   };
-
 
   return (
     <div className={classes.reviewBox}>

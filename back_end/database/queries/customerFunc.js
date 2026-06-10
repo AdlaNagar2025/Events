@@ -263,7 +263,7 @@ async function getAllEventsData(customerId) {
   LEFT JOIN chiefs c ON ep.provider_id = c.chief_id
   LEFT JOIN users u ON c.chief_id = u.id
   WHERE e.user_id = ?
-  ORDER BY e.requested_date ASC, e.start_time ASC`;
+  ORDER BY e.requested_date DESC, e.start_time ASC`;
 
   const result = await doQuery(sql, [customerId]);
   const fresult = [];

@@ -107,6 +107,20 @@ async function deactivateUser(status, userId) {
   return await doQuery(sql, [status, userId]);
 }
 
+
+async function getAllUserStats() {
+  const sql = `SELECT 
+    COUNT(*) AS totalUsers,
+    COUNT(CASE WHEN is_active = 1 THEN 1 END) AS activeUsers,
+    COUNT(CASE WHEN is_active = 0 THEN 1 END) AS inactiveUsers,
+    COUNT(CASE WHEN created_at >= NOW() - INTERVAL 7 DAY THEN 1 END) AS newRegistrations
+FROM users;`;
+  return await doQuery(sql, []);
+}
+
+
+
+
 module.exports = {
   getAllUsers,
   getUsersByRole,
@@ -115,4 +129,5 @@ module.exports = {
   getAllServices,
   deactivateUser,
   getAllServicesAccordingToStatus,
+  getAllUserStats,
 };

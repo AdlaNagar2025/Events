@@ -9,7 +9,7 @@ import EventRow from "../../Events/EventRow";
 export default function MyBooking({ user, onStatusChange }) {
   console.log(user, "in the Events hhhhhhhhhhhhh");
   const navigate = useNavigate();
-
+  const [type, setType] = useState("All");
   const [events, setEvents] = useState([]);
 
   let rolePath = user?.role.toLowerCase();
@@ -17,10 +17,12 @@ export default function MyBooking({ user, onStatusChange }) {
 
   const fetchAllEvents = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:3030/${rolePath}/myEventsData`,
-        { withCredentials: true },
-      );
+      let url = `http://localhost:3030/${rolePath}/myEventsData`;
+      if (type === "All")
+        url = `http://localhost:3030/${rolePath}/myEventsData`;
+      else
+        url = `http://localhost:3030/${rolePath}/AllEventsAccordingToStatus/${type}`;
+      const response = await axios.get(url, { withCredentials: true });
       const rawData = response.data.data;
       const grouped = rawData.reduce((acc, current) => {
         const existingEvent = acc.find(
@@ -68,7 +70,7 @@ export default function MyBooking({ user, onStatusChange }) {
 
   useEffect(() => {
     fetchAllEvents();
-  }, [user, rolePath]);
+  }, [user, rolePath, type]);
 
   function update(e) {
     navigate("/findavendor", {
@@ -182,6 +184,18 @@ export default function MyBooking({ user, onStatusChange }) {
 
   return (
     <div className={classes.eventList}>
+      {rolePath === "provider" && (
+        <select
+          className={classes.filterSelect}
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+        >
+          <option value="All">All Events</option>
+          <option value="pending">⏳ Pending Events</option>
+          <option value="approved">✅ Approved Events</option>
+          <option value="rejected">❌ Rejected Events</option>
+        </select>
+      )}
       <table>
         <thead>
           <tr>
@@ -213,18 +227,6 @@ export default function MyBooking({ user, onStatusChange }) {
           ))}
         </tbody>
       </table>
-      {/* {events.map((e) => (
-        <EventCard
-          key={e.event_id}
-          event={e}
-          rolePath={rolePath}
-          isFuture={checkIfFuture(e)}
-          onCancel={handleCancel}
-          onDisCancel={handleDisCancel}
-          onUpdate={update}
-          onChangeStatus={handlechangeStatus}
-        />
-      ))} */}
     </div>
   );
 }

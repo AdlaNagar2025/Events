@@ -12,11 +12,13 @@ const {
   getAllServices,
   deactivateUser,
   getAllServicesAccordingToStatus,
+  getAllUserStats,
 } = require("../database/queries/adminFunc");
 const {
   getProfile,
   updateBusinessStatus,
   getAllEventsApproved,
+  getAllCommentsAndReviews,
 } = require("../database/queries/commonFunc");
 const { getAllImages } = require("../database/queries/uploadImages");
 const { getCalandar } = require("../database/queries/calendar");
@@ -244,5 +246,37 @@ router.put("/updateNotification/:id", async (req, res) => {
   }
 });
 
+router.get("/allCommentsAndReviews/:providerId", async (req, res) => {
+  try {
+    const { providerId } = req.params;
+    const result = await getAllCommentsAndReviews(providerId);
+    return res.json({ data: result });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+
+
+router.get("/userStats", async (req, res) => {
+  try {
+    const result = await getAllUserStats();
+
+    // ✨ תיקון: לוקחים את האיבר הראשון במערך שחוזר מה-DB
+    const stats = result[0] || {
+      totalUsers: 0,
+      activeUsers: 0,
+      inactiveUsers: 0,
+      newRegistrations: 0,
+    };
+
+    return res.json({ success: true, data: stats });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+});
 
 module.exports = router;

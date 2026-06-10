@@ -33,6 +33,7 @@ const {
   changeStatusEvent,
   getAllEventsApproved,
   getAllPendingEvents,
+  getAllEventsAccordingToStatus,
 } = require("../database/queries/providersFunc");
 const {
   getAllNotification,
@@ -340,9 +341,28 @@ router.get("/AllEventsApproved", async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 });
-router.get("/AllPendingEvents", async (req, res) => {
+// router.get("/AllEventsAccordingToStaus:/status", async (req, res) => {
+//   try {
+//     const status = req.params.status;
+//     const result = await getAllEventsAccordingToStatus(
+//       req.session.user.id,
+//       status,
+//     );
+//     return res.json({ data: result });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+// ✨ תיקון: שינוי הסינטקס של הראוט לשימוש תקין בפרמטר דינמי (:status)
+router.get("/AllEventsAccordingToStatus/:status", async (req, res) => {
   try {
-    const result = await getAllPendingEvents(req.session.user.id);
+    const status = req.params.status.toUpperCase();
+
+    const result = await getAllEventsAccordingToStatus(
+      req.session.user.id,
+      status,
+    );
     return res.json({ data: result });
   } catch (error) {
     console.error(error);
