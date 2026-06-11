@@ -107,7 +107,12 @@ export default function BookEvent({ user }) {
   const shouldShowButton = hallId ? !!hallData : !!eventLocation;
 
   return (
-    <div>
+    <div className={classes.page}>
+      <div className={classes.pageHeader}>
+        <h1>Book Your Event</h1>
+        <p>Review details and confirm your booking</p>
+      </div>
+
       <EventData
         dataToEvent={dataToEvent}
         hallData={hallData}

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import classes from "./serviceCard.module.css"; // בואי נוסיף עיצוב בהמשך
+import classes from "./serviceCard.module.css";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import BusinessProfile from "../CommonComponents/BusinessProfile";
 import { MdOutlineFavoriteBorder } from "react-icons/md";
 import { MdFavorite } from "react-icons/md";
@@ -14,34 +13,62 @@ export default function ServiceCard({
 }) {
   const [showProfile, setShowProfile] = useState(false);
   const [cardData, setCardData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [imageLoading, setImageLoading] = useState(true);
+
+  const displayName =
+    provider?.ServiceName ||
+    [provider?.first_name, provider?.last_name].filter(Boolean).join(" ");
+
+  const roleLabel =
+    provider?.provider_type === "Hall_Owner"
+      ? "Venue"
+      : provider?.provider_type === "Chief"
+        ? "Catering"
+        : provider?.role || "Provider";
+
+  const avgRating = cardData?.avgRating ?? provider?.avgRating;
+  const totalReviews = cardData?.totalReviews ?? provider?.totalReviews ?? 0;
 
   useEffect(() => {
+    if (!provider?.id) {
+      setImageLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
     const fetchCardData = async () => {
       try {
-        setIsLoading(true);
-        const rolePath = user.role.toLowerCase();
+        setImageLoading(true);
+        const rolePath = (user?.role || "customer").toLowerCase();
         const url = `http://localhost:3030/${rolePath}/CardData/${provider.id}`;
         const response = await axios.get(url, { withCredentials: true });
 
-        if (response.data.success) {
+        if (!cancelled && response.data.success) {
           setCardData(response.data.data);
         }
       } catch (error) {
         console.error("Error loading card:", error);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setImageLoading(false);
+        }
       }
     };
 
-    if (provider?.id) fetchCardData();
-  }, [provider.id, provider.role, provider.provider_type]);
+    fetchCardData();
 
-  if (isLoading) return <div className={classes.cardLoader}>loading...</div>;
+    return () => {
+      cancelled = true;
+    };
+  }, [provider?.id, user?.role]);
+
+  if (!provider?.id) {
+    return null;
+  }
 
   return (
     <>
-      {/* שכבת המודל - מוצגת רק כש-showProfile אמת */}
       {showProfile && (
         <div
           className={classes.modalOverlay}
@@ -51,12 +78,20 @@ export default function ServiceCard({
             className={classes.modalContent}
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              className={classes.closeBtn}
-              onClick={() => setShowProfile(false)}
-            >
-              &times;
-            </button>
+            <div className={classes.modalHeader}>
+              <div className={classes.modalHeaderText}>
+                <span className={classes.modalEyebrow}>{roleLabel}</span>
+                <h2 className={classes.modalTitle}>{displayName}</h2>
+              </div>
+              <button
+                type="button"
+                className={classes.closeBtn}
+                onClick={() => setShowProfile(false)}
+                aria-label="Close details"
+              >
+                &times;
+              </button>
+            </div>
 
             <div className={classes.modalBody}>
               <BusinessProfile user={user} provider={provider} />
@@ -66,17 +101,22 @@ export default function ServiceCard({
       )}
 
       <div className={classes.card}>
-        {!isFavorite ? (
-          <MdOutlineFavoriteBorder onClick={() => handleFavorite(provider)} />
-        ) : (
-          <MdFavorite color="red" onClick={() => handleFavorite(provider)} />
-        )}
+        <button
+          type="button"
+          className={`${classes.favBtn} ${isFavorite ? classes.favBtnActive : ""}`}
+          onClick={() => handleFavorite(provider)}
+          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+        >
+          {isFavorite ? <MdFavorite /> : <MdOutlineFavoriteBorder />}
+        </button>
 
         <div className={classes.imageSection}>
-          {cardData?.main_image ? (
+          {imageLoading ? (
+            <div className={classes.noImage}>Loading image...</div>
+          ) : cardData?.main_image ? (
             <img
               src={`http://localhost:3030/uploads/${cardData.main_image}`}
-              alt="Business"
+              alt={displayName}
             />
           ) : (
             <div className={classes.noImage}>No images</div>
@@ -84,35 +124,37 @@ export default function ServiceCard({
         </div>
 
         <div className={classes.content}>
-          <h3>
-            {provider.first_name} {provider.last_name}
-          </h3>
+          <h3>{displayName}</h3>
           <div className={classes.ratingSection}>
             <span className={classes.stars}>
-              {cardData?.totalReviews > 0 && (
+              {Number(totalReviews) > 0 && (
                 <span>
-                  {cardData.avgRating} ⭐ ({cardData.totalReviews} reviews)
+                  {avgRating} ⭐ ({totalReviews} reviews)
                 </span>
               )}
             </span>
           </div>
-          <p className={classes.roleBadge}>{provider.role}</p>
+          <span className={classes.roleBadge}>{roleLabel}</span>
 
           <div className={classes.details}>
-            <span>📍 {cardData?.city || "  "}</span>
+            <span>📍 {cardData?.city || "—"}</span>
             <br />
             <span>
               💰
-              {cardData?.display_price ? `${cardData.display_price} ₪` : ""}
+              {cardData?.display_price ? `${cardData.display_price} ₪` : "—"}
             </span>
           </div>
 
           <div className={classes.actions}>
             <button
+              type="button"
               onClick={() => setShowProfile(true)}
               className={classes.detailsBtn}
             >
-              View Details
+              <span>View Details</span>
+              <span className={classes.detailsBtnArrow} aria-hidden="true">
+                →
+              </span>
             </button>
           </div>
         </div>

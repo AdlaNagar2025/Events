@@ -3,6 +3,14 @@ import { Rating } from "@mui/material";
 import ReviewSection from "./ReviewSection";
 import { useState } from "react";
 
+function getStatusClass(status) {
+  const s = (status || "").toUpperCase();
+  if (s === "APPROVED") return "statusApproved";
+  if (s === "REJECTED" || s === "DENY") return "statusRejected";
+  if (s === "CANCELLED") return "statusCancelled";
+  return "statusPending";
+}
+
 export default function EventRow({
   event,
   rolePath,
@@ -12,9 +20,8 @@ export default function EventRow({
   onDisCancel,
   onChangeStatus,
 }) {
-  console.log(event);
-
   const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const status = event.finalStatus || event.status;
 
 
   const startTime = event.start_time?.slice(0, 5) || "";
@@ -42,7 +49,13 @@ export default function EventRow({
           <td>
             {startTime} - {endTime}
           </td>
-          <td>{event.finalStatus || event.status}</td>
+          <td>
+            <span
+              className={`${classes.statusBadge} ${classes[getStatusClass(status)]}`}
+            >
+              {status}
+            </span>
+          </td>
           <td>{event.guest_number}</td>
 
           <td>
@@ -63,10 +76,15 @@ export default function EventRow({
           </td>
 
           <td>
+            <div className={classes.actions}>
             {isFuture ? (
-              /* --- אירועים עתידיים: כפתורי עדכון וביטול --- */
               <>
-                <button onClick={() => onUpdate(event)}>Update</button>
+                <button
+                  className={classes.updateBtn}
+                  onClick={() => onUpdate(event)}
+                >
+                  Update
+                </button>
                 {event.finalStatus !== "CANCELLED" && (
                   <button
                     className={classes.rejectBtn}
@@ -85,7 +103,6 @@ export default function EventRow({
                 )}
               </>
             ) : (
-              /* --- אירועי עבר (שינוי כאן!): כפתור ביקורת וציון קיים --- */
               <>
                 {event.finalStatus === "APPROVED" && (
                   <button
@@ -96,7 +113,6 @@ export default function EventRow({
                   </button>
                 )}
 
-                {/* הצגת הציון הקיים אם יש */}
                 {event.rating && (
                   <div className={classes.reviewReceived}>
                     <h4>Client Review</h4>
@@ -106,8 +122,8 @@ export default function EventRow({
                 )}
               </>
             )}
+            </div>
 
-            {/* החלון הקופץ ייפתח מעל הכל בצורה חוקית */}
             {isReviewOpen && (
               <ReviewSection
                 event={event}

@@ -1,34 +1,34 @@
-import React from "react";
+import { Link } from "react-router-dom";
 import ServiceCard from "../BasicToProviderProfile/ServiceCard";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import classes from "./favorites.module.css";
 
 export default function FavoriteProviders({ user }) {
   const [providers, setProviders] = useState([]);
   const [providersFavorite, setProvidersFavorite] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   async function fetchAllFavoriteProviders() {
+    setLoading(true);
     try {
       const response = await axios.get(
         "http://localhost:3030/customer/AllFavoritesProviders",
         { withCredentials: true },
       );
 
-      const data = response.data.data; // הנתונים שהגיעו מה-SQL
-      console.log(data);
+      const data = response.data.data;
       setProviders(data);
-
-      // כאן התיקון: אנחנו מוציאים את ה-IDs ישירות מה-data שהגיע, לא מה-state
       setProvidersFavorite(data.map((p) => p.id));
     } catch (error) {
       console.error("Error fetching favorites:", error);
+    } finally {
+      setLoading(false);
     }
   }
 
   async function handleFavorite(provider) {
-    console.log("aaaa", provider);
     const providerId = provider.id;
-    console.log(providerId);
     try {
       if (providersFavorite.includes(provider.id)) {
         await axios.delete(
@@ -47,24 +47,79 @@ export default function FavoriteProviders({ user }) {
       console.error("Error toggling favorite:", error);
     }
   }
+
   useEffect(() => {
     fetchAllFavoriteProviders();
   }, []);
-  return (
-    <div>
-      <h2>Favorite Providers</h2>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
-        {providers.map((p) => (
-          // שימי לב: החלפתי ל-() במקום {} כדי שה-return יהיה אוטומטי
-          <ServiceCard
-            key={p.id} // חשוב להוסיף key!
-            user={user}
-            provider={p}
-            isFavorite={true} // בדף הזה כולם מועדפים
-            handleFavorite={handleFavorite}
-          />
-        ))}
+
+  if (loading) {
+    return (
+      <div className={classes.page}>
+        <div className={classes.loading}>
+          <div className={classes.spinner} />
+          Loading your favorites...
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <div className={classes.page}>
+      <div className={classes.pageHeader}>
+        <div className={classes.headerContent}>
+          <div className={classes.headerText}>
+            <h1>Favorite Providers</h1>
+            <p>Your saved vendors for quick access</p>
+          </div>
+          {providers.length > 0 && (
+            <div className={classes.countBadge}>
+              <span className={classes.countIcon}>❤️</span>
+              <div>
+                <div className={classes.countNumber}>{providers.length}</div>
+                <div className={classes.countLabel}>Saved</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {providers.length === 0 ? (
+        <div className={classes.emptyState}>
+          <div className={classes.emptyIcon}>♡</div>
+          <p className={classes.emptyTitle}>No favorites yet</p>
+          <p className={classes.emptyText}>
+            Browse vendors and tap the heart icon to save your favorites here.
+          </p>
+          <Link to="/customer/find-vendor" className={classes.emptyBtn}>
+            Find a Vendor
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div className={classes.toolbar}>
+            <span className={classes.toolbarText}>
+              Showing <strong>{providers.length}</strong> saved provider
+              {providers.length !== 1 ? "s" : ""}
+            </span>
+            <Link to="/customer/find-vendor" className={classes.findLink}>
+              + Find More
+            </Link>
+          </div>
+
+          <div className={classes.grid}>
+            {providers.map((p) => (
+              <div key={p.id} className={classes.cardWrap}>
+                <ServiceCard
+                  user={user}
+                  provider={p}
+                  isFavorite={true}
+                  handleFavorite={handleFavorite}
+                />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

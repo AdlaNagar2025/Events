@@ -1,126 +1,104 @@
-.event {
-  max-width: 900px;
-  margin: 2rem auto;
-  padding: 1rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.eventCard {
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  position: relative;
-  border-right: 6px solid #ccc; /* ברירת מחדל */
-  transition: transform 0.2s;
-}
-
-.eventCard:hover {
-  transform: translateY(-3px);
-}
-
-/* עיצוב סטטוסים - צבעים לפי שם הסטטוס */
-.approved {
-  color: #27ae60;
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-}
-
-.rejected {
-  color: #e74c3c;
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-}
-
-.pending {
-  color: #f39c12;
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-}
-
-/* פרטי האירוע */
-.eventDetails p {
-  margin: 0.5rem 0;
-  color: #34495e;
-}
-
-.detailsSection {
-  background: #f8f9fa;
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 1rem 0;
-  font-size: 0.95rem;
-}
-
-.smallText {
-  font-size: 0.85rem;
-  color: #7f8c8d;
-  margin-left: 10px;
-}
-
-/* כפתורים */
-.actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 1.5rem;
-}
-
-.actions button, .reviewBtn {
-  padding: 8px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.3s, opacity 0.3s;
-}
-
-.approveBtn {
-  background-color: #2ecc71;
-  color: white;
-}
-
-.approveBtn:hover {
-  background-color: #27ae60;
-}
-
-.rejectBtn {
-  background-color: #e74c3c;
-  color: white;
-}
-
-.rejectBtn:hover {
-  background-color: #c0392b;
-}
-
-.cancelBtn {
-  background-color: #95a5a6;
-  color: white;
-}
-
-.reviewBtn {
-  background-color: #3498db;
-  color: white;
+.page {
   width: 100%;
-  margin-top: 10px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: "Segoe UI", system-ui, sans-serif;
 }
 
-.expiredNote {
-  color: #7f8c8d;
-  font-style: italic;
+.pageHeader {
+  margin-bottom: 24px;
+}
+
+.pageHeader h1 {
+  margin: 0 0 6px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a2634;
+}
+
+.pageHeader p {
+  margin: 0;
   font-size: 0.9rem;
-  margin-top: 10px;
+  color: #64748b;
 }
 
+.toolbar {
+  margin-bottom: 20px;
+}
 
-.eventList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 2rem;
-  padding: 20px;
-  background-color: #f9f9f9;
-  min-height: 100vh;
+.filterSelect {
+  padding: 11px 40px 11px 16px;
+  font-size: 0.9rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  color: #1e293b;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  min-width: 200px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.filterSelect:focus {
+  border-color: #d4af37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+}
+
+.tableWrapper {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  overflow-x: auto;
+}
+
+.eventList table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.eventList thead tr {
+  background: linear-gradient(135deg, #1a2634, #243447);
+}
+
+.eventList th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+.eventList td {
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.eventList tbody tr:hover td {
+  background: #fffdf5;
+}
+
+.eventList tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 56px 24px;
+  color: #94a3b8;
+  font-style: italic;
+  background: #fff;
+  border-radius: 14px;
+  border: 1.5px dashed #e2e8f0;
 }

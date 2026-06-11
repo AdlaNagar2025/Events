@@ -183,50 +183,63 @@ export default function MyBooking({ user, onStatusChange }) {
   };
 
   return (
-    <div className={classes.eventList}>
-      {rolePath === "provider" && (
-        <select
-          className={classes.filterSelect}
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-        >
-          <option value="All">All Events</option>
-          <option value="pending">⏳ Pending Events</option>
-          <option value="approved">✅ Approved Events</option>
-          <option value="rejected">❌ Rejected Events</option>
-        </select>
-      )}
-      <table>
-        <thead>
-          <tr>
-            {rolePath === "provider" && <th>Customer Name</th>}
-            <th> Date</th>
-            <th> Time</th>
-            {rolePath === "customer" && <th>Final Status</th>}
-            {rolePath === "provider" && <th> Status</th>}
-            <th>Guest Number</th>
-            {rolePath === "customer" && <th> provider&status</th>}
-            {user?.role === "Chief" && <th> Location</th>}
-            {rolePath === "provider" && <th> Notes</th>}
+    <div className={classes.page}>
+      <div className={classes.pageHeader}>
+        <h1>My Bookings</h1>
+        <p>Track your events, providers, and booking status</p>
+      </div>
 
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {events.map((e) => (
-            <EventRow
-              key={e.event_id}
-              event={e}
-              rolePath={rolePath}
-              isFuture={checkIfFuture(e)}
-              onCancel={handleCancel}
-              onDisCancel={handleDisCancel}
-              onUpdate={update}
-              onChangeStatus={handlechangeStatus}
-            />
-          ))}
-        </tbody>
-      </table>
+      {rolePath === "provider" && (
+        <div className={classes.toolbar}>
+          <select
+            className={classes.filterSelect}
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          >
+            <option value="All">All Events</option>
+            <option value="pending">Pending Events</option>
+            <option value="approved">Approved Events</option>
+            <option value="rejected">Rejected Events</option>
+          </select>
+        </div>
+      )}
+
+      {events.length === 0 ? (
+        <p className={classes.emptyState}>No bookings found yet.</p>
+      ) : (
+        <div className={`${classes.tableWrapper} ${classes.eventList}`}>
+          <table>
+            <thead>
+              <tr>
+                {rolePath === "provider" && <th>Customer Name</th>}
+                <th>Date</th>
+                <th>Time</th>
+                {rolePath === "customer" && <th>Status</th>}
+                {rolePath === "provider" && <th>Status</th>}
+                <th>Guests</th>
+                {rolePath === "customer" && <th>Providers</th>}
+                {user?.role === "Chief" && <th>Location</th>}
+                {rolePath === "provider" && <th>Notes</th>}
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {events.map((e) => (
+                <EventRow
+                  key={e.event_id}
+                  event={e}
+                  rolePath={rolePath}
+                  isFuture={checkIfFuture(e)}
+                  onCancel={handleCancel}
+                  onDisCancel={handleDisCancel}
+                  onUpdate={update}
+                  onChangeStatus={handlechangeStatus}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

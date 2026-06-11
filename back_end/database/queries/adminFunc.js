@@ -108,8 +108,8 @@ async function getAllServicesAccordingToStatus(status) {
         'Chief' AS provider_type, 
         c.status,
         u.first_name AS ServiceName,
-        c.submitted_at,          -- עמודה חדשה
-        c.rejection_reason,      -- עמודה חדשה
+        c.submitted_at,
+        c.rejection_reason,
         (SELECT AVG(rating) FROM reviews WHERE provider_id = u.id) AS avgRating,
         (SELECT COUNT(rating) FROM reviews WHERE provider_id = u.id) AS totalReviews
     FROM users u
@@ -125,20 +125,21 @@ async function getAllServicesAccordingToStatus(status) {
         'Hall_Owner' AS provider_type, 
         h.status,
         h.hall_name AS ServiceName,
-        h.submitted_at,          -- עמודה חדשה
-        h.rejection_reason,      -- עמודה חדשה
+        h.submitted_at,
+        h.rejection_reason,
         (SELECT AVG(rating) FROM reviews WHERE provider_id = u.id) AS avgRating,
         (SELECT COUNT(rating) FROM reviews WHERE provider_id = u.id) AS totalReviews
     FROM users u
     INNER JOIN halls h ON u.id = h.hall_id
     WHERE h.status = ?
     
-    ORDER BY submitted_at ASC; -- מיון: בקשות ישנות שמעלות אבק יוצגו למעלה
+    ORDER BY submitted_at ASC
   `;
 
   const result = await doQuery(sql, [status, status]);
+  const rows = Array.isArray(result) ? result : [];
 
-  return result.map((provider) => ({
+  return rows.map((provider) => ({
     ...provider,
     avgRating: provider.avgRating
       ? parseFloat(provider.avgRating).toFixed(1)

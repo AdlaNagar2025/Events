@@ -1,72 +1,121 @@
-.eventCard {
+.eventCard td {
   background: #ffffff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s;
-  border-top: 5px solid #3498db; /* צבע ברירת מחדל */
-}
-
-.eventCard:hover {
-  transform: translateY(-5px);
-}
-
-.eventDetails h3 {
-  margin: 0.5rem 0;
-  color: #2c3e50;
-  font-size: 1.2rem;
-}
-
-/* סטטוסים צבעוניים */
-.approved {
-  color: #27ae60;
-  font-weight: bold;
-}
-.pending {
-  color: #f39c12;
-  font-weight: bold;
-}
-.rejected {
-  color: #e74c3c;
-  font-weight: bold;
-}
-.cancelled {
-  color: #95a5a6;
-  font-weight: bold;
-  text-decoration: line-through;
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 1.5rem;
-}
-
-.actions button {
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  transition: 0.3s;
-}
-
-.approveBtn {
-  background-color: #27ae60;
-  color: white;
-}
-.rejectBtn {
-  background-color: #e74c3c;
-  color: white;
-}
-.approveBtn:hover {
-  background-color: #219150;
 }
 
 .detailsSection {
-  background: #f8f9fa;
-  padding: 10px;
+  background: #f8fafc;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.detailsSection strong {
+  color: #1a2634;
+}
+
+.smallText {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.approved { color: #15803d; font-weight: 700; }
+.pending { color: #c2410c; font-weight: 700; }
+.rejected { color: #dc2626; font-weight: 700; }
+.cancelled { color: #94a3b8; font-weight: 700; text-decoration: line-through; }
+.deny { color: #dc2626; font-weight: 700; }
+
+.statusBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.statusApproved { background: #dcfce7; color: #15803d; }
+.statusPending { background: #fff7ed; color: #c2410c; }
+.statusRejected { background: #fef2f2; color: #dc2626; }
+.statusCancelled { background: #f1f5f9; color: #64748b; }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.actions button,
+.updateBtn,
+.reviewBtn {
+  padding: 7px 14px;
   border-radius: 8px;
-  margin: 1rem 0;
-  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.updateBtn {
+  background: #f8fafc;
+  color: #1a2634;
+  border: 1.5px solid #d4af37;
+}
+
+.updateBtn:hover {
+  background: #d4af37;
+}
+
+.approveBtn {
+  background: linear-gradient(135deg, #d4af37, #c9a227);
+  color: #1a2634;
+}
+
+.approveBtn:hover {
+  transform: translateY(-1px);
+}
+
+.rejectBtn {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+}
+
+.rejectBtn:hover {
+  background: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
+}
+
+.reviewBtn {
+  background: #1a2634;
+  color: #fff;
+}
+
+.reviewBtn:hover {
+  background: #243447;
+}
+
+.reviewReceived {
+  margin-top: 8px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+.reviewReceived h4 {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.reviewReceived p {
+  margin: 6px 0 0;
+  color: #475569;
+  font-style: italic;
 }

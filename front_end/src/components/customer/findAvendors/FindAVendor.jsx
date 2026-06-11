@@ -18,6 +18,9 @@ export default function FindAVendor({ user }) {
   const [selectedChiefIds, setSelectedChiefIds] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [allProviders, setAllProviders] = useState([]);
   const [providers, setProviders] = useState([]);
   const [isSearch, setIsSearch] = useState(false);
   const [searchParams, setSearchParams] = useState({
@@ -31,16 +34,29 @@ export default function FindAVendor({ user }) {
 
   const eventToUpdate = location.state?.Event;
   const fetchAllServices = async () => {
+    setIsInitialLoading(true);
+    setLoadError("");
     try {
       const response = await axios.get(
         "http://localhost:3030/customer/AllServices",
         { withCredentials: true },
       );
       if (response.data.success) {
-        setProviders(response.data.data);
+        const data = (Array.isArray(response.data.data) ? response.data.data : [])
+          .filter((p) => p && p.id);
+        setAllProviders(data);
+        setProviders(data);
+      } else {
+        setLoadError("Could not load vendors.");
       }
     } catch (error) {
       console.error("Fetch failed:", error.message);
+      setLoadError(
+        error.response?.data?.message ||
+          "Failed to load vendors. Make sure you are logged in as a customer.",
+      );
+    } finally {
+      setIsInitialLoading(false);
     }
   };
 
@@ -61,7 +77,6 @@ export default function FindAVendor({ user }) {
         event_id: eventToUpdate.event_id || null,
       });
       setIsUpdating(true);
-      setIsSearch(true);
       setSelectedHallId(location.state?.hallId || null);
       setSelectedChiefIds(location.state?.ChiefIds || []);
     }
@@ -193,27 +208,37 @@ export default function FindAVendor({ user }) {
     }
   }
   return (
-    <div>
+    <div className={classes.page}>
       <Search
         setProviders={setProviders}
+        allProviders={allProviders}
         setIsLoading={setIsLoading}
         isLoading={isLoading}
         setSearchParams={setSearchParams}
         searchParams={searchParams}
         setIsSearch={setIsSearch}
+        isSearch={isSearch}
         validation={validation}
       />
 
       <div className={classes.providersGrid}>
-        {providers.length === 0 && (
+        {isInitialLoading && (
+          <p className={classes.loadingBar}>Loading vendors...</p>
+        )}
+        {!isInitialLoading && loadError && (
+          <p className={classes.noResults}>{loadError}</p>
+        )}
+        {!isInitialLoading && !loadError && providers.length === 0 && (
           <p className={classes.noResults}>
-            No vendors found for your criteria.
+            {isSearch
+              ? "No vendors found for your criteria."
+              : "No approved vendors are available yet."}
           </p>
         )}
         {providers.map((p) => (
           <div key={p.id} className={classes.selector}>
             {isSearch && (
-              <div>
+              <label className={classes.selectRow}>
                 <input
                   type="checkbox"
                   checked={
@@ -223,8 +248,8 @@ export default function FindAVendor({ user }) {
                   }
                   onChange={() => toggleProviderSelection(p)}
                 />
-                <span>Select</span>
-              </div>
+                <span>Select for booking</span>
+              </label>
             )}
             <ServiceCard
               user={user}
