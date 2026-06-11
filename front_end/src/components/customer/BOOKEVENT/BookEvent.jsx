@@ -32,7 +32,7 @@ export default function BookEvent({ user }) {
 
   useEffect(() => {
     if (!location.state) {
-      navigate("/findVendor");
+      navigate("/customer/find-vendor");
       return;
     }
 
@@ -93,7 +93,7 @@ export default function BookEvent({ user }) {
       );
       if (response.data.success) {
         alert("Event Booked Successfully!");
-        navigate("/myBooking");
+        navigate("/customer/my-booking");
       }
     } catch (error) {
       console.error("Save failed:", error);

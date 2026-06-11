@@ -4,11 +4,10 @@ import classes from "./home.module.css";
 // import backGround from "../assets/BackGround.png";
 import { useNavigate } from "react-router-dom";
 
-
 export default function Home() {
-  const navigate=useNavigate()
-  function handleClick(){
-    navigate("/login")
+  const navigate = useNavigate();
+  function handleClick() {
+    navigate("/auth/login");
   }
   return (
     <section>

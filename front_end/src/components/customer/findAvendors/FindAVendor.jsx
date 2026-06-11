@@ -124,7 +124,7 @@ export default function FindAVendor({ user }) {
   };
 
   const handleBookingClick = () => {
-    navigate("/bookEvent", {
+    navigate("/customer/book-event", {
       state: {
         dataToEvent: searchParams,
         hallId: selectedHallId,
@@ -148,7 +148,7 @@ export default function FindAVendor({ user }) {
 
       if (response.data.success) {
         alert("Event updated successfully!");
-        navigate("/myBooking");
+        navigate("/customer/my-booking");
       }
     } catch (error) {
       console.error("Update failed:", error);
