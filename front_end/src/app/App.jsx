@@ -150,58 +150,6 @@ function App() {
             </Route>
           </Route>
 
-          <Route
-            path="/findavendor"
-            element={<Navigate to="/customer/find-vendor" replace />}
-          />
-          <Route
-            path="/bookEvent"
-            element={<Navigate to="/customer/book-event" replace />}
-          />
-          <Route
-            path="/myBooking"
-            element={<Navigate to="/customer/my-booking" replace />}
-          />
-          <Route
-            path="/MyFavoriteProviders"
-            element={<Navigate to="/customer/favorites" replace />}
-          />
-          <Route
-            path="/usersmanagment"
-            element={<Navigate to="/admin/users" replace />}
-          />
-          <Route
-            path="/servicesapprovals"
-            element={<Navigate to="/admin/services-approvals" replace />}
-          />
-          <Route
-            path="/myDashboard"
-            element={<Navigate to="/provider/dashboard" replace />}
-          />
-          <Route
-            path="/myEventsAndCalendar"
-            element={<Navigate to="/provider/calendar" replace />}
-          />
-          <Route
-            path="/myCommentsAndReviews"
-            element={<Navigate to="/provider/reviews" replace />}
-          />
-          <Route
-            path="/businessAccount"
-            element={<Navigate to="/provider/business" replace />}
-          />
-          <Route
-            path="/Notifications"
-            element={<Navigate to="/notifications" replace />}
-          />
-          <Route
-            path="/login"
-            element={<Navigate to="/auth/login" replace />}
-          />
-          <Route
-            path="/register"
-            element={<Navigate to="/auth/register" replace />}
-          />
         </Route>
 
         <Route path="/not-found" element={<NotFound />} />

@@ -1,49 +1,64 @@
-import Navbar from "../NavBar/Navbar";
 import classes from "./home.module.css";
-// import home_background from "../assets/home_background.png";
-// import backGround from "../assets/BackGround.png";
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const navigate = useNavigate();
+
   function handleClick() {
     navigate("/auth/login");
   }
+
   return (
-    <section>
+    <section className={classes.page}>
       <main className={classes.main}>
-        <h1>
-          Welcome to EventHub: One solution for planning your perfect event
-        </h1>
-
-        <div className={classes.mdiv}>
-          Discover, manage and connect with event professionals in one place.
-          The online platform linking clients to professional suppliers.
-        </div>
-
-        <div className={classes.start} onClick={handleClick}>
-          START PLANNING YOUR EVENT
+        <div className={classes.hero}>
+          <span className={classes.badge}>Your Event, Perfectly Planned</span>
+          <h1>
+            Welcome to <span className={classes.brand}>EventHub</span>
+          </h1>
+          <p className={classes.tagline}>
+            One solution for planning your perfect event
+          </p>
+          <p className={classes.mdiv}>
+            Discover, manage and connect with event professionals in one place.
+            The online platform linking clients to professional suppliers.
+          </p>
+          <button type="button" className={classes.start} onClick={handleClick}>
+            Start Planning Your Event
+          </button>
         </div>
 
         <div className={classes.container}>
-          <p>Who Is It For?</p>
+          <h2 className={classes.sectionTitle}>Who Is It For?</h2>
           <div className={classes.mid}>
             <div className={classes.infoCard}>
-              <p>FOR CLIENTS</p>
-              <p>Search suppliers</p>
-              <p>Manage time</p>
+              <span className={classes.cardIcon}>👤</span>
+              <p>For Clients</p>
+              <ul>
+                <li>Search trusted suppliers</li>
+                <li>Book halls &amp; catering</li>
+                <li>Manage your events</li>
+              </ul>
             </div>
 
             <div className={classes.infoCard}>
-              <p>FOR SUPPLIERS</p>
-              <p>Grow business</p>
-              <p>Showcase work</p>
+              <span className={classes.cardIcon}>🏢</span>
+              <p>For Suppliers</p>
+              <ul>
+                <li>Grow your business</li>
+                <li>Showcase your work</li>
+                <li>Manage bookings</li>
+              </ul>
             </div>
 
             <div className={classes.infoCard}>
-              <p>FOR ADMIN</p>
-              <p>Oversee content</p>
-              <p>Manage system</p>
+              <span className={classes.cardIcon}>✨</span>
+              <p>How It Works</p>
+              <ul>
+                <li>Search &amp; compare vendors</li>
+                <li>Book your dream team</li>
+                <li>Enjoy your perfect day</li>
+              </ul>
             </div>
           </div>
         </div>

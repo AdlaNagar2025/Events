@@ -54,7 +54,7 @@ export default function AddUser() {
 
       if (response.data.success) {
         alert("User added successfully!");
-        navigate("/usersmanagment"); // ניווט חזרה לדף ניהול המשתמשים
+        navigate("/admin/users");
       } else {
         setError(response.data.message || "Failed to add user.");
       }
