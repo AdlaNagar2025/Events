@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import axios from "axios";
 
 import AuthLayout from "../layouts/AuthLayout";
@@ -24,6 +29,7 @@ import FavoriteProviders from "../components/customer/FavoriteProviders";
 import Notification from "../components/Notifications/Notification";
 import CommentsAndReviews from "../components/provider/CommentsAndReviews";
 import Dashboard from "../components/provider/Dashboard";
+import AddUser from "../components/admin/AddUser";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -57,7 +63,10 @@ function App() {
         <Route path="/auth" element={<AuthLayout />}>
           <Route element={<GuestRoute user={user} loading={loading} />}>
             <Route path="login" element={<Login onLoginSuccess={setUser} />} />
-            <Route path="register" element={<Register onLoginSuccess={setUser} />} />
+            <Route
+              path="register"
+              element={<Register onLoginSuccess={setUser} />}
+            />
           </Route>
         </Route>
 
@@ -88,7 +97,10 @@ function App() {
             <Route path="find-vendor" element={<FindAVendor user={user} />} />
             <Route path="book-event" element={<BookEvent user={user} />} />
             <Route path="my-booking" element={<MyBooking user={user} />} />
-            <Route path="favorites" element={<FavoriteProviders user={user} />} />
+            <Route
+              path="favorites"
+              element={<FavoriteProviders user={user} />}
+            />
           </Route>
 
           <Route
@@ -138,19 +150,58 @@ function App() {
             </Route>
           </Route>
 
-          <Route path="/findavendor" element={<Navigate to="/customer/find-vendor" replace />} />
-          <Route path="/bookEvent" element={<Navigate to="/customer/book-event" replace />} />
-          <Route path="/myBooking" element={<Navigate to="/customer/my-booking" replace />} />
-          <Route path="/MyFavoriteProviders" element={<Navigate to="/customer/favorites" replace />} />
-          <Route path="/usersmanagment" element={<Navigate to="/admin/users" replace />} />
-          <Route path="/servicesapprovals" element={<Navigate to="/admin/services-approvals" replace />} />
-          <Route path="/myDashboard" element={<Navigate to="/provider/dashboard" replace />} />
-          <Route path="/myEventsAndCalendar" element={<Navigate to="/provider/calendar" replace />} />
-          <Route path="/myCommentsAndReviews" element={<Navigate to="/provider/reviews" replace />} />
-          <Route path="/businessAccount" element={<Navigate to="/provider/business" replace />} />
-          <Route path="/Notifications" element={<Navigate to="/notifications" replace />} />
-          <Route path="/login" element={<Navigate to="/auth/login" replace />} />
-          <Route path="/register" element={<Navigate to="/auth/register" replace />} />
+          <Route
+            path="/findavendor"
+            element={<Navigate to="/customer/find-vendor" replace />}
+          />
+          <Route
+            path="/bookEvent"
+            element={<Navigate to="/customer/book-event" replace />}
+          />
+          <Route
+            path="/myBooking"
+            element={<Navigate to="/customer/my-booking" replace />}
+          />
+          <Route
+            path="/MyFavoriteProviders"
+            element={<Navigate to="/customer/favorites" replace />}
+          />
+          <Route
+            path="/usersmanagment"
+            element={<Navigate to="/admin/users" replace />}
+          />
+          <Route
+            path="/servicesapprovals"
+            element={<Navigate to="/admin/services-approvals" replace />}
+          />
+          <Route
+            path="/myDashboard"
+            element={<Navigate to="/provider/dashboard" replace />}
+          />
+          <Route
+            path="/myEventsAndCalendar"
+            element={<Navigate to="/provider/calendar" replace />}
+          />
+          <Route
+            path="/myCommentsAndReviews"
+            element={<Navigate to="/provider/reviews" replace />}
+          />
+          <Route
+            path="/businessAccount"
+            element={<Navigate to="/provider/business" replace />}
+          />
+          <Route
+            path="/Notifications"
+            element={<Navigate to="/notifications" replace />}
+          />
+          <Route
+            path="/login"
+            element={<Navigate to="/auth/login" replace />}
+          />
+          <Route
+            path="/register"
+            element={<Navigate to="/auth/register" replace />}
+          />
         </Route>
 
         <Route path="/not-found" element={<NotFound />} />

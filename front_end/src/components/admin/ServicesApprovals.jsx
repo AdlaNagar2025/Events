@@ -7,6 +7,7 @@ export default function ServicesApprovals({ user }) {
   const [type, setType] = useState("pending");
   const [providers, setProviders] = useState([]);
   const [selectedProvider, setSelectedProvider] = useState(null);
+  console.log(providers);
   useEffect(() => {
     console.log(user);
     const fetchAllProviders = async () => {
@@ -24,17 +25,19 @@ export default function ServicesApprovals({ user }) {
   }, [type]);
   console.log(providers);
 
-  async function handleStatusChange(id, provider_type, newStatus) {
+  async function handleStatusChange(
+    id,
+    provider_type,
+    newStatus,
+    reason = null,
+  ) {
     try {
       const tableName = provider_type === "Chief" ? "chiefs" : "halls";
       const response = await axios.post(
         "http://localhost:3030/admin/approve-business",
-        { type: tableName, id, newStatus },
+        { type: tableName, id, newStatus, reason },
         { withCredentials: true },
       );
-      // if (response.data.success) {
-      //  //TGEEER STATUS IN TABLE DISABLE
-      // }
       alert(response.data.message);
       setProviders((prev) => prev.filter((p) => p.id !== id));
     } catch (error) {
@@ -45,7 +48,7 @@ export default function ServicesApprovals({ user }) {
   if (selectedProvider) {
     return (
       <div>
-        <button onClick={() => setSelectedProvider(null)}>Go Back</button>
+        <button onClick={() => setSelectedProvider(null)}>⬅️ Go Back</button>
         <BusinessProfile user={user} provider={selectedProvider} />
       </div>
     );
@@ -69,8 +72,9 @@ export default function ServicesApprovals({ user }) {
           <table className={classes.customtable}>
             <thead>
               <tr>
-                <th>Provider Name</th>
+                <th>Service Name &Provider</th>
                 <th>Type</th>
+                <th>Submitted Date</th>
                 <th>Status</th>
                 <th>Show Profile</th>
                 <th>Action</th>
@@ -79,15 +83,29 @@ export default function ServicesApprovals({ user }) {
             <tbody>
               {providers.map((provider) => (
                 <tr key={provider.id}>
-                  <td>{provider.first_name}</td>
-                  <td>{provider.provider_type}</td>
-
                   <td>
-                    {" "}
+                    {provider.ServiceName}
+                    {provider.provider_type === "Hall_Owner"
+                      ? provider.first_name
+                      : ""}
+                  </td>
+                  <td>
+                    {provider.provider_type === "Hall_Owner"
+                      ? "Venue"
+                      : "Catering"}
+                  </td>
+                  <td>{provider?.submitted_at}</td>
+                  <td>
                     <span
                       style={{
                         color:
-                          provider.status === "pending" ? "#f39c12" : "#27ae60",
+                          provider?.status?.toLowerCase() === "pending"
+                            ? "#f39c12" // צהוב-כתום
+                            : provider?.status?.toLowerCase() === "approved"
+                              ? "#27ae60" // ירוק
+                              : "#c0392b", // אדום ל-DENY
+                        fontWeight: "bold",
+                        textTransform: "uppercase",
                       }}
                     >
                       {provider.status}
@@ -120,13 +138,22 @@ export default function ServicesApprovals({ user }) {
                       {type !== "deny" && (
                         <button
                           className={classes.denyBtn}
-                          onClick={() =>
+                          onClick={() => {
+                            const reason = prompt(
+                              "Please enter the reason for rejection:",
+                            );
+                            if (reason === null) return; // האדמין לחץ על Cancel, לא עושים כלום
+                            if (reason.trim() === "") {
+                              alert("You must provide a reason for rejection.");
+                              return;
+                            }
                             handleStatusChange(
                               provider.id,
                               provider.provider_type,
                               "Deny",
-                            )
-                          }
+                              reason,
+                            );
+                          }}
                         >
                           Deny
                         </button>

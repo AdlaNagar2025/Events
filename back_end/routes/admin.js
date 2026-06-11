@@ -2,6 +2,7 @@
  * ראוטר לניהול מערכת (Admin Router)
  * מכיל את כל נתיבי ה-API שחשופים רק למנהלי מערכת.
  */
+const register = require("../database/queries/register");
 const express = require("express");
 const { isConnected, isAdmin, isActive } = require("../Middleware/auth");
 const {
@@ -164,18 +165,37 @@ router.get("/allServices/:status", async (req, res) => {
  *  אישור עסק
  * כאן האדמין מקבל החלטה על עסק שממתין. הוא שולח 'approved' או 'deny'.
  */
+// router.post("/approve-business", async (req, res) => {
+//   console.log(req.body);
+//   const { type, id, newStatus } = req.body;
+//   if (!type || !id || !newStatus) {
+//     return res
+//       .status(400)
+//       .json({ success: false, message: "Missing required fields" });
+//   }
+//   try {
+//     await updateBusinessStatus(type, id, newStatus);
+//     res.json({ success: true, message: `Status updated to ${newStatus}` });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Update failed" });
+//   }
+// });
+
 router.post("/approve-business", async (req, res) => {
   console.log(req.body);
-  const { type, id, newStatus } = req.body;
+  const { type, id, newStatus, reason } = req.body;
+
   if (!type || !id || !newStatus) {
     return res
       .status(400)
       .json({ success: false, message: "Missing required fields" });
   }
+
   try {
-    await updateBusinessStatus(type, id, newStatus);
+    await updateBusinessStatus(type, id, newStatus, reason);
     res.json({ success: true, message: `Status updated to ${newStatus}` });
   } catch (error) {
+    console.error("Update failed:", error);
     res.status(500).json({ success: false, message: "Update failed" });
   }
 });
@@ -256,8 +276,6 @@ router.get("/allCommentsAndReviews/:providerId", async (req, res) => {
   }
 });
 
-
-
 router.get("/userStats", async (req, res) => {
   try {
     const result = await getAllUserStats();
@@ -276,6 +294,19 @@ router.get("/userStats", async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Internal server error" });
+  }
+});
+
+router.post("/addUser", async (req, res) => {
+  try {
+    const result = await register(req.body);
+    return res.json(result);
+  } catch (error) {
+    console.error("DEBUG ERROR:", error);
+    return res.status(500).json({
+      msg: "Server Error",
+      devError: error.message,
+    });
   }
 });
 
