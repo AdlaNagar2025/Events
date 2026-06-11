@@ -9,7 +9,7 @@ const doQuery = require("../query");
  * מחזיר: מזהה, שם פרטי, שם משפחה, אימייל ותפקיד.
  */
 async function getAllUsers() {
-  const sql = `SELECT id, first_name, last_name, email, role , is_active FROM users`;
+  const sql = `SELECT id, first_name, last_name, email, role , is_active , created_at FROM users ORDER BY created_at DESC`;
   return await doQuery(sql, []);
 }
 
@@ -107,7 +107,6 @@ async function deactivateUser(status, userId) {
   return await doQuery(sql, [status, userId]);
 }
 
-
 async function getAllUserStats() {
   const sql = `SELECT 
     COUNT(*) AS totalUsers,
@@ -117,9 +116,6 @@ async function getAllUserStats() {
 FROM users;`;
   return await doQuery(sql, []);
 }
-
-
-
 
 module.exports = {
   getAllUsers,

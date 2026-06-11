@@ -2,6 +2,7 @@
  * ראוטר לניהול מערכת (Admin Router)
  * מכיל את כל נתיבי ה-API שחשופים רק למנהלי מערכת.
  */
+const register = require("../database/queries/register");
 const express = require("express");
 const { isConnected, isAdmin, isActive } = require("../Middleware/auth");
 const {
@@ -256,8 +257,6 @@ router.get("/allCommentsAndReviews/:providerId", async (req, res) => {
   }
 });
 
-
-
 router.get("/userStats", async (req, res) => {
   try {
     const result = await getAllUserStats();
@@ -276,6 +275,19 @@ router.get("/userStats", async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Internal server error" });
+  }
+});
+
+router.post("/addUser", async (req, res) => {
+  try {
+    const result = await register(req.body);
+    return res.json(result);
+  } catch (error) {
+    console.error("DEBUG ERROR:", error);
+    return res.status(500).json({
+      msg: "Server Error",
+      devError: error.message,
+    });
   }
 });
 

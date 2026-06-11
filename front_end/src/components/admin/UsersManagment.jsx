@@ -21,17 +21,13 @@ export default function UsersManagment() {
     inactiveUsers: 0,
     newRegistrations: 0,
   });
-
+  //Filter Users According to the searching role status
   const filteredUsers = users.filter((user) => {
     const fullName = `${user?.first_name} ${user?.last_name}`.toLowerCase();
-
     const email = (user?.email || "").toLowerCase();
-
     const search = searchTerm.toLowerCase();
-
     const roleMatch =
       role === "" || user.role.toLowerCase() === role.toLowerCase();
-
     const statusMatch =
       Number(status) === -1 || user.is_active === Number(status);
 
@@ -43,8 +39,6 @@ export default function UsersManagment() {
   });
 
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
-
-  console.log(filteredUsers, "lnxajnj");
 
   useEffect(() => {
     const fetchUserStats = async () => {
@@ -74,16 +68,10 @@ export default function UsersManagment() {
     const fetchUsers = async () => {
       setUsers([]);
       try {
-        let url;
-        // if (role === "All Users") url = "http://localhost:3030/admin/allUsers";
-        // else {
-        const rolePath = role.slice(0, role.length - 1);
-        // url = `http://localhost:3030/admin/role/${rolePath}`
-        url = "http://localhost:3030/admin/allUsers";
-
-        // }
-
-        const response = await axios.get(url, { withCredentials: true });
+        const response = await axios.get(
+          "http://localhost:3030/admin/allUsers",
+          { withCredentials: true },
+        );
         if (response.data.success) {
           setUsers(response.data.data);
         }
@@ -240,7 +228,7 @@ export default function UsersManagment() {
                     {user.role}
                   </span>{" "}
                 </td>
-                <td>{new Date(user.created_at).toLocaleDateString()}</td>{" "}
+                <td>{new Date(user.created_at).toLocaleDateString()}</td>
                 <td
                   style={{
                     color: user?.is_active ? "green" : "red",

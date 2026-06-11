@@ -25,6 +25,7 @@ import FavoriteProviders from "../components/customer/FavoriteProviders";
 import Notification from "../components/Notifications/Notification";
 import CommentsAndReviews from "../components/provider/CommentsAndReviews";
 import Dashboard from "../components/provider/Dashboard";
+import AddUser from "../components/admin/AddUser";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -124,6 +125,7 @@ function App() {
                   <CommentsAndReviews role={user?.role} user={user?.id} />
                 }
               />
+              <Route path="/admin/add-user" element={<AddUser />} />
               <Route path="*" element={<h2>Page Not Found 404</h2>} />
             </Routes>
           </main>
