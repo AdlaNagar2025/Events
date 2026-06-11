@@ -125,12 +125,14 @@ function App() {
                   <CommentsAndReviews role={user?.role} user={user?.id} />
                 }
               />
-              <Route path="/admin/add-user" element={<AddUser />} />
-              <Route path="*" element={<h2>Page Not Found 404</h2>} />
-            </Routes>
-          </main>
-        </div>
-      </div>
+            </Route>
+          </Route>
+
+        </Route>
+
+        <Route path="/not-found" element={<NotFound />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </Router>
   );
 }
