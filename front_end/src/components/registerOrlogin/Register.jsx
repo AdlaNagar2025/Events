@@ -2,10 +2,21 @@ import { useState } from "react";
 import classes from "./registerorlogin.module.css";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-/**
- * Register Component - מאפשר למשתמשים חדשים להצטרף למערכת לפי תפקיד נבחר.
- * מטפל באיסוף הנתונים, הצפנתם (בצד שרת) והפניה לדף החשבון לאחר הצלחה.
- */
+
+function getDefaultRouteForRole(role) {
+  switch (role) {
+    case "Customer":
+      return "/account";
+    case "Admin":
+      return "/admin/users";
+    case "Chief":
+    case "Hall_Owner":
+      return "/provider/dashboard";
+    default:
+      return "/";
+  }
+}
+
 export default function Register({ onLoginSuccess }) {
   const navigate = useNavigate();
 
@@ -17,23 +28,15 @@ export default function Register({ onLoginSuccess }) {
     password: "",
     role: "",
   });
-  /**
-   * handleInputChange - מעדכנת את ה-State המקומי בכל שינוי בשדות הטופס.
-   * פועלת באופן דינמי על פי מאפיין ה-name של ה-input.
-   */
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  /**
-   * handleRegisterSubmit - שולחת את נתוני המשתמש החדש לשרת ליצירת חשבון.
-   * במידה והרישום הצליח, המערכת מבצעת כניסה אוטומטית (Login) ומעבירה לדף החשבון.
-   */
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
 
-    // בדיקה בסיסית שחובה לבחור תפקיד
     if (!formData.role) {
       return alert("Please select a role before registering");
     }
@@ -47,14 +50,11 @@ export default function Register({ onLoginSuccess }) {
 
       if (response.data.success) {
         onLoginSuccess(response.data.user);
-        if (response.data.user?.role === "Customer" || response.data.user?.role==="Admin") {
-          // עדכון המצב הגלובלי באפליקציה
-          navigate("/account");
-        } else if (
-          response.data.user?.role === "Chief" ||
-          response.data.user?.role === "Hall_Owner"
-        ) {
-          navigate("/businessAccount");
+        const role = response.data.user?.role;
+        if (role === "Chief" || role === "Hall_Owner") {
+          navigate("/provider/business");
+        } else {
+          navigate(getDefaultRouteForRole(role));
         }
       } else {
         alert(response.data.message);
@@ -66,52 +66,83 @@ export default function Register({ onLoginSuccess }) {
   };
 
   return (
-      <form className={classes.form} onSubmit={handleRegisterSubmit}>
-        <h2>Create Your Account</h2>
-        <p>Join EventHub to manage your events effortlessly</p>
-        <h3>Personal Details</h3>
+    <form className={classes.form} onSubmit={handleRegisterSubmit}>
+      <h2>Create Your Account</h2>
+      <p className={classes.subtitle}>
+        Join EventHub to manage your events effortlessly
+      </p>
+
+      <p className={classes.sectionTitle}>Personal Details</p>
+
+      <div className={classes.nameRow}>
+        <div className={classes.fieldGroup}>
+          <label htmlFor="first_name">First Name</label>
+          <input
+            id="first_name"
+            type="text"
+            name="first_name"
+            placeholder="First name"
+            value={formData.first_name}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+        <div className={classes.fieldGroup}>
+          <label htmlFor="last_name">Last Name</label>
+          <input
+            id="last_name"
+            type="text"
+            name="last_name"
+            placeholder="Last name"
+            value={formData.last_name}
+            onChange={handleInputChange}
+          />
+        </div>
+      </div>
+
+      <div className={classes.fieldGroup}>
+        <label htmlFor="email">Email Address</label>
         <input
-          type="text"
-          name="first_name"
-          placeholder="First Name"
-          value={formData.first_name}
-          onChange={handleInputChange}
-          required
-        />
-        <input
-          type="text"
-          name="last_name"
-          placeholder="Last Name"
-          value={formData.last_name}
-          onChange={handleInputChange}
-        />
-        <input
+          id="email"
           type="email"
           name="email"
-          placeholder="Email Address"
+          placeholder="you@example.com"
           value={formData.email}
           onChange={handleInputChange}
           required
         />
+      </div>
+
+      <div className={classes.fieldGroup}>
+        <label htmlFor="phone">Phone</label>
         <input
+          id="phone"
           type="tel"
           name="phone"
-          placeholder="Phone (e.g. 0501234567)"
+          placeholder="0501234567"
           pattern="^05[023458]\d{7}$"
           value={formData.phone}
           onChange={handleInputChange}
         />
+      </div>
+
+      <div className={classes.fieldGroup}>
+        <label htmlFor="password">Password</label>
         <input
+          id="password"
           type="password"
           name="password"
-          placeholder="Choose a Password"
+          placeholder="Choose a strong password"
           value={formData.password}
           onChange={handleInputChange}
           required
         />
-        <section className={classes.roleSelection}>
-          <label>Select Your Role:</label>
-          <div className={classes.radioGroup}>
+      </div>
+
+      <section className={classes.roleSelection}>
+        <label>Select Your Role</label>
+        <div className={classes.radioGroup}>
+          <label>
             <input
               type="radio"
               name="role"
@@ -120,6 +151,8 @@ export default function Register({ onLoginSuccess }) {
               checked={formData.role === "Customer"}
             />
             Customer
+          </label>
+          <label>
             <input
               type="radio"
               name="role"
@@ -127,7 +160,9 @@ export default function Register({ onLoginSuccess }) {
               onChange={handleInputChange}
               checked={formData.role === "Hall_Owner"}
             />
-            Hall_Owner
+            Hall Owner
+          </label>
+          <label>
             <input
               type="radio"
               name="role"
@@ -136,16 +171,17 @@ export default function Register({ onLoginSuccess }) {
               checked={formData.role === "Chief"}
             />
             Chief
-          
-          </div>
-        </section>
-        <button type="submit" className={classes.submitBtn}>
-          Sign Up Now
-        </button>
-        <p>
-          Already have an account? <Link to="/login">Log In</Link>
-        </p>
-      </form>
+          </label>
+        </div>
+      </section>
 
+      <button type="submit" className={classes.submitBtn}>
+        Sign Up Now
+      </button>
+
+      <p className={classes.footerText}>
+        Already have an account? <Link to="/auth/login">Log In</Link>
+      </p>
+    </form>
   );
 }

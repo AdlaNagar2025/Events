@@ -73,7 +73,7 @@ export default function MyBooking({ user, onStatusChange }) {
   }, [user, rolePath, type]);
 
   function update(e) {
-    navigate("/findavendor", {
+    navigate("/customer/find-vendor", {
       state: {
         Event: e,
         hallId: e.hall_id,

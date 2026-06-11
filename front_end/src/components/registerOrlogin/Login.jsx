@@ -1,28 +1,39 @@
 import { useState } from "react";
 import classes from "./registerorlogin.module.css";
 import axios from "axios";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-/**
- * Login Component - מטפל באימות משתמשים קיימים והפנייתם לאזור האישי.
- */
+import { Link, useNavigate } from "react-router-dom";
+
+function getDefaultRouteForRole(role) {
+  switch (role) {
+    case "Customer":
+      return "/account";
+    case "Admin":
+      return "/admin/users";
+    case "Chief":
+    case "Hall_Owner":
+      return "/provider/dashboard";
+    default:
+      return "/";
+  }
+}
+
 export default function Login({ onLoginSuccess }) {
   const navigate = useNavigate();
   const [credentials, setCredentials] = useState({ email: "", password: "" });
-  /**
-   * handleInputChange - מעדכנת את ה-State בכל שינוי באחד משדות הקלט (Input).
-   * פונקציה גנרית המשתמשת במאפיין ה-name של השדה כדי לעדכן את הערך המתאים.
-   */
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCredentials((prev) => ({ ...prev, [name]: value }));
+    if (error) setError("");
   };
-  /**
-   * handleLoginSubmit - שולחת בקשת POST לשרת לאימות הפרטים.
-   * במקרה של הצלחה: מעדכנת את ה-State של האפליקציה, שומרת Session ועוברת לדף החשבון.
-   */
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
+
     try {
       const response = await axios.post(
         "http://localhost:3030/user/login",
@@ -31,54 +42,83 @@ export default function Login({ onLoginSuccess }) {
       );
       if (response.data.success) {
         onLoginSuccess(response.data.user);
-        if (response.data.user?.role === "Customer") {
-          navigate("/account");
-        } else if (
-          response.data.user?.role === "Chief" ||
-          response.data.user?.role === "Hall_Owner"
-        ) {
-          navigate("/myDashboard");
-        } else if (response.data.user?.role === "Admin") navigate("/account");
+        navigate(getDefaultRouteForRole(response.data.user?.role));
       } else {
-        alert(response.data.message);
+        setError(response.data.message || "Invalid email or password.");
       }
-    } catch (error) {
-      console.error("Login Error:", error);
+    } catch (err) {
+      console.error("Login Error:", err);
 
-      if (error.response && error.response.data) {
-        alert(error.response.data.message || "Access denied");
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
       } else {
-        alert("An error occurred during login. Please try again.");
+        setError("Something went wrong. Please try again.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <form className={classes.form} onSubmit={handleLoginSubmit}>
       <h2>Welcome Back</h2>
-      <p>Sign in to your EventHub account</p>
-      <h3>Login Details</h3>
-      <input
-        type="email"
-        name="email"
-        placeholder="Email Address"
-        required
-        value={credentials.email}
-        onChange={handleInputChange}
-      />
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        required
-        value={credentials.password}
-        onChange={handleInputChange}
-      />
-      <button type="submit" className={classes.loginBtn}>
-        Sign In
+      <p className={classes.subtitle}>Sign in to your EventHub account</p>
+
+      {error && (
+        <div className={classes.errorAlert} role="alert">
+          <span className={classes.errorIcon} aria-hidden="true">
+            !
+          </span>
+          <div className={classes.errorContent}>
+            <strong>Login failed</strong>
+            <p>{error}</p>
+          </div>
+          <button
+            type="button"
+            className={classes.errorDismiss}
+            onClick={() => setError("")}
+            aria-label="Dismiss error"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      <p className={classes.sectionTitle}>Login Details</p>
+
+      <div className={classes.fieldGroup}>
+        <label htmlFor="login-email">Email Address</label>
+        <input
+          id="login-email"
+          type="email"
+          name="email"
+          placeholder="you@example.com"
+          required
+          value={credentials.email}
+          onChange={handleInputChange}
+        />
+      </div>
+
+      <div className={classes.fieldGroup}>
+        <label htmlFor="login-password">Password</label>
+        <input
+          id="login-password"
+          type="password"
+          name="password"
+          placeholder="Enter your password"
+          required
+          value={credentials.password}
+          onChange={handleInputChange}
+          className={error ? classes.inputError : ""}
+        />
+      </div>
+
+      <button type="submit" className={classes.loginBtn} disabled={loading}>
+        {loading ? "Signing in..." : "Sign In"}
       </button>
-      <p>
-        Don't have an account? <Link to="/register">Sign Up</Link>
+
+      <p className={classes.footerText}>
+        Don&apos;t have an account? <Link to="/auth/register">Sign Up</Link>
       </p>
     </form>
   );

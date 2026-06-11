@@ -3,7 +3,6 @@ import classes from "./navbar.module.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-
 export default function Navbar({ user, setUserTo }) {
   const navigate = useNavigate();
 
@@ -14,7 +13,7 @@ export default function Navbar({ user, setUserTo }) {
       });
       if (response.data.success) {
         setUserTo(null); // איפס ה-State
-        navigate("/"); // חזרה לדף הבית
+        navigate("/");
       }
     } catch (error) {
       console.error("Logout failed", error);
@@ -22,15 +21,14 @@ export default function Navbar({ user, setUserTo }) {
   };
   return (
     <nav className={classes.nav}>
-
       <div className={classes.navLinks}>
         {!user ? (
           <>
             <Link to="/" className={classes.logo}>
               EventHub
             </Link>
-            <Link to="/register">Register</Link>
-            <Link to="/login">Login</Link>
+            <Link to="/auth/register">Register</Link>
+            <Link to="/auth/login">Login</Link>
           </>
         ) : (
           <>
