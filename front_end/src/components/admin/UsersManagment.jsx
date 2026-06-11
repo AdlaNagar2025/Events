@@ -114,13 +114,29 @@ export default function UsersManagment() {
     }
   };
   return (
-    <div>
-      <div className={classes.overviewContainer}>
-        <strong>User Overview</strong>
-        <p>Total Users: {userStats.totalUsers}</p>
-        <p>Active Users: {userStats.activeUsers}</p>
-        <p>Deactive Users: {userStats.inactiveUsers}</p>
-        <p>New Registration: {userStats.newRegistrations}</p>
+    <div className={classes.page}>
+      <div className={classes.pageHeader}>
+        <h1>Users Management</h1>
+        <p>Monitor accounts, filter users, and manage access</p>
+      </div>
+
+      <div className={classes.statsGrid}>
+        <div className={classes.statCard}>
+          <span className={classes.statLabel}>Total Users</span>
+          <span className={classes.statValue}>{userStats.totalUsers}</span>
+        </div>
+        <div className={classes.statCard}>
+          <span className={classes.statLabel}>Active Users</span>
+          <span className={classes.statValue}>{userStats.activeUsers}</span>
+        </div>
+        <div className={classes.statCard}>
+          <span className={classes.statLabel}>Inactive Users</span>
+          <span className={classes.statValue}>{userStats.inactiveUsers}</span>
+        </div>
+        <div className={classes.statCard}>
+          <span className={classes.statLabel}>New Registrations</span>
+          <span className={classes.statValue}>{userStats.newRegistrations}</span>
+        </div>
       </div>
 
       <div className={classes.searchBarContainer}>
@@ -191,82 +207,82 @@ export default function UsersManagment() {
           <p>Loading users...</p>
         </div>
       ) : (
-        <table className={classes.customtable}>{/* table */}</table>
-      )}
-      <table className={classes.customtable}>
-        <thead>
-          <tr>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Joined</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {filteredUsers.length === 0 ? (
-            <tr>
-              <td colSpan="7" style={{ textAlign: "center" }}>
-                No users found
-              </td>
-            </tr>
-          ) : (
-            currentUsers.map((user) => (
-              <tr key={user?.id}>
-                <td>{user?.first_name}</td>
-                <td>{user?.last_name}</td>
-                <td>{user?.email}</td>
-                <td>
-                  <span
-                    className={`${classes.roleBadge} ${
-                      classes[user.role.toLowerCase()]
-                    }`}
-                  >
-                    {user.role}
-                  </span>{" "}
-                </td>
-                <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                <td
-                  style={{
-                    color: user?.is_active ? "green" : "red",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {user?.is_active === 1 ? "Active" : "Inactive"}
-                </td>
-                <td>
-                  <button
-                    onClick={() =>
-                      handleToggleActive(user?.id, user?.is_active)
-                    }
-                    className={
-                      user?.is_active
-                        ? classes.deactivateBtn
-                        : classes.activateBtn
-                    }
-                  >
-                    {user?.is_active ? "Deactivate" : "Activate"}
-                  </button>
-                </td>
+        <div className={classes.tableWrapper}>
+          <table className={classes.customtable}>
+            <thead>
+              <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Joined</th>
+                <th>Status</th>
+                <th>Action</th>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            </thead>
 
-      <div>
+            <tbody>
+              {filteredUsers.length === 0 ? (
+                <tr className={classes.emptyRow}>
+                  <td colSpan="7">No users found</td>
+                </tr>
+              ) : (
+                currentUsers.map((user) => (
+                  <tr key={user?.id}>
+                    <td>{user?.first_name}</td>
+                    <td>{user?.last_name}</td>
+                    <td>{user?.email}</td>
+                    <td>
+                      <span
+                        className={`${classes.roleBadge} ${
+                          classes[user.role.toLowerCase()]
+                        }`}
+                      >
+                        {user.role}
+                      </span>
+                    </td>
+                    <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                    <td>
+                      <span
+                        className={
+                          user?.is_active === 1
+                            ? classes.statusActive
+                            : classes.statusInactive
+                        }
+                      >
+                        {user?.is_active === 1 ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        onClick={() =>
+                          handleToggleActive(user?.id, user?.is_active)
+                        }
+                        className={
+                          user?.is_active
+                            ? classes.deactivateBtn
+                            : classes.activateBtn
+                        }
+                      >
+                        {user?.is_active ? "Deactivate" : "Activate"}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className={classes.pagination}>
         <button
           disabled={currentPage === 1}
           onClick={() => setCurrentPage(currentPage - 1)}
         >
           Previous
         </button>
-
-        <span> Page {currentPage} </span>
-
+        <span className={classes.pageInfo}>Page {currentPage}</span>
         <button
           disabled={indexOfLastUser >= filteredUsers.length}
           onClick={() => setCurrentPage(currentPage + 1)}

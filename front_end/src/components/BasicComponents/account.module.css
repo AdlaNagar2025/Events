@@ -1,85 +1,295 @@
-/* מיכל ראשי שמאחד את הסרגל והתוכן */
-.accountContainer {
+.page {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.pageHeader {
+  margin-bottom: 28px;
+}
+
+.pageHeader h1 {
+  margin: 0 0 6px;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #1a2634;
+  letter-spacing: -0.3px;
+}
+
+.pageHeader p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ── Profile card ── */
+.profileCard {
+  background: linear-gradient(160deg, #1a2634 0%, #243447 100%);
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(26, 38, 52, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.profileCard::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.avatar {
+  position: relative;
   display: flex;
-  gap: 40px;
-  max-width: 1200px;
-  margin: 40px auto;
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #d4af37, #c9a227);
+  color: #1a2634;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.35);
 }
 
-
-/* אזור הטופס */
-.formContainer {
-  flex: 1; /* לוקח את שאר המרחב */
+.profileName {
+  position: relative;
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
 }
 
-.form {
-  background: white;
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+.profileEmail {
+  position: relative;
+  margin: 0 0 16px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.6);
+  word-break: break-all;
 }
 
-.form h2 {
-  color: #2c3e50;
-  margin-bottom: 20px;
-  font-size: 24px;
-  border-bottom: 2px solid #f4f7f6;
-  padding-bottom: 10px;
+.roleBadge {
+  position: relative;
+  display: inline-block;
+  padding: 5px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #d4af37;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 20px;
+}
+
+.statusBadge {
+  position: relative;
+  display: block;
+  margin-top: 12px;
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.statusApproved { border-left: 3px solid #22c55e; }
+.statusPending { border-left: 3px solid #f59e0b; }
+.statusDeny { border-left: 3px solid #ef4444; }
+
+/* ── Form card ── */
+.formCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+.formTitle {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1a2634;
+}
+
+.formSubtitle {
+  margin: 0 0 24px;
+  font-size: 0.86rem;
+  color: #64748b;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.nameRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.fieldGroup {
+  margin-bottom: 16px;
+}
+
+.fieldGroup label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
 }
 
 .form input {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 0.3s;
+  padding: 12px 16px;
+  font-size: 0.92rem;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 11px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.form input::placeholder {
+  color: #94a3b8;
+}
+
+.form input:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
 }
 
 .form input:focus {
   border-color: #d4af37;
-  outline: none;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
 }
 
-/* כפתור שמירה */
 .updateBtn {
-  background-color: #d4af37;
-  color: #2c3e50;
-  padding: 14px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px 20px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a2634;
+  background: linear-gradient(135deg, #d4af37, #c9a227);
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: bold;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 10px;
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+  transition: all 0.2s ease;
 }
 
-.updateBtn:hover {
-  background-color: #b8962d;
+.updateBtn:hover:not(:disabled) {
   transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(212, 175, 55, 0.45);
 }
 
-/* הודעת ברוך הבא מעל הטופס */
-.accountContainer > p {
-  font-size: 18px;
-  color: white;
+.updateBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Alerts ── */
+.successAlert,
+.errorAlert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  animation: slideIn 0.35s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.successAlert {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-left: 4px solid #16a34a;
+}
+
+.successAlert p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #15803d;
   font-weight: 500;
 }
 
-/* התאמה לנייד */
+.errorAlert {
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  border-left: 4px solid #dc2626;
+}
+
+.errorAlert p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #b91c1c;
+  font-weight: 500;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #d4af37;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @media (max-width: 768px) {
-  .accountContainer {
-    flex-direction: column;
+  .layout {
+    grid-template-columns: 1fr;
   }
-  .sideBar {
-    width: 100%;
+
+  .nameRow {
+    grid-template-columns: 1fr;
+  }
+
+  .profileCard {
+    padding: 24px 20px;
   }
 }

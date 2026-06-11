@@ -69,12 +69,16 @@ export default function AddUser() {
   };
 
   return (
-    <div className={classes.container}>
-      <h2 className={classes.title}>Add New User</h2>
+    <div className={classes.page}>
+      <div className={classes.pageHeader}>
+        <h2 className={classes.title}>Add New User</h2>
+        <p>Create a new account and assign a role</p>
+      </div>
 
-      {error && <div className={classes.error}>{error}</div>}
+      <div className={classes.formCard}>
+        {error && <div className={classes.error}>{error}</div>}
 
-      <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
         <div className={classes.formGroup}>
           <label>First Name:</label>
           <input
@@ -154,7 +158,8 @@ export default function AddUser() {
             {loading ? "Adding..." : "Add User"}
           </button>
         </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

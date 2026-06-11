@@ -23,11 +23,13 @@
 }
 
 .sidebarContainer {
-  width: 250px;
-  min-width: 250px;
+  width: 260px;
+  min-width: 260px;
   flex-shrink: 0;
-  background-color: #1a2634;
-  color: white;
+  display: flex;
+  flex-direction: column;
+  background: #1a2634;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
 }
 
 .contentArea {

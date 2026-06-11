@@ -45,27 +45,45 @@ export default function ServicesApprovals({ user }) {
     }
   }
 
+  function getStatusClass(status) {
+    const s = status?.toLowerCase();
+    if (s === "pending") return classes.statusPending;
+    if (s === "approved") return classes.statusApproved;
+    return classes.statusDeny;
+  }
+
   if (selectedProvider) {
     return (
-      <div>
-        <button onClick={() => setSelectedProvider(null)}>⬅️ Go Back</button>
+      <div className={classes.detailView}>
+        <button
+          className={classes.backBtn}
+          onClick={() => setSelectedProvider(null)}
+        >
+          Go Back
+        </button>
         <BusinessProfile user={user} provider={selectedProvider} />
       </div>
     );
   }
 
   return (
-    <div className={classes.container}>
-      <h2>Service Approvals Management</h2>
-      <select
-        className={classes.filterSelect}
-        value={type}
-        onChange={(e) => setType(e.target.value)}
-      >
+    <div className={classes.page}>
+      <div className={classes.pageHeader}>
+        <h2>Service Approvals</h2>
+        <p>Review, approve, or deny provider service requests</p>
+      </div>
+
+      <div className={classes.toolbar}>
+        <select
+          className={classes.filterSelect}
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+        >
         <option value="pending">⏳ Pending Services</option>
         <option value="approved">✅ Approved Services</option>
         <option value="deny">❌ Denied Services</option>
-      </select>
+        </select>
+      </div>
 
       {providers.length !== 0 ? (
         <div className={classes.tableContainer}>
@@ -97,16 +115,7 @@ export default function ServicesApprovals({ user }) {
                   <td>{provider?.submitted_at}</td>
                   <td>
                     <span
-                      style={{
-                        color:
-                          provider?.status?.toLowerCase() === "pending"
-                            ? "#f39c12" // צהוב-כתום
-                            : provider?.status?.toLowerCase() === "approved"
-                              ? "#27ae60" // ירוק
-                              : "#c0392b", // אדום ל-DENY
-                        fontWeight: "bold",
-                        textTransform: "uppercase",
-                      }}
+                      className={`${classes.statusBadge} ${getStatusClass(provider.status)}`}
                     >
                       {provider.status}
                     </span>
@@ -166,7 +175,7 @@ export default function ServicesApprovals({ user }) {
           </table>
         </div>
       ) : (
-        <p style={{ textAlign: "center", color: "#777" }}>
+        <p className={classes.emptyState}>
           No services found for this category.
         </p>
       )}
