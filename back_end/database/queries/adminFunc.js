@@ -42,19 +42,62 @@ async function getAllHallsOwnerProfile() {
  */
 async function getAllServices() {
   const sql = `
-SELECT users.id,users.first_name, users.email, 'Chief' AS provider_type  , chiefs.status
+SELECT users.id,users.first_name, users.email, 'Chief' AS provider_type  , chiefs.status ,users.first_name AS ServiceName
 FROM users
 INNER JOIN chiefs ON users.id = chiefs.chief_id
 UNION ALL
-SELECT users.id,users.first_name,  users.email, 'Hall_Owner' AS provider_type , halls.status
+SELECT users.id,users.first_name,  users.email, 'Hall_Owner' AS provider_type , halls.status , halls.hall_name AS ServiceName
 FROM users
-INNER JOIN halls ON users.id = halls.hall_id;`;
+INNER JOIN halls ON users.id = halls.hall_id; `;
   return await doQuery(sql, []);
 }
 /**
  * שליפת נותני שירות מסוננים לפי סטטוס אישור (למשל: 'pending', 'approved', 'denied').
  * @param {string} status - הסטטוס המבוקש
  */
+
+// async function getAllServicesAccordingToStatus(status) {
+//   const sql = `
+//     SELECT
+//         u.id,
+//         u.first_name,
+//         u.email,
+//         'Chief' AS provider_type,
+//         c.status,
+//         u.first_name AS ServiceName,
+//         (SELECT AVG(rating) FROM reviews WHERE provider_id = u.id) AS avgRating,
+//         (SELECT COUNT(rating) FROM reviews WHERE provider_id = u.id) AS totalReviews
+//     FROM users u
+//     INNER JOIN chiefs c ON u.id = c.chief_id
+//     WHERE c.status = ?
+
+//     UNION ALL
+
+//     SELECT
+//         u.id,
+//         u.first_name,
+//         u.email,
+//         'Hall_Owner' AS provider_type,
+//         h.status,
+//         h.hall_name AS ServiceName,
+//         (SELECT AVG(rating) FROM reviews WHERE provider_id = u.id) AS avgRating,
+//         (SELECT COUNT(rating) FROM reviews WHERE provider_id = u.id) AS totalReviews
+//     FROM users u
+//     INNER JOIN halls h ON u.id = h.hall_id
+//     WHERE h.status = ?;
+//   `;
+
+//   const result = await doQuery(sql, [status, status]);
+
+//   // טיפול קטן ב-JavaScript כדי לעגל מספרים או להפוך NULL ל-0
+//   return result.map((provider) => ({
+//     ...provider,
+//     avgRating: provider.avgRating
+//       ? parseFloat(provider.avgRating).toFixed(1)
+//       : 0,
+//     totalReviews: provider.totalReviews || 0,
+//   }));
+// }
 
 async function getAllServicesAccordingToStatus(status) {
   const sql = `
@@ -64,6 +107,9 @@ async function getAllServicesAccordingToStatus(status) {
         u.email, 
         'Chief' AS provider_type, 
         c.status,
+        u.first_name AS ServiceName,
+        c.submitted_at,          -- עמודה חדשה
+        c.rejection_reason,      -- עמודה חדשה
         (SELECT AVG(rating) FROM reviews WHERE provider_id = u.id) AS avgRating,
         (SELECT COUNT(rating) FROM reviews WHERE provider_id = u.id) AS totalReviews
     FROM users u
@@ -78,22 +124,30 @@ async function getAllServicesAccordingToStatus(status) {
         u.email, 
         'Hall_Owner' AS provider_type, 
         h.status,
+        h.hall_name AS ServiceName,
+        h.submitted_at,          -- עמודה חדשה
+        h.rejection_reason,      -- עמודה חדשה
         (SELECT AVG(rating) FROM reviews WHERE provider_id = u.id) AS avgRating,
         (SELECT COUNT(rating) FROM reviews WHERE provider_id = u.id) AS totalReviews
     FROM users u
     INNER JOIN halls h ON u.id = h.hall_id
-    WHERE h.status = ?;
+    WHERE h.status = ?
+    
+    ORDER BY submitted_at ASC; -- מיון: בקשות ישנות שמעלות אבק יוצגו למעלה
   `;
 
   const result = await doQuery(sql, [status, status]);
 
-  // טיפול קטן ב-JavaScript כדי לעגל מספרים או להפוך NULL ל-0
   return result.map((provider) => ({
     ...provider,
     avgRating: provider.avgRating
       ? parseFloat(provider.avgRating).toFixed(1)
       : 0,
     totalReviews: provider.totalReviews || 0,
+    // פורמט תאריך קריא ויפה ל-UI (למשל: 11/06/2026)
+    submitted_at: provider.submitted_at
+      ? new Date(provider.submitted_at).toLocaleDateString("he-IL")
+      : "טרם נשלח",
   }));
 }
 /**

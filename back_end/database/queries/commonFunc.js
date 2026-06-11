@@ -85,44 +85,105 @@ async function getMainFoto(id) {
  * @param {number} id - מזהה המשתמש (User ID)
  * @param {string} newStatus - הסטטוס החדש לעדכון
  */
-async function updateBusinessStatus(type, id, newStatus) {
+// async function updateBusinessStatus(type, id, newStatus) {
+//   const allowedTypes = ["chiefs", "halls"];
+//   if (!allowedTypes.includes(type)) {
+//     throw new Error("Invalid table name");
+//   }
+
+//   let sql = "";
+//   if (type === "chiefs") {
+//     sql = `UPDATE chiefs SET status = ? WHERE chief_id = ?`;
+//   } else {
+//     sql = `UPDATE halls SET status = ? WHERE hall_id = ?`;
+//   }
+
+//   // 1. קודם כל מעדכנים את הסטטוס בבסיס הנתונים
+//   const result = await doQuery(sql, [newStatus, id]);
+
+//   // 2. קביעת הודעה מתאימה לפי הסטטוס החדש
+//   let notificationMessage = "";
+//   switch (newStatus.toUpperCase()) {
+//     case "APPROVE":
+//     case "APPROVED":
+//       notificationMessage =
+//         "Your business profile has been approved! You now have full access to EventHub.";
+//       break;
+//     case "DENY":
+//     case "DENIED":
+//       notificationMessage =
+//         "Your business profile was rejected. Please review and update your details in Profile Settings.";
+//       break;
+//     case "PENDING":
+//       notificationMessage =
+//         "Your profile changes have been submitted and are currently pending review.";
+//       break;
+//     default:
+//       notificationMessage = `Your business profile status has been updated to ${newStatus}.`;
+//   }
+
+//   // 3. יוצרים את ההתראה רק אחרי שהעדכון ב-DB הצליח
+//   await createNotification({
+//     message: notificationMessage,
+//     userId: id,
+//   });
+
+//   return result;
+// }
+
+
+
+async function updateBusinessStatus(type, id, newStatus, reason = null) {
   const allowedTypes = ["chiefs", "halls"];
   if (!allowedTypes.includes(type)) {
     throw new Error("Invalid table name");
   }
 
+  const idColumn = type === "chiefs" ? "chief_id" : "hall_id";
   let sql = "";
-  if (type === "chiefs") {
-    sql = `UPDATE chiefs SET status = ? WHERE chief_id = ?`;
+  let queryParams = [];
+
+  const statusUpper = newStatus.toUpperCase();
+
+  // בניית השאילתה בצורה חכמה לפי הסטטוס החדש
+  if (statusUpper === "PENDING") {
+    // בעל העסק שולח לאישור בפעם הראשונה או מחדש
+    sql = `UPDATE ${type} SET status = ?, submitted_at = NOW() WHERE ${idColumn} = ?`;
+    queryParams = [newStatus, id];
+  } else if (statusUpper === "DENY" || statusUpper === "DENIED") {
+    // האדמין דחה את הבקשה
+    sql = `UPDATE ${type} SET status = ?, rejection_reason = ? WHERE ${idColumn} = ?`;
+    queryParams = [newStatus, reason || "No reason provided", id];
   } else {
-    sql = `UPDATE halls SET status = ? WHERE hall_id = ?`;
+    // אדמין אישר (Approved) - מנקים את סיבת הדחייה הישנה ליתר ביטחון
+    sql = `UPDATE ${type} SET status = ?, rejection_reason = NULL WHERE ${idColumn} = ?`;
+    queryParams = [newStatus, id];
   }
 
-  // 1. קודם כל מעדכנים את הסטטוס בבסיס הנתונים
-  const result = await doQuery(sql, [newStatus, id]);
+  // 1. עדכון בבסיס הנתונים
+  const result = await doQuery(sql, queryParams);
 
-  // 2. קביעת הודעה מתאימה לפי הסטטוס החדש
+  // 2. קביעת הודעה מתאימה להתראה (Notification)
   let notificationMessage = "";
-  switch (newStatus.toUpperCase()) {
+  switch (statusUpper) {
     case "APPROVE":
     case "APPROVED":
       notificationMessage =
-        "Your business profile has been approved! You now have full access to EventHub.";
+        "Your business profile has been approved! You now have full access to EventHub. 🎉";
       break;
     case "DENY":
     case "DENIED":
-      notificationMessage =
-        "Your business profile was rejected. Please review and update your details in Profile Settings.";
+      notificationMessage = `Your business profile was rejected. Reason: "${reason || "Please review your details"}"`;
       break;
     case "PENDING":
       notificationMessage =
-        "Your profile changes have been submitted and are currently pending review.";
+        "Your profile changes have been submitted and are currently pending review. ⏳";
       break;
     default:
       notificationMessage = `Your business profile status has been updated to ${newStatus}.`;
   }
 
-  // 3. יוצרים את ההתראה רק אחרי שהעדכון ב-DB הצליח
+  // 3. יצירת ההתראה למשתמש
   await createNotification({
     message: notificationMessage,
     userId: id,

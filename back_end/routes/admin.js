@@ -165,18 +165,37 @@ router.get("/allServices/:status", async (req, res) => {
  *  אישור עסק
  * כאן האדמין מקבל החלטה על עסק שממתין. הוא שולח 'approved' או 'deny'.
  */
+// router.post("/approve-business", async (req, res) => {
+//   console.log(req.body);
+//   const { type, id, newStatus } = req.body;
+//   if (!type || !id || !newStatus) {
+//     return res
+//       .status(400)
+//       .json({ success: false, message: "Missing required fields" });
+//   }
+//   try {
+//     await updateBusinessStatus(type, id, newStatus);
+//     res.json({ success: true, message: `Status updated to ${newStatus}` });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Update failed" });
+//   }
+// });
+
 router.post("/approve-business", async (req, res) => {
   console.log(req.body);
-  const { type, id, newStatus } = req.body;
+  const { type, id, newStatus, reason } = req.body;
+
   if (!type || !id || !newStatus) {
     return res
       .status(400)
       .json({ success: false, message: "Missing required fields" });
   }
+
   try {
-    await updateBusinessStatus(type, id, newStatus);
+    await updateBusinessStatus(type, id, newStatus, reason);
     res.json({ success: true, message: `Status updated to ${newStatus}` });
   } catch (error) {
+    console.error("Update failed:", error);
     res.status(500).json({ success: false, message: "Update failed" });
   }
 });
