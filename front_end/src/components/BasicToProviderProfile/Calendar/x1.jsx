@@ -16,8 +16,7 @@ export default function Calendar({ role, user }) {
   const [worksHour, setWorksHour] = useState([]);
   const [events, setEvents] = useState([]);
 
-  console.log("worksHourrr", worksHour);
-
+  // משתנה עזר שמחזיר את תאריך היום בפורמט YYYY-MM-DD המותאם ל-HTML אינפוט
   const getTodayString = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -26,8 +25,10 @@ export default function Calendar({ role, user }) {
     return `${year}-${month}-${day}`;
   };
 
+  // פונקציה מרוכזת לבדיקת תקינות הזמנים (ולידציה)
   const validateTimes = (date, start, end) => {
     const todayStr = getTodayString();
+
     if (date < todayStr) {
       alert("You cannot select a date in the past!");
       return false;
@@ -65,23 +66,13 @@ export default function Calendar({ role, user }) {
         const formattedWorksHour = dataFromDB.map((item) => {
           const d = new Date(item.available_date);
           const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
-          const cleanStart = item.start_time.substring(0, 5); // הופך "10:00:00" ל-"10:00"
-          const cleanEnd = item.end_time.substring(0, 5); // הופך "15:00:00" ל-"15:00"
-
           return {
             title: "🟢 Available",
-            start: `${localDate}T${cleanStart}`,
-            end: `${localDate}T${cleanEnd}`,
+            start: `${localDate}T${item.start_time}`,
+            end: `${localDate}T${item.end_time}`,
             backgroundColor: "#28a745",
             borderColor: "#68c47e",
             allDay: false,
-            extendedProps: {
-              rawDate: localDate,
-              startTime: cleanStart, // ✨ עכשיו זה יישמר נקי בלי שניות
-              endTime: cleanEnd, // ✨ עכשיו זה יישמר נקי בלי שניות
-              isSlot: true,
-            },
           };
         });
         setWorksHour(formattedWorksHour);
@@ -112,7 +103,6 @@ export default function Calendar({ role, user }) {
           backgroundColor: "#2889a7",
           borderColor: "#c4687f",
           allDay: false,
-          extendedProps: { isSlot: false },
         };
       });
       setEvents(formattedEvents);
@@ -127,11 +117,13 @@ export default function Calendar({ role, user }) {
     fetchgetAllEventsApproved();
   }, []);
 
+  // בחירה ישירה באמצעות גרירה/קליק על לוח השנה
   const handleSelect = (info) => {
     const selectedDate = info.start.toISOString().split("T")[0];
     const startTime = info.start.toTimeString().substring(0, 5);
     const endTime = info.end.toTimeString().substring(0, 5);
 
+    // ביצוע הולידציה המרכזית
     if (!validateTimes(selectedDate, startTime, endTime)) return;
 
     setAvailableData({
@@ -141,31 +133,24 @@ export default function Calendar({ role, user }) {
     });
   };
 
-  // ✨ פונקציה שמזהה לחיצה על משבצת קיימת וממלאת את האינפוטים למטה
-  const handleEventClick = (clickInfo) => {
-    const props = clickInfo.event.extendedProps;
-    if (props.isSlot && (role === "Chief" || role === "Hall_Owner")) {
-      setAvailableData({
-        available_date: props.rawDate,
-        start_time: props.startTime,
-        end_time: props.endTime,
-      });
-    }
-  };
-
+  // שינוי ידני דרך תיבות ה-Input
   function handleChange(e) {
     const { name, value } = e.target;
-    setAvailableData((prev) => ({ ...prev, [name]: value }));
+    setAvailableData((prev) => {
+      const updatedData = { ...prev, [name]: value };
+      return updatedData;
+    });
   }
 
+  // שמירה לשרת
   const handleSave = async () => {
     const { available_date, start_time, end_time } = availableData;
     if (!available_date || !start_time || !end_time) {
       alert("Please select a valid time slot first.");
       return;
     }
+    // ולידציה סופית רגע לפני השליחה (מגן מפני שינויים ידניים אסורים באינפוטים)
     if (!validateTimes(available_date, start_time, end_time)) return;
-
     setLoading(true);
     try {
       const response = await axios.post(
@@ -182,73 +167,47 @@ export default function Calendar({ role, user }) {
       }
     } catch (error) {
       console.error("Calendar save error:", error);
-      alert(error.response?.data?.message || "Failed to save availability.");
+      // מציג את השגיאה המדויקת מה-Backend במידה והולידציה שם נכשלה
+      const errorMsg =
+        error.response?.data?.message || "Failed to save availability.";
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✨ פונקציית המחיקה המעודכנת שמדברת עם הראוט החדש בבקאנד
   const handleDelete = async () => {
     const { available_date, start_time, end_time } = availableData;
     if (!available_date || !start_time || !end_time) {
-      alert("Please select a valid time slot to delete.");
+      alert("Please select a valid time slot first.");
       return;
     }
-
-    const confirmDelete = window.confirm(
-      "Are you sure you want to remove this availability?",
-    );
-    if (!confirmDelete) return;
-
+    // ולידציה סופית רגע לפני השליחה (מגן מפני שינויים ידניים אסורים באינפוטים)
+    if (!validateTimes(available_date, start_time, end_time)) return;
     setLoading(true);
     try {
-      // שליחת בקשת POST/PUT ייעודית לעדכון היומן (מחיקת המקטע)
-      const response = await axios.post(
+      const response = await axios.delete(
         "http://localhost:3030/provider/updateCalendar",
         availableData,
         { withCredentials: true },
       );
-
       if (response.data.success) {
-        alert("Availability removed successfully! 🗑️");
+        alert("Availability saved successfully! ✨");
         setAvailableData({ available_date: "", start_time: "", end_time: "" });
-        fetchAvailability(); // ריענון היומן
+        fetchAvailability();
       } else {
-        alert(response.data.message || "Failed to delete availability.");
+        alert(response.data.message || "Failed to save availability.");
       }
     } catch (error) {
-      console.error("Calendar delete error:", error);
-      alert(error.response?.data?.message || "Failed to delete availability.");
+      console.error("Calendar save error:", error);
+      // מציג את השגיאה המדויקת מה-Backend במידה והולידציה שם נכשלה
+      const errorMsg =
+        error.response?.data?.message || "Failed to save availability.";
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }
   };
-
-  // הבדיקה החכמה: מחפשים האם יש משבצת ביומן שתואמת בדיוק לערכים שבאינפוטים
-  const isSlotExisting = worksHour.some((slot) => {
-    const slotDate = slot.start.split("T")[0]; // מוציא רק את ה-YYYY-MM-DD
-    const slotStart = slot.start.split("T")[1].substring(0, 5); // מוציא את ה-HH:MM
-    const slotEnd = slot.end.split("T")[1].substring(0, 5); // מוציא את ה-HH:MM
-    console.log(
-      slotDate,
-      availableData.available_date,
-      "",
-      slotStart,
-      " ",
-      availableData.start_time,
-      "",
-      slotEnd,
-      "",
-      availableData.end_time,
-    );
-
-    return (
-      slotDate === availableData.available_date &&
-      slotStart <= availableData.start_time &&
-      slotEnd >= availableData.end_time
-    );
-  });
 
   return (
     <>
@@ -264,7 +223,6 @@ export default function Calendar({ role, user }) {
                 editable={false}
                 events={[...worksHour, ...events]}
                 select={handleSelect}
-                eventClick={handleEventClick} // ✨ חיבור הלחיצה על איוונטים ביומן
                 allDaySlot={false}
                 slotMinTime="08:00:00"
                 slotMaxTime="24:00:00"
@@ -282,7 +240,7 @@ export default function Calendar({ role, user }) {
               <label>Date: </label>
               <input
                 type="date"
-                min={getTodayString()}
+                min={getTodayString()} // ✨ תיקון: חסימת תאריכי עבר באינפוט עצמו בצורה נכונה
                 value={availableData.available_date}
                 name="available_date"
                 onChange={handleChange}
@@ -312,67 +270,80 @@ export default function Calendar({ role, user }) {
             availableData.start_time &&
             availableData.end_time && (
               <div className={classes.confirmBox}>
-                <h4>Selected Slot Actions:</h4>
+                <h4>Confirm New Slot:</h4>
                 <p>📅 {availableData.available_date}</p>
                 <p>
                   ⏰ {availableData.start_time} - {availableData.end_time}
                 </p>
-
-                <div style={{ display: "flex", gap: "10px" }}>
-                  <button
-                    onClick={handleSave}
-                    className={classes.saveBtn}
-                    disabled={loading}
-                  >
-                    {loading ? "Saving..." : "Save Slot"}
-                  </button>
-                  {isSlotExisting && (
-                    <button
-                      onClick={handleDelete}
-                      className={classes.deleteBtn}
-                      style={{
-                        backgroundColor: "#dc3545",
-                        color: "white",
-                        border: "none",
-                        padding: "10px 15px",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                      disabled={loading}
-                    >
-                      {loading ? "Deleting..." : "🗑️ Delete Slot"}
-                    </button>
-                  )}
-
-                  <button
-                    onClick={() =>
-                      setAvailableData({
-                        available_date: "",
-                        start_time: "",
-                        end_time: "",
-                      })
-                    }
-                    disabled={loading}
-                    className={classes.cancelBtn}
-                  >
-                    Cancel
-                  </button>
-                </div>
+                <button
+                  onClick={handleSave}
+                  className={classes.saveBtn}
+                  disabled={loading}
+                >
+                  {loading ? "Saving..." : "Save Slot"}
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className={classes.deleteBtn} // תוכלי לעצב אותו באדום ב-CSS שלך
+                  style={{
+                    backgroundColor: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 15px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? "Deleting..." : "🗑️ Delete Slot"}
+                </button>
+                <button
+                  onClick={() =>
+                    setAvailableData({
+                      available_date: "",
+                      start_time: "",
+                      end_time: "",
+                    })
+                  }
+                  disabled={loading}
+                  className={classes.cancelBtn}
+                >
+                  Cancel
+                </button>
               </div>
             )}
         </div>
       )}
 
-      {/* תצוגת אדמין ולקוח נשארות נקיות וקריאות בלבד */}
-      {(role === "Admin" || role === "Customer") && (
+      {role === "Admin" && (
         <div className={classes.calendarWrapper}>
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="timeGridWeek"
-            selectable={role === "Customer"}
             editable={false}
             events={[...worksHour, ...events]}
-            select={role === "Customer" ? handleSelect : null}
+            allDaySlot={false}
+            slotMinTime="08:00:00"
+            slotMaxTime="24:00:00"
+            height="auto"
+            headerToolbar={{
+              start: "prev,next today",
+              center: "title",
+              end: "dayGridMonth,timeGridWeek",
+            }}
+          />
+        </div>
+      )}
+
+      {role === "Customer" && (
+        <div className={classes.calendarWrapper}>
+          <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView="timeGridWeek"
+            selectable={true}
+            editable={false}
+            events={[...worksHour, ...events]}
+            select={handleSelect}
             allDaySlot={false}
             slotMinTime="08:00:00"
             slotMaxTime="24:00:00"

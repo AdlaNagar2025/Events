@@ -23,7 +23,11 @@ const {
   deleteImage,
   setMainImage,
 } = require("../database/queries/uploadImages");
-const { fillCalendar, getCalandar } = require("../database/queries/calendar");
+const {
+  fillCalendar,
+  getCalandar,
+  updateCalendar,
+} = require("../database/queries/calendar");
 const {
   getProfile,
   updateBusinessStatus,
@@ -138,21 +142,60 @@ router.post("/upload-gallery", (req, res) => {
   });
 });
 
+//CALENDAR
 /**
  * @route   POST /provider/fillCalendar
- * @desc    הגדרת זמינות (תאריכים ושעות) ביומן של הספק.
- * @access  Private (Provider only)
+ * @desc    Create or update availability slots (Validates and merges overlaps)
+ * @access  Private (Provider Only)
  */
 router.post("/fillCalendar", async (req, res) => {
   try {
     const result = await fillCalendar(req.session.user, req.body);
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
     return res.json(result);
   } catch (error) {
-    console.error("Calendar Error:", error);
+    console.error("Calendar Route Error:", error);
     return res.status(500).json({
       success: false,
-      msg: "Server Error while updating calendar",
-      devError: error.message,
+      message: "Server Error while updating calendar",
+    });
+  }
+});
+
+/**
+ * @route   GET /provider/getMyCalendar
+ * @desc    Get all availability slots for the logged-in provider
+ * @access  Private (Provider Only)
+ */
+router.get("/getMyCalendar", async (req, res) => {
+  try {
+    const providerId = req.session.user.id;
+    const results = await getCalandar(providerId);
+    return res.json({ success: true, data: results });
+  } catch (error) {
+    console.error("Get Calendar Route Error:", error);
+    return res.status(500).json({ success: false, message: "Database error" });
+  }
+});
+
+router.post("/updateCalendar", async (req, res) => {
+  try {
+    const result = await updateCalendar(req.session.user, req.body);
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    return res.json(result);
+  } catch (error) {
+    console.error("Calendar Route Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server Error while updating calendar",
     });
   }
 });
@@ -169,18 +212,6 @@ router.get("/Profile/:id", async (req, res) => {
     return res.json({ success: true, data: result });
   } catch (error) {
     console.error("Get Profile Error:", error);
-    res.status(500).json({ success: false, message: "Database error" });
-  }
-});
-
-// routes/provider.js
-router.get("/getMyCalendar", async (req, res) => {
-  try {
-    const providerId = req.session.user.id;
-    const results = await getCalandar(providerId);
-    res.json({ success: true, data: results });
-  } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
@@ -401,8 +432,6 @@ router.get("/allCommentsAndReviews", async (req, res) => {
   }
 });
 
-
-
 router.post("/writeReport", async (req, res) => {
   try {
     const result = await writeReport(req.session.user.id, req.body);
@@ -420,6 +449,5 @@ router.post("/writeReport", async (req, res) => {
     });
   }
 });
-
 
 module.exports = router;

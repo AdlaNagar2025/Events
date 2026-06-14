@@ -106,7 +106,6 @@ async function getTimeAvail(eventId, date, providerId) {
   }
 }
 
-
 async function getProviderRating(providerId) {
   const sql = `
     SELECT 
@@ -125,5 +124,9 @@ async function getProviderRating(providerId) {
   return { averageRating: 0, reviewCount: 0 };
 }
 
-
-module.exports = { getRole, getStatusEvent, AvailToEvent, getProviderRating };
+module.exports = {
+  getRole,
+  getStatusEvent,
+  AvailToEvent,
+  getProviderRating,
+};

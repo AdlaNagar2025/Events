@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import classes from "./servicesapprovals.module.css"; // משתמשים באותו קובץ עיצוב של הטבלאות שלך
+import classes from "./servicesapprovals.module.css"; 
 
 export default function ContentModeration() {
-  const [reports, setReports] = useState([]); // תוקן ל-[] מתוך useState
+  const [reports, setReports] = useState([]);
 
   useEffect(() => {
     const fetchAllReports = async () => {
       try {
-        // הכתובת המדויקת של הראוט החדש שיצרנו ב-Backend
         const response = await axios.get(
           "http://localhost:3030/admin/allReports",
           { withCredentials: true },
