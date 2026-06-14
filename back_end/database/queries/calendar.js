@@ -139,6 +139,30 @@ async function updateCalendar(provider, calendarData) {
   }
 
   try {
+    const checkEventSql = `
+      SELECT * FROM events 
+      LEFT JOIN event_providers ON events.event_id = event_providers.event_id 
+      WHERE requested_date = ? 
+        AND start_time < ? 
+        AND end_time > ? 
+        AND (hall_id = ?  AND events.status = 'APPROVED'  OR event_providers.provider_id = ? AND event_providers.status = 'APPROVED' )
+    `;
+
+    const approvedEvents = await doQuery(checkEventSql, [
+      available_date,
+      end_time,
+      start_time,
+      provider_id,
+      provider_id,
+    ]);
+
+    if (approvedEvents.length > 0) {
+      return {
+        success: false,
+        message:
+          "Cannot delete or alter slot: An approved event already exists during this time!",
+      };
+    }
     const newBlocks = await updateTimeAvail(
       available_date,
       provider_id,
@@ -180,24 +204,22 @@ async function updateCalendar(provider, calendarData) {
 async function updateTimeAvail(date, providerId, removeStart, removeEnd) {
   try {
     const availSql = `
-            SELECT start_time, end_time FROM availability 
-            WHERE available_date = ? AND provider_id = ? 
-            ORDER BY start_time ASC`;
+        SELECT start_time, end_time FROM availability 
+        WHERE available_date = ? AND provider_id = ? 
+        ORDER BY start_time ASC`;
     const availabilityBlocks = await doQuery(availSql, [date, providerId]);
     const finalFreeTimes = [];
+
     availabilityBlocks.forEach((block) => {
-      // אם אין חפיפה בכלל עם הבלוק הנוכחי - משאירים אותו כמו שהוא
       if (block.end_time <= removeStart || block.start_time >= removeEnd) {
         finalFreeTimes.push(block);
       } else {
-        // אם יש חפיפה, בודקים אם נשאר חלק לפני המחיקה
         if (block.start_time < removeStart) {
           finalFreeTimes.push({
             start_time: block.start_time,
             end_time: removeStart,
           });
         }
-        // בודקים אם נשאר חלק אחרי המחיקה
         if (block.end_time > removeEnd) {
           finalFreeTimes.push({
             start_time: removeEnd,
@@ -206,9 +228,10 @@ async function updateTimeAvail(date, providerId, removeStart, removeEnd) {
         }
       }
     });
-    return finalFreeTimes;
+
+    return finalFreeTimes; // תמיד מחזירה מערך!
   } catch (error) {
-    console.error("Error in getTimeAvail:", error);
+    console.error("Error in updateTimeAvail:", error);
     return [];
   }
 }
