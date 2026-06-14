@@ -131,8 +131,6 @@ async function getMainFoto(id) {
 //   return result;
 // }
 
-
-
 async function updateBusinessStatus(type, id, newStatus, reason = null) {
   const allowedTypes = ["chiefs", "halls"];
   if (!allowedTypes.includes(type)) {

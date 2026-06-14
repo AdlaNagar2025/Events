@@ -1,6 +1,8 @@
 import classes from "./eventCard.module.css";
 import { Rating } from "@mui/material";
 import ReviewSection from "./ReviewSection";
+import ReportSection from "./ReportSection";
+
 import { useState } from "react";
 
 function getStatusClass(status) {
@@ -21,16 +23,16 @@ export default function EventRow({
   onChangeStatus,
 }) {
   const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const status = event.finalStatus || event.status;
-
 
   const startTime = event.start_time?.slice(0, 5) || "";
   const endTime = event.end_time?.slice(0, 5) || "";
-  
+
   const canProviderAction =
     rolePath === "provider" && isFuture && event.status !== "CANCELLED";
 
-      const checkIfFuture = (event) => {
+  const checkIfFuture = (event) => {
     const today = new Date().toISOString().split("T")[0];
     const currentTime = new Date().toTimeString().slice(0, 5);
     const startTime = event.start_time.slice(0, 5);
@@ -77,57 +79,72 @@ export default function EventRow({
 
           <td>
             <div className={classes.actions}>
-            {isFuture ? (
-              <>
-                <button
-                  className={classes.updateBtn}
-                  onClick={() => onUpdate(event)}
-                >
-                  Update
-                </button>
-                {event.finalStatus !== "CANCELLED" && (
+              {isFuture ? (
+                <>
                   <button
-                    className={classes.rejectBtn}
-                    onClick={() => onCancel(event)}
+                    className={classes.updateBtn}
+                    onClick={() => onUpdate(event)}
                   >
-                    Cancel
+                    Update
                   </button>
-                )}
-                {event.finalStatus === "CANCELLED" && (
-                  <button
-                    className={classes.rejectBtn}
-                    onClick={() => onDisCancel(event)}
-                  >
-                    DisCancel
-                  </button>
-                )}
-              </>
-            ) : (
-              <>
-                {event.finalStatus === "APPROVED" && (
-                  <button
-                    className={classes.reviewBtn}
-                    onClick={() => setIsReviewOpen(true)}
-                  >
-                    Write a Review
-                  </button>
-                )}
+                  {event.finalStatus !== "CANCELLED" && (
+                    <button
+                      className={classes.rejectBtn}
+                      onClick={() => onCancel(event)}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  {event.finalStatus === "CANCELLED" && (
+                    <button
+                      className={classes.rejectBtn}
+                      onClick={() => onDisCancel(event)}
+                    >
+                      DisCancel
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  {event.finalStatus === "APPROVED" && (
+                    <div>
+                      <button
+                        className={classes.reviewBtn}
+                        onClick={() => setIsReviewOpen(true)}
+                      >
+                        Write a Review
+                      </button>
+                      <button
+                        className={classes.reviewBtn}
+                        onClick={() => setIsReportOpen(true)}
+                      >
+                        🚩 Report
+                      </button>
+                    </div>
+                  )}
 
-                {event.rating && (
-                  <div className={classes.reviewReceived}>
-                    <h4>Client Review</h4>
-                    <Rating value={event.rating} readOnly size="small" />
-                    <p>"{event.comment}"</p>
-                  </div>
-                )}
-              </>
-            )}
+                  {event.rating && (
+                    <div className={classes.reviewReceived}>
+                      <h4>Client Review</h4>
+                      <Rating value={event.rating} readOnly size="small" />
+                      <p>"{event.comment}"</p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             {isReviewOpen && (
               <ReviewSection
                 event={event}
                 onClose={() => setIsReviewOpen(false)}
+              />
+            )}
+
+            {isReportOpen && (
+              <ReportSection
+                event={event}
+                onClose={() => setIsReportOpen(false)}
               />
             )}
           </td>

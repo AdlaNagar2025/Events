@@ -2,6 +2,11 @@
  * ראוטר לניהול מערכת (Admin Router)
  * מכיל את כל נתיבי ה-API שחשופים רק למנהלי מערכת.
  */
+const {
+  writeReport,
+  getAllReports,
+  updateStatusReport,
+} = require("../database/queries/report");
 const register = require("../database/queries/register");
 const express = require("express");
 const { isConnected, isAdmin, isActive } = require("../Middleware/auth");
@@ -310,4 +315,40 @@ router.post("/addUser", async (req, res) => {
   }
 });
 
+router.get("/allReports", async (req, res) => {
+  try {
+    const result = await getAllReports();
+    return res.json({ success: true, data: result });
+  } catch (error) {
+    console.error("DEBUG ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      msg: "Server Error",
+      devError: error.message,
+    });
+  }
+});
+
+router.put("/updateReport", async (req, res) => {
+  try {
+    const { newStatus, reportId } = req.body;
+
+    if (!newStatus || !reportId) {
+      return res.status(400).json({ success: false, msg: "Missing fields" });
+    }
+
+    await updateStatusReport(newStatus, reportId);
+    return res.json({
+      success: true,
+      msg: `Report status updated to ${newStatus}`,
+    });
+  } catch (error) {
+    console.error("DEBUG ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      msg: "Server Error",
+      devError: error.message,
+    });
+  }
+});
 module.exports = router;

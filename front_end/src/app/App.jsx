@@ -30,6 +30,8 @@ import Notification from "../components/Notifications/Notification";
 import CommentsAndReviews from "../components/provider/CommentsAndReviews";
 import Dashboard from "../components/provider/Dashboard";
 import AddUser from "../components/admin/AddUser";
+import ContentModeration from "../components/admin/contentModeration";
+import ReportSection from "../components/Events/ReportSection";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -101,6 +103,10 @@ function App() {
               path="favorites"
               element={<FavoriteProviders user={user} />}
             />
+            <Route
+              path="reports"
+              element={<ReportSection role={user?.role} user={user?.id} />}
+            />
           </Route>
 
           <Route
@@ -119,6 +125,8 @@ function App() {
               path="services-approvals"
               element={<ServicesApprovals user={user} />}
             />
+            <Route path="add-user" element={<AddUser />} />
+            <Route path="content-moderation" element={<ContentModeration />} />
           </Route>
 
           <Route
@@ -147,9 +155,12 @@ function App() {
                   <CommentsAndReviews role={user?.role} user={user?.id} />
                 }
               />
+              <Route
+                path="reports"
+                element={<ReportSection role={user?.role} user={user?.id} />}
+              />
             </Route>
           </Route>
-
         </Route>
 
         <Route path="/not-found" element={<NotFound />} />

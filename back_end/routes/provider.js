@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const router = express.Router();
+const { writeReport } = require("../database/queries/report");
 const { getProviderRating } = require("../database/queries/helpingFunc");
 const {
   isProvider,
@@ -399,5 +400,26 @@ router.get("/allCommentsAndReviews", async (req, res) => {
     console.log(error);
   }
 });
+
+
+
+router.post("/writeReport", async (req, res) => {
+  try {
+    const result = await writeReport(req.session.user.id, req.body);
+    return res.json({
+      success: true,
+      msg: "Report submitted successfully",
+      result,
+    });
+  } catch (error) {
+    console.error("DEBUG ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      msg: "Server Error",
+      devError: error.message,
+    });
+  }
+});
+
 
 module.exports = router;

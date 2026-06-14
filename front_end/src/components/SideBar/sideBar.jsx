@@ -62,7 +62,7 @@ export default function SideBar({ user }) {
             <p className={classes.sectionLabel}>Dashboard</p>
             <NavItem to="/admin/users">Users Management</NavItem>
             <NavItem to="/admin/services-approvals">Services Approvals</NavItem>
-            <p className={classes.sectionLabel}>Moderation</p>
+            <NavItem to="/admin/content-moderation">Content Moderation</NavItem>
           </>
         )}
 

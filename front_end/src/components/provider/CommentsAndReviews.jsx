@@ -1,8 +1,10 @@
 import React from "react";
 import axios from "axios";
 import { useState, useEffect } from "react";
+import CommentReportModal from "./CommentReportModal";
 
 export default function CommentsAndReviews({ role, user }) {
+  const [selectedReviewForReport, setSelectedReviewForReport] = useState(null);
   const [data, setData] = useState([
     { reviews: "", comments: "", Date: "", ClientName: "" },
   ]);
@@ -32,6 +34,7 @@ export default function CommentsAndReviews({ role, user }) {
           comment: item.comment,
           date: date,
           clientName: clientName,
+          userId: item.user_id,
         };
       });
 
@@ -55,6 +58,7 @@ export default function CommentsAndReviews({ role, user }) {
             <th>Date</th>
             <th>Rating</th>
             <th>Comments</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -66,6 +70,22 @@ export default function CommentsAndReviews({ role, user }) {
                 <td>{review.date}</td>
                 <td>⭐ {review.rating} / 5</td>
                 <td>{review.comment}</td>
+                <td style={{ padding: "12px" }}>
+                  <button
+                    onClick={() => setSelectedReviewForReport(review)}
+                    style={{
+                      backgroundColor: "transparent",
+                      border: "1px solid #c0392b",
+                      color: "#c0392b",
+                      padding: "5px 10px",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      fontWeight: "500",
+                    }}
+                  >
+                    🚩 Report
+                  </button>
+                </td>
               </tr>
             ))
           ) : (
@@ -77,6 +97,12 @@ export default function CommentsAndReviews({ role, user }) {
           )}
         </tbody>
       </table>
+      {selectedReviewForReport && (
+        <CommentReportModal
+          review={selectedReviewForReport}
+          onClose={() => setSelectedReviewForReport(null)}
+        />
+      )}
     </div>
   );
 }

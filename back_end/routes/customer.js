@@ -1,4 +1,9 @@
 const express = require("express");
+const {
+  writeReport,
+  getAllReports,
+  updateStatusReport,
+} = require("../database/queries/report");
 const { isConnected, isCustomer, isActive } = require("../Middleware/auth");
 const {
   getProfile,
@@ -262,6 +267,24 @@ router.get("/allCommentsAndReviews/:providerId", async (req, res) => {
     return res.json({ data: result });
   } catch (error) {
     console.log(error);
+  }
+});
+
+router.post("/writeReport", async (req, res) => {
+  try {
+    const result = await writeReport(req.session.user.id, req.body);
+    return res.json({
+      success: true,
+      msg: "Report submitted successfully",
+      result,
+    });
+  } catch (error) {
+    console.error("DEBUG ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      msg: "Server Error",
+      devError: error.message,
+    });
   }
 });
 
