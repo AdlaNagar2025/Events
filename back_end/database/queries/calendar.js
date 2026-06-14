@@ -1,7 +1,12 @@
 const doQuery = require("../query");
 /**
- * Saves or updates provider availability slots.
- * Validates operating hours, checks for overlaps, and merges overlapping slots.
+ * @function fillCalendar
+ * @description שמירת חלונות זמן חדשים של ספק ביומן.
+ * הפונקציה בודקת חפיפות מול חלונות קיימים ומבצעת "מיזוג חכם" (Smart Merge)
+ * כדי למנוע כפילויות של שורות לאותו ספק באותו היום.
+ * * @param {Object} provider - אובייקט הספק המכיל id ו-role
+ * @param {Object} calendarData - נתוני חלון הזמן (available_date, start_time, end_time)
+ * @returns {Object} אובייקט הצלחה/כישלון עם הודעה מתאימה
  */
 async function fillCalendar(provider, calendarData) {
   const provider_id = provider.id;
@@ -100,14 +105,26 @@ async function fillCalendar(provider, calendarData) {
   }
 }
 /**
- * Fetches all availability records for a specific provider.
+ * @function getCalandar
+ * @description שליפת כל חלונות הזמן הפנויים שספק הגדיר ביומן שלו.
+ * * @param {number|string} providerId - מזהה הייחודי של הספק
+ * @returns {Array} מערך של אובייקטי זמינות מבסיס הנתונים
  */
 async function getCalandar(providerId) {
   const sql = `SELECT * FROM availability WHERE provider_id = ?`;
   const result = await doQuery(sql, [providerId]);
   return result;
 }
-
+/**
+ * @function updateCalendar
+ * @description עדכון/מחיקת מקטע זמינות של ספק (כולל פיצול זמנים חכם).
+ * הפונקציה בודקת מול טבלאות האירועים (events ו-event_providers) האם קיים אירוע
+ * מאושר (APPROVED) בטווח השעות שהספק מבקש למחוק. אם נמצא אירוע חופף, הפעולה נחסמת
+ * מיידית כדי למנוע מצב שספק "מעלים" שעות של אירוע קיים שהלקוח כבר שילם והזמין.
+ * * @param {Object} provider - אובייקט הספק המכיל id ו-role
+ * @param {Object} calendarData - חלון הזמן שרוצים להסיר (available_date, start_time, end_time)
+ * @returns {Object} אובייקט הצלחה או הודעת שגיאה מפורטת במידה ויש אירוע חופף
+ */
 async function updateCalendar(provider, calendarData) {
   const provider_id = provider.id;
   const provider_type = provider.role;
@@ -200,7 +217,20 @@ async function updateCalendar(provider, calendarData) {
     return { success: false, message: "Internal server error" };
   }
 }
-
+/**
+ * @function updateTimeAvail
+ * @description פונקציית עזר מתמטית/לוגית שמחשבת אילו חלונות זמן נשארים פנויים
+ * לאחר שמורידים (מנקים) מקטע זמן ספציפי מתוך יום עבודה קיים.
+ * * תפקיד עיקרי: פיצול סלוטים (לדוגמה: אם היום פנוי מ-08:00 עד 16:00, ומקצצים את 10:00-12:00,
+ * הפונקציה תפצל ותחזיר שני סלוטים חדשים: 08:00-10:00 וכן 12:00-16:00).
+ * * ⚠️ חוק ארכיטקטורה: הפונקציה הזו מחזירה **תמיד מערך** (Array), כדי לא לשבור
+ * את לולאות ה-for-of שמריצות את שאילתות ה-Insert בפונקציה הקוראת לה.
+ * * @param {string} date - התאריך המבוקש (YYYY-MM-DD)
+ * @param {number|string} providerId - מזהה הספק
+ * @param {string} removeStart - שעת תחילת המקטע למחיקה (HH:MM)
+ * @param {string} removeEnd - שעת סיום המקטע למחיקה (HH:MM)
+ * @returns {Array<Object>} מערך של אובייקטים עם הבלוקים שנשארו פנויים [{start_time, end_time}]
+ */
 async function updateTimeAvail(date, providerId, removeStart, removeEnd) {
   try {
     const availSql = `
