@@ -16,7 +16,6 @@ function getStatusClass(status) {
 export default function EventRow({
   event,
   rolePath,
-  role,
   isFuture,
   onUpdate,
   onCancel,
@@ -43,24 +42,6 @@ export default function EventRow({
       (event.requested_date === today && startTime > currentTime)
     );
   };
-  // החליפי את פונקציית handleProviderReject ואת הכפתורים של הספק בגרסה הזו:
-
-  const handleProviderActionWithReason = (actionStatus) => {
-    const actionName =
-      actionStatus === "CANCELLED" ? "cancelling" : "rejecting";
-    const userReason = prompt(
-      `Please enter the reason for ${actionName} this request:`,
-    );
-
-    // אם הספק לחץ על "ביטול" בתיבת ה-prompt, נעצור
-    if (userReason === null) return;
-
-    const cleanReason =
-      userReason.trim() || "No reason provided by the business owner.";
-
-    // קריאה לפונקציית האב עם 4 פרמטרים
-    onChangeStatus(event, event.event_id, actionStatus, cleanReason);
-  };
 
   return (
     <>
@@ -82,31 +63,17 @@ export default function EventRow({
           <td>
             <div className={classes.detailsSection}>
               <strong>Hall:</strong> {event.hall_name} |{" "}
-              <span>
-                {event.hall_status} || {event?.hall_reason}
-              </span>
+              <span>{event.hall_status}</span>
               <br />
               <strong>Chiefs:</strong>
               {event.chiefs?.map((chief) => (
                 <p key={chief.id} className={classes.smallText}>
                   {chief.name} |{" "}
                   <span className={classes[chief.status?.toLowerCase()]}>
-                    {chief.status} || {event.chiefs_reason}
+                    {chief.status}
                   </span>
                 </p>
               ))}
-              {event.rejection_reason && (
-                <div
-                  className={classes.reasonBox}
-                  style={{
-                    marginTop: "8px",
-                    color: "#dc3545",
-                    fontSize: "0.9em",
-                  }}
-                >
-                  <strong>⚠️ Note:</strong> "{event.rejection_reason}"
-                </div>
-              )}
             </div>
           </td>
 
@@ -193,40 +160,17 @@ export default function EventRow({
           </td>
           <td>{event.finalStatus || event.status}</td>
           <td>{event.guest_number}</td>
-          {role === "Chief" && <td>{event.location}</td>}
-          <td>
-            {event.notes}
-
-            {event.rejection_reason && (
-              <div
-                style={{
-                  fontStyle: "italic",
-                  color: "#6c757d",
-                  marginTop: "4px",
-                }}
-              >
-                Reason sent: "{event.rejection_reason}"
-              </div>
-            )}
-          </td>
+          <td>{event.location}</td>
+          <td>{event.notes}</td>
 
           <td>
-            {/* {canProviderAction && (
+            {canProviderAction && (
               <>
-                <button
-                  className={classes.approveBtn}
-                  onClick={() =>
-                    onChangeStatus(event, event.event_id, "CANCELLED")
-                  }
-                >
-                  Cancel
-                </button>
-
                 {event.status !== "APPROVED" && (
                   <button
                     className={classes.approveBtn}
                     onClick={() =>
-                      onChangeStatus(event, event.event_id, "APPROVED", null)
+                      onChangeStatus(event, event.event_id, "APPROVED")
                     }
                   >
                     Approve
@@ -235,47 +179,15 @@ export default function EventRow({
                 {event.status !== "REJECTED" && (
                   <button
                     className={classes.rejectBtn}
-                    onClick={handleProviderReject} // ✨ קריאה לפונקציה שמבקשת סיבה
+                    onClick={() =>
+                      onChangeStatus(event, event.event_id, "REJECTED")
+                    }
                   >
                     Reject
                   </button>
                 )}
               </>
-            )} */}
-
-            <td>
-              {canProviderAction && (
-                <>
-                  {/* כפתור ביטול יזום על ידי הספק - דורש סיבה */}
-                  <button
-                    className={classes.rejectBtn}
-                    onClick={() => handleProviderActionWithReason("CANCELLED")}
-                  >
-                    Cancel Event
-                  </button>
-
-                  {status !== "APPROVED" && (
-                    <button
-                      className={classes.approveBtn}
-                      onClick={() =>
-                        onChangeStatus(event, event.event_id, "APPROVED", null)
-                      }
-                    >
-                      Approve
-                    </button>
-                  )}
-
-                  {status !== "REJECTED" && (
-                    <button
-                      className={classes.rejectBtn}
-                      onClick={() => handleProviderActionWithReason("REJECTED")}
-                    >
-                      Reject
-                    </button>
-                  )}
-                </>
-              )}
-            </td>
+            )}
           </td>
         </tr>
       )}

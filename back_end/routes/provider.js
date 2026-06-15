@@ -344,10 +344,29 @@ router.get("/myEventsData", async (req, res) => {
   return res.json({ data: result });
 });
 
+// router.put("/changeEventStatus/:eventId", async (req, res) => {
+//   const eventId = req.params.eventId;
+//   const status = req.body.status;
+//   const eventData = req.body.eventData;
+
+//   try {
+//     const result = await changeStatusEvent(
+//       req.session.user.id,
+//       eventId,
+//       status,
+//       eventData,
+//     );
+
+//     return res.json(result);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ success: false, message: "Server error" });
+//   }
+// });
+
 router.put("/changeEventStatus/:eventId", async (req, res) => {
   const eventId = req.params.eventId;
-  const status = req.body.status;
-  const eventData = req.body.eventData;
+  const { status, eventData, reason, cancelledBy } = req.body;
 
   try {
     const result = await changeStatusEvent(
@@ -355,6 +374,7 @@ router.put("/changeEventStatus/:eventId", async (req, res) => {
       eventId,
       status,
       eventData,
+      { reason, cancelledBy },
     );
 
     return res.json(result);
@@ -363,7 +383,6 @@ router.put("/changeEventStatus/:eventId", async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
 router.get("/AllEventsApproved", async (req, res) => {
   try {
     const result = await getAllEventsApproved(req.session.user.id);

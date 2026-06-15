@@ -247,6 +247,7 @@ async function getAllEventsData(customerId) {
     e.end_time,
     e.guest_number,
     e.notesToHall,            -- שליפת ההערות של האולם
+    e.rejection_reason  AS hall_reason ,
     e.status AS hall_status,
     e.hall_id,
     h.hall_name,
@@ -255,6 +256,7 @@ async function getAllEventsData(customerId) {
     ep.provider_id AS chief_id,
     ep.status AS chief_status,
     ep.noteToChef,            -- שליפת ההערה הספציפית של השף הזה
+    ep.rejection_reason  AS chiefs_reason ,
     ep.location AS chef_event_location, -- שליפת מיקום האירוע עבור השף
     c.price_per_hour
   FROM events e

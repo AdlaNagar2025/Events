@@ -103,27 +103,63 @@ export default function MyBooking({ user, onStatusChange }) {
     return Math.max(0, durationInHours);
   };
 
-  async function handlechangeStatus(event, eventId, status) {
+  // async function handlechangeStatus(event, eventId, status) {
+  //   try {
+  //     const response = await axios.put(
+  //       `http://localhost:3030/provider/changeEventStatus/${eventId}`,
+  //       { status: status, eventData: event },
+  //       { withCredentials: true },
+  //     );
+
+  //     if (response.data.success) {
+  //       alert("Status updated successfully!");
+  //       // 1. רענון הרשימה המקומית ב-MyBooking
+  //       fetchAllEvents();
+  //       // 2. הפעלת הריענון ב-Calendar דרך רכיב האב
+  //       if (onStatusChange) {
+  //         onStatusChange();
+  //       }
+  //     } else {
+  //       alert(response.data.message);
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }
+
+  // סרקי והחליפי את הפונקציה הזו בתוך MyBooking שלך:
+
+  async function handlechangeStatus(event, eventId, status, reason = null) {
     try {
+      // קביעת מי יזם את הביטול במידה והסטטוס הוא ביטול
+      let cancelledBy = null;
+      if (status === "CANCELLED" || status === "CANCELED") {
+        cancelledBy = "PROVIDER";
+      }
+
       const response = await axios.put(
         `http://localhost:3030/provider/changeEventStatus/${eventId}`,
-        { status: status, eventData: event },
+        {
+          status: status,
+          eventData: event,
+          reason: reason, // ✨ נשלח לשרת
+          cancelledBy: cancelledBy, // ✨ נשלח לשרת
+        },
         { withCredentials: true },
       );
 
       if (response.data.success) {
-        alert("Status updated successfully!");
-        // 1. רענון הרשימה המקומית ב-MyBooking
-        fetchAllEvents();
-        // 2. הפעלת הריענון ב-Calendar דרך רכיב האב
+        alert(`Status updated to ${status} successfully!`);
+        fetchAllEvents(); // רענון הרשימה המקומית
         if (onStatusChange) {
-          onStatusChange();
+          onStatusChange(); // רענון הלוח שנה ברכיב האב
         }
       } else {
         alert(response.data.message);
       }
     } catch (error) {
-      console.log(error);
+      console.log("Error updating event status:", error);
+      alert("An error occurred while updating status.");
     }
   }
 
@@ -229,6 +265,7 @@ export default function MyBooking({ user, onStatusChange }) {
                   key={e.event_id}
                   event={e}
                   rolePath={rolePath}
+                  role={user.role}
                   isFuture={checkIfFuture(e)}
                   onCancel={handleCancel}
                   onDisCancel={handleDisCancel}
