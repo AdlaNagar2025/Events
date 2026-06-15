@@ -3,7 +3,7 @@ import axios from "axios";
 import classes from "./servicesapprovals.module.css";
 import BusinessProfile from "../CommonComponents/BusinessProfile";
 
-export default function ServicesApprovals({ user }) {
+export default function ServicesApprovals({ user, newType }) {
   const [type, setType] = useState("pending");
   const [providers, setProviders] = useState([]);
   const [selectedProvider, setSelectedProvider] = useState(null);
@@ -12,6 +12,7 @@ export default function ServicesApprovals({ user }) {
     console.log(user);
     const fetchAllProviders = async () => {
       try {
+        if (newType) setType(newType);
         let url = `http://localhost:3030/admin/allServices/${type}`;
         const response = await axios.get(url, { withCredentials: true });
         if (response.data.success) {
@@ -79,9 +80,9 @@ export default function ServicesApprovals({ user }) {
           value={type}
           onChange={(e) => setType(e.target.value)}
         >
-        <option value="pending">⏳ Pending Services</option>
-        <option value="approved">✅ Approved Services</option>
-        <option value="deny">❌ Denied Services</option>
+          <option value="pending">⏳ Pending Services</option>
+          <option value="approved">✅ Approved Services</option>
+          <option value="deny">❌ Denied Services</option>
         </select>
       </div>
 

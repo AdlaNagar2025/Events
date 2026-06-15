@@ -6,6 +6,7 @@ const {
   writeReport,
   getAllReports,
   updateStatusReport,
+  getAllPendingReports,
 } = require("../database/queries/report");
 const register = require("../database/queries/register");
 const express = require("express");
@@ -342,6 +343,22 @@ router.put("/updateReport", async (req, res) => {
       success: true,
       msg: `Report status updated to ${newStatus}`,
     });
+  } catch (error) {
+    console.error("DEBUG ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      msg: "Server Error",
+      devError: error.message,
+    });
+  }
+});
+
+
+
+router.get("/allPendingReports", async (req, res) => {
+  try {
+    const result = await getAllPendingReports();
+    return res.json({ success: true, data: result });
   } catch (error) {
     console.error("DEBUG ERROR:", error);
     return res.status(500).json({

@@ -32,6 +32,7 @@ import Dashboard from "../components/provider/Dashboard";
 import AddUser from "../components/admin/AddUser";
 import ContentModeration from "../components/admin/contentModeration";
 import ReportSection from "../components/Events/ReportSection";
+import AdminDashboard from "../components/admin/AdminDashboard";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -126,6 +127,7 @@ function App() {
               element={<ServicesApprovals user={user} />}
             />
             <Route path="add-user" element={<AddUser />} />
+            <Route path="dashboard" element={<AdminDashboard user={user} />} />
             <Route path="content-moderation" element={<ContentModeration />} />
           </Route>
 

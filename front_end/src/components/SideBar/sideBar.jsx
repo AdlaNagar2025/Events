@@ -59,7 +59,8 @@ export default function SideBar({ user }) {
 
         {user.role === "Admin" && (
           <>
-            <p className={classes.sectionLabel}>Dashboard</p>
+            <p className={classes.sectionLabel}></p>
+            <NavItem to="/admin/dashboard">Dashboard</NavItem>
             <NavItem to="/admin/users">Users Management</NavItem>
             <NavItem to="/admin/services-approvals">Services Approvals</NavItem>
             <NavItem to="/admin/content-moderation">Content Moderation</NavItem>

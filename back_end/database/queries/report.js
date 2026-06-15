@@ -10,7 +10,7 @@ async function writeReport(reporterId, data) {
     reporterId,
     reported_id,
     target_type,
-    target_id !== undefined ? target_id : null, 
+    target_id !== undefined ? target_id : null,
     reason,
     description,
   ]);
@@ -27,6 +27,23 @@ async function getAllReports() {
     FROM reports r
     INNER JOIN users u1 ON r.reporter_id = u1.id
     INNER JOIN users u2 ON r.reported_id = u2.id
+    ORDER BY r.created_at ASC;
+  `;
+  return await doQuery(sql, []);
+}
+
+async function getAllPendingReports() {
+  const sql = `
+    SELECT 
+        r.*,
+        u1.first_name AS reporter_name,
+        u1.email AS reporter_email,
+        u2.first_name AS reported_name,
+        u2.email AS reported_email
+    FROM reports r
+    INNER JOIN users u1 ON r.reporter_id = u1.id
+    INNER JOIN users u2 ON r.reported_id = u2.id
+    WHERE r.status="PENDING"
     ORDER BY r.created_at DESC;
   `;
   return await doQuery(sql, []);
@@ -37,7 +54,9 @@ async function updateStatusReport(newStatus, reportId) {
   return await doQuery(sql, [newStatus, reportId]);
 }
 
-module.exports = { writeReport, getAllReports, updateStatusReport };
-
-
-
+module.exports = {
+  writeReport,
+  getAllReports,
+  updateStatusReport,
+  getAllPendingReports,
+};

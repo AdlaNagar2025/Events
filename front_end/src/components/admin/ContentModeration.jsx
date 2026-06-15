@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import classes from "./servicesapprovals.module.css"; 
+import classes from "./servicesapprovals.module.css";
 
-export default function ContentModeration() {
+export default function ContentModeration({ newUrl }) {
   const [reports, setReports] = useState([]);
 
   useEffect(() => {
     const fetchAllReports = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3030/admin/allReports",
-          { withCredentials: true },
-        );
+        let url = newUrl ? newUrl : "http://localhost:3030/admin/allReports";
+        const response = await axios.get(url, { withCredentials: true });
         if (response.data.success) {
           setReports(response.data.data);
         }
