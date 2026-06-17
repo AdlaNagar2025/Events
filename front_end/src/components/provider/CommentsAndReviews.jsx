@@ -71,20 +71,23 @@ export default function CommentsAndReviews({ role, user }) {
                 <td>⭐ {review.rating} / 5</td>
                 <td>{review.comment}</td>
                 <td style={{ padding: "12px" }}>
-                  <button
-                    onClick={() => setSelectedReviewForReport(review)}
-                    style={{
-                      backgroundColor: "transparent",
-                      border: "1px solid #c0392b",
-                      color: "#c0392b",
-                      padding: "5px 10px",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      fontWeight: "500",
-                    }}
-                  >
-                    🚩 Report
-                  </button>
+                  {role === "Chief" ||
+                    (role === "Hall_Owner" && (
+                      <button
+                        onClick={() => setSelectedReviewForReport(review)}
+                        style={{
+                          backgroundColor: "transparent",
+                          border: "1px solid #c0392b",
+                          color: "#c0392b",
+                          padding: "5px 10px",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          fontWeight: "500",
+                        }}
+                      >
+                        🚩 Report
+                      </button>
+                    ))}
                 </td>
               </tr>
             ))

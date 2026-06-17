@@ -4,77 +4,168 @@ import axios from "axios";
 import classes from "./review.module.css";
 import { Rating } from "@mui/material";
 
-export default function Review({ provider, eventId }) {
+export default function Review({ event, onClose }) {
+  const providers = [
+    ...(event.hall_id
+      ? [{ id: event.hall_id, name: event.hall_name, type: "BUSINESS" }]
+      : []),
+    ...(event.chiefs
+      ? event.chiefs.map((c) => ({ id: c.id, name: c.name, type: "BUSINESS" }))
+      : []),
+  ];
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  useEffect(() => {
-    if (!provider?.id || !eventId) return;
-    const fetchReviewsEvent = async () => {
-      try {
-        const response = await axios.post(
-          `http://localhost:3030/customer/EventComments/${eventId}`,
-          { providerId: provider.id },
-          { withCredentials: true },
-        );
-        console.log("Fetched review data:", response.data);
 
-        if (response.data && response.data.length > 0) {
-          setRating(response.data[0].rating || 0);
-          setComment(response.data[0].comment || "");
-        }
-      } catch (error) {
-        console.error("Error fetching reviews:", error);
-      }
-    };
+  const [loading, setLoading] = useState(false);
 
-    fetchReviewsEvent();
-  }, [provider, eventId]);
+  async function writeReport(e) {
+    e.preventDefault(); // מניעת רענון של העמוד
 
-  const handleSubmit = async () => {
-    if (!provider?.id) return alert("Provider details missing.");
-    setIsSubmitting(true);
+    if (!report.reason.trim()) {
+      alert("Please provide a reason for the report.");
+      return;
+    }
+
     try {
-      const finalReviewData = {
-        rating,
-        comment,
-        eventId,
-        providerId: provider.id,
-      };
+      setLoading(false);
       const response = await axios.post(
-        "http://localhost:3030/customer/ReviewProvider",
-        finalReviewData,
+        "http://localhost:3030/customer/writeReport",
+        report,
         { withCredentials: true },
       );
+
       if (response.data.success) {
-        alert("Review submitted!");
+        alert(
+          "Thank you. Your report has been submitted to the admin for review. 🚩",
+        );
+        onClose();
       }
-    } catch (err) {
-      console.error("Review failed", err);
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      alert(
+        error.response?.data?.msg ||
+          "Failed to submit report. Please try again.",
+      );
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className={classes.reviewBox}>
-      <p>
-        Rate: <strong>{provider.name}</strong>
-      </p>
-      <Rating
-        value={rating}
-        precision={0.5}
-        onChange={(event, newValue) => setRating(newValue)}
-      />
-      <textarea
-        placeholder="Write a comment..."
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        rows="3"
-      />
-      <button onClick={handleSubmit} disabled={isSubmitting}>
-        {isSubmitting ? "Sending..." : "Submit Review"}
-      </button>
+    <div className={classes.modalBackdrop}>
+      <div className={classes.reviewModal}>
+        <button className={classes.closeModalBtn} onClick={onClose}>
+          &times;
+        </button>
+
+        <h3>🚩 Report an Issue</h3>
+        <p style={{ fontSize: "14px", color: "#666" }}>
+          Please select the provider and describe the problem you experienced.
+        </p>
+
+        <form onSubmit={writeReport} className={classes.formContainer}>
+          {/* 1. בחירת הספק עליו מתלוננים */}
+          <div style={{ marginBottom: "15px" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "5px",
+                fontWeight: "bold",
+              }}
+            >
+              Select Provider:
+            </label>
+            <select
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "4px",
+                border: "1px solid #ccc",
+              }}
+              value={report.reported_id}
+              onChange={(e) =>
+                setReport({ ...report, reported_id: Number(e.target.value) })
+              }
+            >
+              {providers.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 2. הזנת סיבת התלונה */}
+          <div style={{ marginBottom: "15px" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "5px",
+                fontWeight: "bold",
+              }}
+            >
+              Reason:
+            </label>
+            <input
+              type="text"
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "4px",
+                border: "1px solid #ccc",
+              }}
+              placeholder="e.g., Provider did not show up, Bad behavior..."
+              value={report.reason}
+              onChange={(e) => setReport({ ...report, reason: e.target.value })}
+            />
+          </div>
+
+          {/* 3. פירוט חופשי */}
+          <div style={{ marginBottom: "20px" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "5px",
+                fontWeight: "bold",
+              }}
+            >
+              Description (Optional):
+            </label>
+            <textarea
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "4px",
+                border: "1px solid #ccc",
+                height: "100px",
+              }}
+              placeholder="Provide more details about what happened..."
+              value={report.description}
+              onChange={(e) =>
+                setReport({ ...report, description: e.target.value })
+              }
+            ></textarea>
+          </div>
+
+          {/* כפתור שליחה */}
+          <button
+            type="submit"
+            style={{
+              backgroundColor: "#c0392b",
+              color: "white",
+              padding: "10px 15px",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              width: "100%",
+              fontWeight: "bold",
+            }}
+            disabled={loading}
+          >
+            {loading ? "Submitting..." : "Submit Report"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
