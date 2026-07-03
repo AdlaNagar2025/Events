@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import axios from "axios";
 import classes from "./findavendor.module.css";
 import CitySelect from "../../provider/CitySelect";
@@ -6,12 +7,11 @@ export default function Search({
   setProviders,
   allProviders,
   setIsLoading,
-  isLoading,
   setSearchParams,
   searchParams,
   setIsSearch,
   isSearch,
-  validation,
+  isLoading,
 }) {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -23,9 +23,18 @@ export default function Search({
     setProviders(allProviders);
   };
 
-  const handleSearch = async () => {
-    if (!validation()) return;
+  // Auto-search as long as at least one criterion is chosen (partial search allowed)
+  const isSearchable = () => {
+    const { requested_date, start_time, end_time, city, guest_number, price } =
+      searchParams;
+    // If both times are set, keep them in a valid order
+    if (start_time && end_time && start_time >= end_time) return false;
+    return Boolean(
+      requested_date || start_time || end_time || city || guest_number || price,
+    );
+  };
 
+  const runSearch = async () => {
     const capacity = Number(searchParams.guest_number);
     setIsLoading(true);
     try {
@@ -44,11 +53,29 @@ export default function Search({
       setIsSearch(true);
     } catch (error) {
       console.error("Search failed", error);
-      alert("Search failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Automatically search (debounced) whenever the criteria change and are valid
+  useEffect(() => {
+    if (!isSearchable()) return;
+
+    const timer = setTimeout(() => {
+      runSearch();
+    }, 500);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    searchParams.requested_date,
+    searchParams.start_time,
+    searchParams.end_time,
+    searchParams.city,
+    searchParams.guest_number,
+    searchParams.price,
+  ]);
 
   return (
     <div className={classes.container}>
@@ -120,18 +147,6 @@ export default function Search({
             name="price"
             onChange={handleInputChange}
           />
-        </div>
-
-        <div className={classes.inputGroup}>
-          <label>&nbsp;</label>
-          <button
-            type="button"
-            className={classes.searchBtn}
-            onClick={handleSearch}
-            disabled={isLoading}
-          >
-            {isLoading ? "Searching..." : "Search"}
-          </button>
         </div>
 
         {isSearch && (
