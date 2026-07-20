@@ -1,16 +1,20 @@
 import { useState } from "react";
 import classes from "./registerorlogin.module.css";
-import axios from "axios";
+import API from "../../services/api";
 import { Link, useNavigate } from "react-router-dom";
 
-function getDefaultRouteForRole(role) {
-  switch (role) {
+function getDefaultRouteForRole(user) {
+  if (!user) return "/";
+  switch (user.role) {
     case "Customer":
       return "/account";
     case "Admin":
       return "/admin/users";
     case "Chief":
     case "Hall_Owner":
+      if (user.status === "DRAFT" || user.status === "PENDING") {
+        return "/provider/business";
+      }
       return "/provider/dashboard";
     default:
       return "/";
@@ -42,26 +46,20 @@ export default function Register({ onLoginSuccess }) {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:3030/user/register",
-        formData,
-        { withCredentials: true },
-      );
+      const response = await API.post("/user/register", formData);
 
       if (response.data.success) {
         onLoginSuccess(response.data.user);
-        const role = response.data.user?.role;
-        if (role === "Chief" || role === "Hall_Owner") {
-          navigate("/provider/business");
-        } else {
-          navigate(getDefaultRouteForRole(role));
-        }
+        navigate(getDefaultRouteForRole(response.data.user));
       } else {
         alert(response.data.message);
       }
     } catch (error) {
       console.error("Registration error:", error);
-      alert("Registration failed. Please try again later.");
+      const errorMessage =
+        error.response?.data?.message ||
+        "Registration failed. Please try again later.";
+      alert(errorMessage);
     }
   };
 
