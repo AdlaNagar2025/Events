@@ -6,7 +6,11 @@ const doQuery = require("../query");
  */
 async function updateProfile(updatedData, user) {
   if (!user || !user.id) {
-    return { success: false, message: "User not authenticated or missing ID" };
+    return {
+      success: false,
+      statusCode: 401,
+      message: "User not authenticated or missing ID",
+    };
   }
   let { first_name, last_name, email, phone } = updatedData;
   first_name = first_name || user.first_name;
@@ -20,6 +24,7 @@ async function updateProfile(updatedData, user) {
   if (result1.length > 0) {
     return {
       success: false,
+      statusCode: 409,
       message: "This email is already taken by another user",
     };
   }

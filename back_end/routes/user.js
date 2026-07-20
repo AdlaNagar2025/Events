@@ -52,18 +52,26 @@ router.post("/register", async (req, res) => {
   }
 });
 
+/**
+ * @route   PUT /user/updateProfile
+ * @desc    Update user profile
+ * @access  User logged_in
+ */
 router.put("/updateProfile", isConnected, isActive, async (req, res) => {
   try {
     const result = await updateProfile(req.body, req.session.user);
     if (result.success) {
       req.session.user = result.updatedUser;
     }
-    return res.json(result);
+    const statusCode = result.success ? 200 : result.statusCode || 400;
+    return res.status(statusCode).json(result);
   } catch (error) {
     console.error("DEBUG ERROR:", error);
     return res.status(500).json({
-      msg: "Server Error",
-      devError: error.message,
+      success: false,
+      message: "Server Error",
+      devError:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 });
