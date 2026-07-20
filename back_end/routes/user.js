@@ -22,20 +22,25 @@ router.post("/register", async (req, res) => {
   }
 });
 
-//user/login
+/**
+ * @route   POST /user/login
+ * @desc    Authenticate user & establish session
+ * @access  Public
+ */
 router.post("/login", async (req, res) => {
   try {
     const result = await login(req.body);
     if (!result.success) {
-      return res.json(result);
+      return res.status(result.statusCode || 400).json(result);
     }
     req.session.user = result.user;
-    return res.json(result);
+    return res.status(200).json(result);
   } catch (error) {
-    console.error("DEBUG ERROR:", error);
+    console.error("Error in /login route:", error);
     return res.status(500).json({
-      msg: "Server Error",
-      devError: error.message,
+      success: false,
+      message: "Internal Server Error during login.",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 });

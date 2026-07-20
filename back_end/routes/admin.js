@@ -7,6 +7,7 @@ const {
   getAllReports,
   updateStatusReport,
   getAllPendingReports,
+  resolveReport,
 } = require("../database/queries/report");
 const register = require("../database/queries/register");
 const express = require("express");
@@ -330,30 +331,28 @@ router.get("/allReports", async (req, res) => {
   }
 });
 
-router.put("/updateReport", async (req, res) => {
-  try {
-    const { newStatus, reportId } = req.body;
+// router.put("/updateReport", async (req, res) => {
+//   try {
+//     const { newStatus, reportId } = req.body;
 
-    if (!newStatus || !reportId) {
-      return res.status(400).json({ success: false, msg: "Missing fields" });
-    }
+//     if (!newStatus || !reportId) {
+//       return res.status(400).json({ success: false, msg: "Missing fields" });
+//     }
 
-    await updateStatusReport(newStatus, reportId);
-    return res.json({
-      success: true,
-      msg: `Report status updated to ${newStatus}`,
-    });
-  } catch (error) {
-    console.error("DEBUG ERROR:", error);
-    return res.status(500).json({
-      success: false,
-      msg: "Server Error",
-      devError: error.message,
-    });
-  }
-});
-
-
+//     await updateStatusReport(newStatus, reportId);
+//     return res.json({
+//       success: true,
+//       msg: `Report status updated to ${newStatus}`,
+//     });
+//   } catch (error) {
+//     console.error("DEBUG ERROR:", error);
+//     return res.status(500).json({
+//       success: false,
+//       msg: "Server Error",
+//       devError: error.message,
+//     });
+//   }
+// });
 
 router.get("/allPendingReports", async (req, res) => {
   try {
@@ -368,4 +367,34 @@ router.get("/allPendingReports", async (req, res) => {
     });
   }
 });
+
+// POST /admin/resolveReport
+router.post("/resolveReport", async (req, res) => {
+  try {
+    const { reportId, newStatus } = req.body;
+
+    // א) מקרה של דחיית התלונה - רק מעדכנים סטטוס ל-DISMISSED
+    if (newStatus === "DISMISSED") {
+      await db.query(`UPDATE reports SET status = 'DISMISSED' WHERE id = ?`, [
+        reportId,
+      ]);
+      return res.json({
+        success: true,
+        message: "Report was dismissed successfully.",
+      });
+    }
+
+    // ב) מקרה של Resolve - מפעילים את הלוגיקה המורכבת
+    const result = await resolveReport(req.body);
+    return res.json({ success: true, ...result });
+  } catch (error) {
+    console.error("DEBUG ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      msg: "Server Error",
+      devError: error.message,
+    });
+  }
+});
+
 module.exports = router;

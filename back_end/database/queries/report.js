@@ -54,9 +54,50 @@ async function updateStatusReport(newStatus, reportId) {
   return await doQuery(sql, [newStatus, reportId]);
 }
 
+async function resolveReport(dataToResolved) {
+  const { reportId, targetType, targetId, offenderId, reason } = dataToResolved;
+  // 1. עדכון סטטוס הדיווח ל-RESOLVED
+  await doQuery(`UPDATE reports SET status = 'RESOLVED' WHERE id = ?`, [
+    reportId,
+  ]);
+
+  // 2. ביצוע פעולה בהתאם לסוג היעד
+  if (targetType === "COMMENT") {
+    await doQuery(`UPDATE reviews SET is_deleted = 1 WHERE id = ?`, [targetId]);
+  }
+
+  // 3. הוספת אזהרה למשתמש הפוגע
+  await doQuery(
+    `INSERT INTO user_warnings (user_id, report_id, reason) VALUES (?, ?, ?)`,
+    [offenderId, reportId, reason || "Violation of community guidelines"],
+  );
+
+  // 4. בדיקה אוטומטית: כמה אזהרות יש לו עכשיו?
+  const [warnCountResult] = await doQuery(
+    `SELECT COUNT(*) AS total_warnings FROM user_warnings WHERE user_id = ?`,
+    [offenderId],
+  );
+
+  const totalWarnings = warnCountResult[0].total_warnings;
+
+  // 5. אם הוא הגיע ל-5 אזהרות ומעלה - חוסמים אותו!
+  if (totalWarnings >= 5) {
+    await db.query(`UPDATE users SET is_active = 0 WHERE id = ?`, [offenderId]);
+    return {
+      message: `Report resolved. User reached ${totalWarnings} warnings and has been banned! 🚫`,
+      totalWarnings,
+    };
+  }
+
+  return {
+    message: `Report resolved successfully. Warning issued (${totalWarnings}/5).`,
+    totalWarnings,
+  };
+}
 module.exports = {
   writeReport,
   getAllReports,
   updateStatusReport,
   getAllPendingReports,
+  resolveReport,
 };

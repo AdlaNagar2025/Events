@@ -213,8 +213,14 @@ async function getAllEventsApproved(providerId) {
 // להגיב לביקורת (Reply): נניח שלקוח רשם "היה אוכל מעולה!", בעל העסק יכול להגיב "תודה רבה שמחנו לקחת חלק!". התגובה הזו של בעל העסק צריכה להופיע גם בפרופיל הציבורי מתחת לביקורת (זה מראה על עסק רציני וקשוב).
 
 // לדווח על ביקורת פוגענית (Report): אם לקוח סתם קילל או רשם משהו לא חוקי, לבעל העסק צריכה להיות אפשרות לבקש מהאדמין למחוק את זה.
+
 async function getAllCommentsAndReviews(providerId) {
-  const sql = `SELECT reviews.*, users.first_name , users.last_name FROM reviews JOIN users ON users.id=reviews.user_id   WHERE provider_id=?`;
+  const sql = `
+    SELECT reviews.*, users.first_name, users.last_name 
+    FROM reviews 
+    JOIN users ON users.id = reviews.user_id 
+    WHERE reviews.provider_id = ? AND reviews.is_deleted = 0
+  `;
   const result = await doQuery(sql, [providerId]);
   return result;
 }

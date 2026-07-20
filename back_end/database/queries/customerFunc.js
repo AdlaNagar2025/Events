@@ -801,21 +801,6 @@ WHERE f.user_id = ?`;
   return result;
 }
 
-// async function ReviewProvider(ReviewData, userId) {
-//   const { eventId, providerId, rating, comment } = ReviewData;
-//   const sql = `
-//     INSERT INTO reviews (event_id, user_id, provider_id, rating, comment)
-//     VALUES (?, ?, ?, ?, ?)
-//     ON DUPLICATE KEY UPDATE
-//       rating = VALUES(rating),
-//       comment = VALUES(comment)
-//   `;
-
-//   await doQuery(sql, [eventId, userId, providerId, rating, comment]);
-
-//   return { success: true };
-// }
-
 async function ReviewProvider(ReviewData, userId) {
   const { eventId, providerId, rating, comment } = ReviewData;
   const sql = `
@@ -847,6 +832,17 @@ async function ReviewProvider(ReviewData, userId) {
 async function ReviewAndComment(eventId, userId, providerId) {
   const sql = `SELECT * FROM reviews WHERE provider_id=? AND event_id=? AND user_id=?`;
   const result = await doQuery(sql, [providerId, eventId, userId]);
+  return result;
+}
+
+async function getAllCommentsAndReviews(providerId) {
+  const sql = `
+    SELECT reviews.*, users.first_name, users.last_name 
+    FROM reviews 
+    JOIN users ON users.id = reviews.user_id 
+    WHERE reviews.provider_id = ? AND reviews.is_deleted = 0
+  `;
+  const result = await doQuery(sql, [providerId]);
   return result;
 }
 

@@ -19,37 +19,27 @@ export default function ContentModeration({ newUrl }) {
     };
 
     fetchAllReports();
-  }, [newUrl]);
+  }, []);
 
-  // ✨ הפונקציה המעודכנת שמחברת את הכל לבקאנד
-  const handleUpdateStatus = async (report, newStatus) => {
+  // פונקציה לעדכון הסטטוס של הדיווח (אישור/ביטול)
+  const handleUpdateStatus = async (reportId, newStatus) => {
     try {
-      const response = await axios.post(
-        "http://localhost:3030/admin/resolveReport",
-        {
-          reportId: report.id,
-          newStatus: newStatus,
-          targetType: report.target_type,
-          targetId: report.target_id, // ה-ID של התגובה/אלמנט
-          offenderId: report.offender_id, // ה-ID של המשתמש הפוגע (וודאי שזה השם מה-SQL שלך)
-          reason: report.reason,
-        },
+      const response = await axios.put(
+        "http://localhost:3030/admin/updateReport",
+        { reportId, newStatus },
         { withCredentials: true },
       );
 
       if (response.data.success) {
-        alert(response.data.message || "Status updated successfully!");
-
-        // עדכון הסטייט המקומי כדי שהטבלה תתעדכן מיידית לעיני האדמין
         setReports((prevReports) =>
-          prevReports.map((r) =>
-            r.id === report.id ? { ...r, status: newStatus } : r,
+          prevReports.map((report) =>
+            report.id === reportId ? { ...report, status: newStatus } : report,
           ),
         );
       }
     } catch (error) {
       console.error("Error updating report status:", error);
-      alert(error.response?.data?.devError || "Failed to update report status");
+      alert("Failed to update report status");
     }
   };
 
@@ -93,7 +83,7 @@ export default function ContentModeration({ newUrl }) {
                     </div>
                   </td>
 
-                  {/* סוג התלונה */}
+                  {/* סוג התלונה: יוזר, עסק או קומנט */}
                   <td>
                     <span
                       style={{
@@ -148,16 +138,16 @@ export default function ContentModeration({ newUrl }) {
                           <button
                             className={classes.approveBtn}
                             onClick={() =>
-                              handleUpdateStatus(report, "RESOLVED")
-                            } // ✨ מעביר את כל ה-object
+                              handleUpdateStatus(report.id, "RESOLVED")
+                            }
                           >
                             Resolve
                           </button>
                           <button
                             className={classes.denyBtn}
                             onClick={() =>
-                              handleUpdateStatus(report, "DISMISSED")
-                            } // ✨ מעביר את כל ה-object
+                              handleUpdateStatus(report.id, "DISMISSED")
+                            }
                           >
                             Dismiss
                           </button>
