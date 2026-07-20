@@ -75,21 +75,35 @@ router.put("/updateProfile", isConnected, isActive, async (req, res) => {
     });
   }
 });
-//user/logout
+
+/**
+ * @route   GET /user/logout
+ * @desc    Logout user and clear session
+ * @access  User logged_in
+ */
 router.get("/logout", (req, res) => {
-  if (req.session.user) {
-    req.session.destroy((err) => {
-      if (err) return res.json({ success: false, message: "Logout failed" });
-      res.clearCookie("connect.sid");
-      return res.json({ success: true, message: "Logged out successfully" });
-    });
-  } else {
-    return res.json({ success: true, message: "Already logged out" });
+  if (!req.session || !req.session.user) {
+    return res
+      .status(200)
+      .json({ success: true, message: "Already logged out" });
   }
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Logout Error:", err);
+      return res.status(500).json({ success: false, message: "Logout failed" });
+    }
+
+    res.clearCookie("connect.sid", { path: "/" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Logged out successfully" });
+  });
 });
 
 router.get("/checkSession", (req, res) => {
-  return res.json({ success: true, user: req.session.user });
+  if (req.session && req.session.user) {
+    return res.status(200).json({ success: true, user: req.session.user });
+  }
+  return res.status(200).json({ success: false, user: null });
 });
-
 module.exports = router;

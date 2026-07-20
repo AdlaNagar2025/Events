@@ -1,24 +1,22 @@
 import { Link } from "react-router-dom";
 import classes from "./navbar.module.css";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import API from "../../services/api";
 
 export default function Navbar({ user, setUserTo }) {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      const response = await axios.get("http://localhost:3030/user/logout", {
-        withCredentials: true,
-      });
-      if (response.data.success) {
-        setUserTo(null); // איפס ה-State
-        navigate("/");
-      }
+      await API.get("/user/logout");
     } catch (error) {
-      console.error("Logout failed", error);
+      console.error("Logout request error:", error);
+    } finally {
+      setUserTo(null);
+      navigate("/");
     }
   };
+
   return (
     <nav className={classes.nav}>
       <div className={classes.navLinks}>
@@ -32,11 +30,9 @@ export default function Navbar({ user, setUserTo }) {
           </>
         ) : (
           <>
-            {user && (
-              <button onClick={handleLogout} className={classes.logoutBtn}>
-                Logout
-              </button>
-            )}
+            <button onClick={handleLogout} className={classes.logoutBtn}>
+              Logout
+            </button>
           </>
         )}
       </div>
