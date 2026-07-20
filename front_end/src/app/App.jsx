@@ -14,11 +14,11 @@ import ProtectedRoute from "../layouts/ProtectedRoute";
 import GuestRoute from "../layouts/GuestRoute";
 import RequireApproved from "../layouts/RequireApproved";
 
-import Register from "../components/registerOrlogin/Register";
-import Login from "../components/registerOrlogin/Login";
-import Account from "../components/BasicComponents/Account";
-import Home from "../components/BasicComponents/Home";
-import NotFound from "../components/BasicComponents/NotFound";
+import Register from "../pages/auth/Register";
+import Login from "../pages/auth/Login";
+import Account from "../pages/user/Account";
+import Home from "../pages/Home";
+import NotFound from "../pages/NotFound";
 import DetailsOFbusiness from "../components/provider/DetailsOFbusiness";
 import UsersManagment from "../components/admin/UsersManagment";
 import ServicesApprovals from "../components/admin/ServicesApprovals";

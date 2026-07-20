@@ -2,8 +2,8 @@ import { Outlet } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 import styles from "../app/app.module.css";
-import Navbar from "../components/NavBar/Navbar";
-import SideBar from "../components/SideBar/sideBar";
+import Navbar from "../components/common/Navbar";
+import SideBar from "../components/common/sideBar";
 
 export default function MainLayout({ user, setUser }) {
   return (
