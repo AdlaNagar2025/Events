@@ -5,23 +5,6 @@ const login = require("../database/queries/login");
 const updateProfile = require("../database/queries/update");
 const { isConnected, isActive } = require("../Middleware/auth");
 
-//user/register
-router.post("/register", async (req, res) => {
-  console.log("Body received:", req.body);
-  try {
-    const result = await register(req.body);
-    req.session.user = result.user;
-    console.log(req.session);
-    return res.json(result);
-  } catch (error) {
-    console.error("DEBUG ERROR:", error);
-    return res.status(500).json({
-      msg: "Server Error",
-      devError: error.message,
-    });
-  }
-});
-
 /**
  * @route   POST /user/login
  * @desc    Authenticate user & establish session
@@ -40,6 +23,30 @@ router.post("/login", async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal Server Error during login.",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+});
+
+/**
+ * @route   POST /user/register
+ * @desc    Authenticate user
+ * @access  Public
+ */
+router.post("/register", async (req, res) => {
+  try {
+    const result = await register(req.body);
+    if (result.success && result.user) {
+      req.session.user = result.user;
+    }
+    return res
+      .status(result.statusCode || (result.success ? 201 : 400))
+      .json(result);
+  } catch (error) {
+    console.error("Error in /Register route:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error during register.",
       error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }

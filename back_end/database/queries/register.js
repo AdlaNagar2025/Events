@@ -13,7 +13,9 @@ async function register(NewUser) {
   if (!first_name || !email || !password)
     return {
       success: false,
-      message: "Please make sure all required fields are filled correctly.",
+      statusCode: 400,
+      message:
+        "Please fill in all required fields (Email and Password and FirstName) .",
     };
   // Set default values for optional fields if they are missing
   last_name = NewUser.last_name || "";
@@ -31,14 +33,19 @@ async function register(NewUser) {
     // Step 3: Insert the new user into the database
     const sql = `INSERT INTO users (first_name,last_name,email,phone,password,role) VALUES (?,?,?,?,?,?)`;
     const result = await doQuery(sql, values);
-    //כדי SESSION לעשות UPDATE BY ID
     const id = result.insertId;
-    let user = { ...NewUser };
-    delete user.password;
-    user.id = id;
-    user.is_active = 1;
+    const user = {
+      id: result.insertId,
+      first_name,
+      last_name,
+      email,
+      phone,
+      role,
+      is_active: 1,
+    };
     return {
       success: true,
+      statusCode: 201,
       message: `Welcome to EventHub, ${first_name}! Your account has been created successfully.`,
       user: user,
     };
@@ -47,6 +54,7 @@ async function register(NewUser) {
   else {
     return {
       success: false,
+      statusCode: 409,
       message:
         "It looks like this email is already registered. Try logging in instead!",
     };
