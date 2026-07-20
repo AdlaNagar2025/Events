@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import axios from "axios";
 
+import API from "../services/api";
 import AuthLayout from "../layouts/AuthLayout";
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "../layouts/ProtectedRoute";
@@ -41,10 +42,7 @@ function App() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3030/user/checkSession",
-          { withCredentials: true },
-        );
+        const response = await API.get("/user/checkSession");
         if (response.data.success) {
           setUser(response.data.user);
         } else {

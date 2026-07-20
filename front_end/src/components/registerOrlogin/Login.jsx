@@ -1,16 +1,20 @@
 import { useState } from "react";
 import classes from "./registerorlogin.module.css";
-import axios from "axios";
+import API from "../../services/api";
 import { Link, useNavigate } from "react-router-dom";
 
-function getDefaultRouteForRole(role) {
-  switch (role) {
+function getDefaultRouteForRole(user) {
+  if (!user) return "/";
+  switch (user.role) {
     case "Customer":
       return "/account";
     case "Admin":
       return "/admin/users";
     case "Chief":
     case "Hall_Owner":
+      if (user.status === "DRAFT" || user.status === "PENDING") {
+        return "/provider/business";
+      }
       return "/provider/dashboard";
     default:
       return "/";
@@ -35,14 +39,10 @@ export default function Login({ onLoginSuccess }) {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://localhost:3030/user/login",
-        credentials,
-        { withCredentials: true },
-      );
+      const response = await API.post("/user/login", credentials);
       if (response.data.success) {
         onLoginSuccess(response.data.user);
-        navigate(getDefaultRouteForRole(response.data.user?.role));
+        navigate(getDefaultRouteForRole(response.data.user));
       } else {
         setError(response.data.message || "Invalid email or password.");
       }
