@@ -1,4 +1,4 @@
-import axios from "axios";
+import API from "../../services/api";
 import { useState, useEffect } from "react";
 import classes from "./account.module.css";
 
@@ -56,21 +56,21 @@ export default function Account({ user, onUpdateSuccess }) {
     setLoading(true);
 
     try {
-      const response = await axios.put(
-        "http://localhost:3030/user/updateProfile",
-        formData,
-        { withCredentials: true },
-      );
+      const response = await API.put("/user/updateProfile", formData);
 
       if (response.data.success) {
         setSuccess(response.data.message || "Profile updated successfully!");
-        onUpdateSuccess(response.data.updatedUser);
+        const updated = response.data.updatedUser || formData;
+        onUpdateSuccess({ ...user, ...updated });
       } else {
         setError(response.data.message || "Failed to update profile.");
       }
     } catch (err) {
       console.error("Update error:", err);
-      setError("Failed to update profile. Please try again.");
+      const serverMsg =
+        err.response?.data?.message ||
+        "Failed to update profile. Please try again.";
+      setError(serverMsg);
     } finally {
       setLoading(false);
     }
@@ -104,7 +104,9 @@ export default function Account({ user, onUpdateSuccess }) {
           <p className={classes.profileEmail}>{user.email}</p>
           <span className={classes.roleBadge}>{getRoleLabel(user.role)}</span>
           {isProvider && user.status && (
-            <span className={`${classes.statusBadge} ${getStatusClass(user.status)}`}>
+            <span
+              className={`${classes.statusBadge} ${getStatusClass(user.status)}`}
+            >
               Status: {user.status}
             </span>
           )}
