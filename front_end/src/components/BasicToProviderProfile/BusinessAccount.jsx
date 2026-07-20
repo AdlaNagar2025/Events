@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import toast from "react-hot-toast";
 import classes from "./BusinessAccount.module.css";
 import FormInput from "../BasicToProviderProfile/FormInput";
@@ -18,7 +18,6 @@ const initialChief = {
 const initialHall = {
   hall_name: "",
   city: "",
-  street: "",
   price: "",
   phone: "",
   capacity: "",
@@ -46,7 +45,7 @@ const CHIEF_FIELDS = [
     label: "Phone",
     name: "phone",
     type: "tel",
-    required: true,
+    required: false,
     extraProps: { pattern: "^05\\d{8}$" },
   },
   { label: "City", name: "city", required: true },
@@ -55,17 +54,16 @@ const CHIEF_FIELDS = [
 const HALL_FIELDS = [
   { label: "Hall Name", name: "hall_name", required: true },
   { label: "Price", name: "price", type: "number", required: true },
-  { label: "Email", name: "email", type: "email", required: true },
+  { label: "Email", name: "email", type: "email", required: false },
   {
     label: "Phone",
     name: "phone",
     type: "tel",
-    required: true,
+    required: false,
     extraProps: { pattern: "^05\\d{8}$" },
   },
   { label: "Capacity", name: "capacity", type: "number", required: true },
   { label: "City", name: "city", required: true },
-  { label: "Street", name: "street", required: false },
 ];
 
 export default function BusinessAccount({
@@ -81,7 +79,6 @@ export default function BusinessAccount({
   const data = isChief ? chiefData : hallData;
   const relevantFields = isChief ? CHIEF_FIELDS : HALL_FIELDS;
 
-  // ✨ החזרת פונקציית handleChange שנמחקה בטעות
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "city_and_region") {
@@ -109,17 +106,30 @@ export default function BusinessAccount({
 
   const checkIsProfileComplete = (profileData) => {
     if (!profileData) return false;
-    return isChief
-      ? !!profileData.specialty && !!profileData.city
-      : !!profileData.hall_name && !!profileData.city;
+    if (isChief) {
+      return (
+        !!profileData.specialty &&
+        !!profileData.city &&
+        !!profileData.region &&
+        !!profileData.price_per_hour &&
+        !!profileData.capacity &&
+        !!profileData.description
+      );
+    } else {
+      return (
+        !!profileData.hall_name &&
+        !!profileData.city &&
+        !!profileData.region &&
+        !!profileData.price &&
+        !!profileData.capacity &&
+        !!profileData.description
+      );
+    }
   };
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:3030/provider/MyProfile",
-        { withCredentials: true },
-      );
+      const response = await API.get("/provider/MyProfile");
 
       if (response.data.success && response.data.data) {
         const profileData = response.data.data;
@@ -149,18 +159,28 @@ export default function BusinessAccount({
 
   const submitProfile = async (e) => {
     e.preventDefault();
-    if (data.description.length < 20) {
+    if (!data.description || data.description.length < 20) {
       return toast.error("Description too short (min 20 chars).");
     }
     if (
       isChief &&
       data.start_year &&
-      data.start_year > new Date().getFullYear()
+      Number(data.start_year) > new Date().getFullYear()
     ) {
-      return toast.error("Year cannot be in the future.");
+      return toast.error("Start year cannot be in the future.");
     }
-    const priceValue = isChief ? data.price_per_hour : data.price;
-    if (priceValue <= 0 || data.capacity <= 0) {
+
+    const priceValue = isChief
+      ? Number(data.price_per_hour)
+      : Number(data.price);
+    const capacityValue = Number(data.capacity);
+
+    if (
+      isNaN(priceValue) ||
+      priceValue <= 0 ||
+      isNaN(capacityValue) ||
+      capacityValue <= 0
+    ) {
       return toast.error(
         "Please enter valid positive values for price and capacity.",
       );
@@ -169,11 +189,7 @@ export default function BusinessAccount({
     setIsSubmitting(true);
     const loadingId = toast.loading("Saving your business profile...");
     try {
-      const response = await axios.post(
-        "http://localhost:3030/provider/businessAccount",
-        data,
-        { withCredentials: true },
-      );
+      const response = await API.post("/provider/businessAccount", data);
       if (response.data.success) {
         toast.success(response.data.message || "Saved successfully! ✨", {
           id: loadingId,

@@ -63,18 +63,13 @@ router.use(isProvider); // שלב 3: האם הוא ספק (Chief/Hall_Owner)?
  * @access  Private (Provider only)
  */
 router.post("/businessAccount", async (req, res) => {
-  console.log("Data received from frontend:", req.body);
   try {
     const result = await createBusinessProfile({
       businessData: req.body,
       user: req.session.user,
     });
 
-    if (!result.success) {
-      return res.status(400).json(result);
-    }
-
-    return res.json(result);
+    return res.status(result.statusCode || 200).json(result);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -82,6 +77,7 @@ router.post("/businessAccount", async (req, res) => {
     });
   }
 });
+
 /**
  * @route   POST /provider/upload-gallery
  * @desc    העלאת עד 5 תמונות לגלריה ושמירת הנתיבים שלהן ב-DB.

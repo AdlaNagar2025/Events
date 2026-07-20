@@ -1,166 +1,19 @@
 const doQuery = require("../query");
 const { getRole } = require("./helpingFunc");
 
-// async function createBusinessProfile({ businessData, user }) {
-//   const userId = user.id;
-//   let sql = "";
-//   let values = [];
-//   let roleType = "";
-
-//   if (user.role === "Chief") {
-//     roleType = "Chief";
-//     let {
-//       specialty,
-//       city,
-//       region,
-//       street,
-//       house_number,
-//       lat,
-//       lng,
-//       price_per_hour,
-//       start_year,
-//       description,
-//       capacity,
-//       phone,
-//     } = businessData;
-
-//     await doQuery(sql, [
-//       specialty,
-//       phone,
-//       price_per_hour,
-//       capacity,
-//       description,
-//       city,
-//       region,
-//       req.session.user.id,
-//     ]);
-
-//     if (!specialty || !city || price_per_hour <= 0 || capacity <= 0) {
-//       return {
-//         success: false,
-//         message: "Please fill in all required fields for your Cheif profile.",
-//       };
-//     }
-
-//     if (start_year > new Date().getFullYear()) {
-//       return { success: false, message: "Start year cannot be in the future." };
-//     }
-
-//     sql = `
-//       INSERT INTO chiefs (chief_id, phone, specialty, city, street, house_number, lat, lng, price_per_hour, start_year, description, capacity , region)
-//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ?)
-//       ON DUPLICATE KEY UPDATE
-//         phone = VALUES(phone), specialty = VALUES(specialty), city = VALUES(city), region = VALUES(region),
-//         street = VALUES(street), house_number = VALUES(house_number), lat = VALUES(lat),
-//         lng = VALUES(lng), price_per_hour = VALUES(price_per_hour), start_year = VALUES(start_year),
-//         description = VALUES(description), capacity = VALUES(capacity);
-//     `;
-//     values = [
-//       userId,
-//       phone,
-//       specialty,
-//       city,
-//       street,
-//       house_number,
-//       lat,
-//       lng,
-//       price_per_hour,
-//       start_year,
-//       description,
-//       capacity,
-//       region,
-//     ];
-//   } else if (user.role === "Hall_Owner") {
-//     roleType = "Hall";
-//     let {
-//       hall_name,
-//       city,
-//       street,
-//       region,
-//       house_number,
-//       lat,
-//       lng,
-//       capacity,
-//       price,
-//       phone,
-//       email,
-//       description,
-//     } = businessData;
-
-//     if (!hall_name || !city || price <= 0 || capacity <= 0) {
-//       return {
-//         success: false,
-//         message: "Please fill in all required fields for your Hall profile.",
-//       };
-//     }
-
-//     sql = `
-//       INSERT INTO halls (hall_id, hall_name, city, street, house_number, lat, lng, capacity, price, phone, email, description ,  region)
-//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?)
-//       ON DUPLICATE KEY UPDATE
-//         hall_name = VALUES(hall_name), city = VALUES(city), street = VALUES(street), region=VALUES(region),
-//         house_number = VALUES(house_number), lat = VALUES(lat), lng = VALUES(lng),
-//         capacity = VALUES(capacity), price = VALUES(price), phone = VALUES(phone),
-//         email = VALUES(email), description = VALUES(description);
-//     `;
-//     values = [
-//       userId,
-//       hall_name,
-//       city,
-//       street,
-//       house_number,
-//       lat,
-//       lng,
-//       capacity,
-//       price,
-//       phone,
-//       email,
-//       description,
-//       region,
-//     ];
-//   } else {
-//     return { success: false, message: "Invalid user role." };
-//   }
-
-//   // 2. הרצת השאילתה וטיפול בתוצאה
-//   try {
-//     const result = await doQuery(sql, values);
-
-//     // ב-MySQL, affectedRows = 1 זה INSERT חדש, affectedRows = 2 זה UPDATE
-//     const isUpdate = result.affectedRows > 0;
-
-//     return {
-//       success: true,
-//       message: isUpdate
-//         ? `Your ${roleType} profile has been updated! 🔄`
-//         : `Welcome! Your ${roleType} profile was created successfully. 🎉`,
-//     };
-//   } catch (err) {
-//     console.error(`DB Error (${roleType}):`, err);
-
-//     if (err.code === "ER_DUP_ENTRY") {
-//       return {
-//         success: false,
-//         message: "The email or phone number is already registered.",
-//       };
-//     }
-
-//     return {
-//       success: false,
-//       message: "A database error occurred. Please try again later.",
-//     };
-//   }
-// }
-
 async function createBusinessProfile({ businessData, user }) {
   const userId = user.id;
+  const userEmail = user.email;
+
   let sql = "";
   let values = [];
   let roleType = "";
 
+  const currentYear = new Date().getFullYear();
+
   if (user.role === "Chief") {
     roleType = "Chief";
-    let {
+    const {
       specialty,
       city,
       region,
@@ -171,43 +24,83 @@ async function createBusinessProfile({ businessData, user }) {
       phone,
     } = businessData;
 
-    // 1. קודם כל ולידציה - אם חסר משהו, עוצרים מיד
-    if (!specialty || !city || price_per_hour <= 0 || capacity <= 0) {
+    const parsedPrice = Number(price_per_hour);
+    const parsedCapacity = Number(capacity);
+    const parsedStartYear = Number(start_year);
+
+    if (
+      !specialty?.trim() ||
+      !city?.trim() ||
+      !region?.trim() ||
+      !description?.trim()
+    ) {
       return {
+        statusCode: 400,
         success: false,
-        message: "Please fill in all required fields for your Chief profile.",
+        message: "Please fill in all text fields for your Chief profile.",
       };
     }
 
-    if (start_year > new Date().getFullYear()) {
-      return { success: false, message: "Start year cannot be in the future." };
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      return {
+        statusCode: 400,
+        success: false,
+        message: "Hourly price must be a valid number greater than 0.",
+      };
     }
 
-    // 2. הגדרת ה-SQL (שים לב לפסיק שהתווסף אחרי (VALUES(region )
+    if (isNaN(parsedCapacity) || parsedCapacity <= 0) {
+      return {
+        statusCode: 400,
+        success: false,
+        message: "Capacity must be a valid number greater than 0.",
+      };
+    }
+
+    if (
+      isNaN(parsedStartYear) ||
+      parsedStartYear < 1950 ||
+      parsedStartYear > currentYear
+    ) {
+      return {
+        statusCode: 400,
+        success: false,
+        message: `Start year must be a valid year between 1950 and ${currentYear}.`,
+      };
+    }
+
+    // 2. שאילתת SQL
     sql = `
-      INSERT INTO chiefs (chief_id, phone, specialty, city,price_per_hour, start_year, description, capacity, region)
-      VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO chiefs (chief_id, email, phone, specialty, city, region, price_per_hour, start_year, description, capacity, status, submitted_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', CURRENT_TIMESTAMP)
       ON DUPLICATE KEY UPDATE 
-        phone = VALUES(phone), specialty = VALUES(specialty), city = VALUES(city), region = VALUES(region),
-       price_per_hour = VALUES(price_per_hour), start_year = VALUES(start_year), 
-        description = VALUES(description), capacity = VALUES(capacity);
+        phone = VALUES(phone),
+        specialty = VALUES(specialty),
+        city = VALUES(city),
+        region = VALUES(region),
+        price_per_hour = VALUES(price_per_hour),
+        start_year = VALUES(start_year),
+        description = VALUES(description),
+        capacity = VALUES(capacity),
+        status = IF(status = 'APPROVED', 'APPROVED', 'PENDING'),
+        submitted_at = CURRENT_TIMESTAMP;
     `;
 
-    // 3. סידור המערך בדיוק לפי סדר ה-INSERT (העברנו את region למקום ה-13, בסוף)
     values = [
       userId,
-      phone,
-      specialty,
-      city,
-      price_per_hour,
-      start_year,
-      description,
-      capacity,
-      region,
+      userEmail,
+      phone || user.phone || null,
+      specialty.trim(),
+      city.trim(),
+      region.trim(),
+      parsedPrice,
+      parsedStartYear,
+      description.trim(),
+      parsedCapacity,
     ];
   } else if (user.role === "Hall_Owner") {
     roleType = "Hall";
-    let {
+    const {
       hall_name,
       city,
       region,
@@ -218,68 +111,101 @@ async function createBusinessProfile({ businessData, user }) {
       description,
     } = businessData;
 
-    if (!hall_name || !city || price <= 0 || capacity <= 0) {
+    // 1. הפיכה למספרים ובדיקת תקינות חסינה
+    const parsedPrice = Number(price);
+    const parsedCapacity = Number(capacity);
+
+    if (
+      !hall_name?.trim() ||
+      !city?.trim() ||
+      !region?.trim() ||
+      !description?.trim()
+    ) {
       return {
+        statusCode: 400,
         success: false,
-        message: "Please fill in all required fields for your Hall profile.",
+        message: "Please fill in all text fields for your Hall profile.",
       };
     }
 
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      return {
+        statusCode: 400,
+        success: false,
+        message: "Hall price must be a valid number greater than 0.",
+      };
+    }
+
+    if (isNaN(parsedCapacity) || parsedCapacity <= 0) {
+      return {
+        statusCode: 400,
+        success: false,
+        message: "Capacity must be a valid number greater than 0.",
+      };
+    }
+
+    // 2. שאילתת SQL
     sql = `
-      INSERT INTO halls (hall_id, hall_name, city,  capacity, price, phone, email, description, region) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ? )
+      INSERT INTO halls (hall_id, hall_name, city, region, capacity, price, phone, email, description, status, submitted_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', CURRENT_TIMESTAMP)
       ON DUPLICATE KEY UPDATE
-        hall_name = VALUES(hall_name), city = VALUES(city), street = VALUES(street), region = VALUES(region),
-        house_number = VALUES(house_number), lat = VALUES(lat), lng = VALUES(lng), 
-        capacity = VALUES(capacity), price = VALUES(price), phone = VALUES(phone), 
-        email = VALUES(email), description = VALUES(description);
+        hall_name = VALUES(hall_name),
+        city = VALUES(city),
+        region = VALUES(region),
+        capacity = VALUES(capacity),
+        price = VALUES(price),
+        phone = VALUES(phone),
+        email = VALUES(email),
+        description = VALUES(description),
+        status = IF(status = 'APPROVED', 'APPROVED', 'PENDING'),
+        submitted_at = CURRENT_TIMESTAMP;
     `;
 
-    // סידור המערך בדיוק לפי סדר ה-INSERT (העברנו את region לסוף המערך)
     values = [
       userId,
-      hall_name,
-      city,
-      capacity,
-      price,
-      phone,
-      email,
-      description,
-      region,
+      hall_name.trim(),
+      city.trim(),
+      region.trim(),
+      parsedCapacity,
+      parsedPrice,
+      phone || user.phone || null,
+      email || userEmail,
+      description.trim(),
     ];
   } else {
-    return { success: false, message: "Invalid user role." };
+    return { statusCode: 400, success: false, message: "Invalid user role." };
   }
 
-  // הרצת השאילתה וטיפול בתוצאה
   try {
     const result = await doQuery(sql, values);
-
-    // ב-MySQL, אם זה INSERT אז affectedRows הוא 1, ואם זה UPDATE אז הוא 2
     const isUpdate = result.affectedRows === 2;
 
     return {
+      statusCode: 200,
       success: true,
       message: isUpdate
-        ? `Your ${roleType} profile has been updated! 🔄`
-        : `Welcome! Your ${roleType} profile was created successfully. 🎉`,
+        ? `Your ${roleType} profile has been updated and sent to admin for approval! 🔄`
+        : `Your ${roleType} profile has been created and sent to admin for approval! 🎉`,
     };
   } catch (err) {
     console.error(`DB Error (${roleType}):`, err);
 
     if (err.code === "ER_DUP_ENTRY") {
       return {
+        statusCode: 409, // Conflict
         success: false,
         message: "The email or phone number is already registered.",
       };
     }
 
     return {
+      statusCode: 500, // Internal Server Error
       success: false,
       message: "A database error occurred. Please try again later.",
     };
   }
 }
+
 async function checkStatus(providerId, role) {
   const tableName = role === "Chief" ? "chiefs" : "halls";
   const idColumn = role === "Chief" ? "chief_id" : "hall_id";
@@ -287,7 +213,6 @@ async function checkStatus(providerId, role) {
   const result = await doQuery(sql, [providerId]);
   return result[0]?.status || "DRAFT";
 }
-
 
 async function getProviderCardData(providerId) {
   const role = await getRole(providerId);
