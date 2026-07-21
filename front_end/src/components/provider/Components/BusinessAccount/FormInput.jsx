@@ -1,6 +1,6 @@
 import React from "react";
 import classes from "./FormInput.module.css";
-import CitySelect from "../provider/CitySelect";
+import CitySelect from "../../Shared/CitySelect";
 
 const FormInput = ({
   label,

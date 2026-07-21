@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import classes from "./serviceCard.module.css";
 import axios from "axios";
-import BusinessProfile from "../CommonComponents/BusinessProfile";
+import BusinessProfile from "../../CommonComponents/BusinessProfile";
 import { MdOutlineFavoriteBorder } from "react-icons/md";
 import { MdFavorite } from "react-icons/md";
 

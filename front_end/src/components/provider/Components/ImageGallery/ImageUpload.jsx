@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import classes from "./ImageUpload.module.css";
-import API from "../../../services/api";
+import API from "../../../../services/api";
 import ImageItem from "./ImageItem";
 import { FaTimes } from "react-icons/fa";
 

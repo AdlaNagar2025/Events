@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import BusinessAccount from "../BasicToProviderProfile/BusinessAccount";
-import ImageUpload from "../BasicToProviderProfile/ImagesCode/ImageUpload";
-import Calendar from "../BasicToProviderProfile/Calendar/Calendar";
+import BusinessAccount from "../../BasicToProviderProfile/BusinessAccount";
+import ImageUpload from "../../BasicToProviderProfile/ImagesCode/ImageUpload";
+import Calendar from "../../BasicToProviderProfile/Calendar/Calendar";
 import classes from "./DetailsOFbusiness.module.css";
 import { FaTimes, FaUserAlt, FaImages, FaCalendarAlt } from "react-icons/fa";
-import API from "../../services/api";
+import API from "../../../services/api";
 
 function DetailsOFbusiness({ user }) {
   const [activeTab, setActiveTab] = useState(1);

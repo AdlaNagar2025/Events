@@ -2,8 +2,8 @@ import classes from "./BusinessProfile.module.css";
 import React from "react";
 import API from "../../services/api";
 import { useState, useEffect } from "react";
-import ImageUpload from "../BasicToProviderProfile/ImagesCode/ImageUpload";
-import Calendar from "../BasicToProviderProfile/Calendar/Calendar";
+import ImageUpload from "../provider/Components/ImageGallery/ImageUpload";
+import Calendar from "../provider/Components/Calander/Calendar";
 import CommentsAndReviews from "../provider/CommentsAndReviews";
 
 export default function BusinessProfile({ user, provider }) {
