@@ -5,55 +5,47 @@ import { FaStar, FaRegStar, FaTimes } from "react-icons/fa";
  * ImageItem Component
  * -------------------
  * פריט תצוגה בודד עבור גלריית התמונות.
- * * תכונות עיקריות:
- * - מציג תצוגה מקדימה (Preview) לתמונות מקומיות או תמונות מהשרת.
- * - כפתור מחיקה (X).
- * - כפתור כוכב (Main) להגדרת התמונה כתמונת פרופיל עסקית (זמין רק לתמונות קיימות).
- * - מסגרת זהב בולטת במידה והתמונה מוגדרת כראשית.
+ *
+ * @param {Object} props
+ * @param {Object|File} props.img - אובייקט תמונה מה-DB או קובץ File מקומי
+ * @param {boolean} props.isExisting - האם התמונה כבר קיימת בשרת
+ * @param {Function} props.onRemove - פונקציית מחיקה
+ * @param {Function} props.onSetMain - פונקציה להגדרת תמונה ראשית
+ * @param {boolean} props.isMain - האם התמונה מוגדרת כראשית
+ * @param {string} props.role - תפקיד המשתמש המחובר
  */
-const ImageItem = ({ img, isExisting, onRemove, onSetMain, isMain , role }) => {
-
-  // console.log("I AM IN IMAGEITEM " , role)
+const ImageItem = ({ img, isExisting, onRemove, onSetMain, isMain, role }) => {
+  const isProvider = role === "Chief" || role === "Hall_Owner";
+  const imageSrc = isExisting
+    ? `http://localhost:3030/uploads/${img.image_path}`
+    : URL.createObjectURL(img);
   return (
     <div
       className={`${classes.imageWrapper} ${isMain ? classes.mainActive : ""}`}
     >
-      <img
-        src={
-          isExisting
-            ? `http://localhost:3030/uploads/${img.image_path}`
-            : URL.createObjectURL(img)
-        }
-        alt="preview"
-        className={classes.previewImg}
-      />
+      <img src={imageSrc} alt="preview" className={classes.previewImg} />
 
-      { role !=="Admin" && role!= "Customer"  && (
-                <div className={classes.overlay}>
-        <button
-          type="button"
-          className={classes.removeBtn}
-          onClick={onRemove}
-          title="Remove Image"
-        >
-          <FaTimes />
-        </button>
-
-      
-      
-      
-
-
-        {isExisting && (
-          <div
-            className={`${classes.starIcon} ${isMain ? classes.starActive : ""}`}
-            onClick={() => onSetMain(img.image_path)}
-            title={isMain ? "Main Image" : "Set as Main"}
+      {isProvider && (
+        <div className={classes.overlay}>
+          <button
+            type="button"
+            className={classes.removeBtn}
+            onClick={onRemove}
+            title={isExisting ? "Delete Image" : "Remove Choice"}
           >
-            {isMain ? <FaStar /> : <FaRegStar />}
-          </div>
-        )}
-      </div>
+            <FaTimes />
+          </button>
+
+          {isExisting && (
+            <div
+              className={`${classes.starIcon} ${isMain ? classes.starActive : ""}`}
+              onClick={() => onSetMain(img.image_path)}
+              title={isMain ? "Main Image" : "Set as Main"}
+            >
+              {isMain ? <FaStar /> : <FaRegStar />}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

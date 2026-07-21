@@ -80,14 +80,11 @@ router.post("/businessAccount", async (req, res) => {
 
 /**
  * @route   POST /provider/upload-gallery
- * @desc    העלאת עד 5 תמונות לגלריה ושמירת הנתיבים שלהן ב-DB.
+ * @desc    העלאת עד 5 תמונות לגלריה ושמירתן ב-DB
  * @access  Private (Provider only)
  */
-
 router.post("/upload-gallery", (req, res) => {
-  // 1. קריאה ידנית לפונקציית ההעלאה כדי שנוכל לתפוס שגיאות (כמו Size Limit)
   upload.array("images", 5)(req, res, async (err) => {
-    // בדיקה אם קרתה שגיאה של Multer (למשל: קובץ גדול מדי או יותר מ-5 תמונות)
     if (err instanceof multer.MulterError) {
       if (err.code === "LIMIT_FILE_SIZE") {
         return res.status(400).json({
@@ -95,47 +92,122 @@ router.post("/upload-gallery", (req, res) => {
           message: "One or more files are too large (Max 2MB per image).",
         });
       }
-      return res
-        .status(400)
-        .json({ success: false, message: `Upload error: ${err.message}` });
-    }
-    // בדיקה אם קרתה שגיאה אחרת (למשל: סוג קובץ לא תקין מה-fileFilter)
-    else if (err) {
+      return res.status(400).json({
+        success: false,
+        message: `Upload error: ${err.message}`,
+      });
+    } else if (err) {
       return res.status(400).json({ success: false, message: err.message });
     }
 
-    // 2. אם הגענו לכאן - הקבצים עלו לשרת בהצלחה! עכשיו נשמור אותם ב-DB
     try {
       const providerId = req.session.user.id;
-      const provider_type = req.session.user.role;
+      const providerType = req.session.user.role;
       const files = req.files;
 
       if (!files || files.length === 0) {
-        return res
-          .status(400)
-          .json({ success: false, message: "No files selected." });
-      }
-
-      // שמירה ב-Database
-      const dbResult = await uploadImagesToDB(providerId, provider_type, files);
-
-      if (dbResult.success) {
-        return res.json({
-          success: true,
-          message: "Gallery uploaded and saved successfully! ✨",
-          count: files.length,
+        return res.status(400).json({
+          success: false,
+          message: "No files selected.",
         });
-      } else {
-        return res.status(500).json(dbResult);
       }
+
+      const result = await uploadImagesToDB(providerId, providerType, files);
+      return res.status(result.statusCode).json(result);
     } catch (error) {
       console.error("Critical Upload Error:", error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: "Failed to process images after upload.",
       });
     }
   });
+});
+
+/**
+ * @route   GET /provider/MyImages
+ * @desc    שליפת כל התמונות של הספק המחובר
+ * @access  Private (Provider only)
+ */
+router.get("/MyImages", async (req, res) => {
+  try {
+    const providerId = req.session.user.id;
+    const result = await getAllImages(providerId);
+
+    return res.status(result.statusCode).json(result);
+  } catch (error) {
+    console.error("Error fetching images:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server connection error.",
+    });
+  }
+});
+
+/**
+ * @route   DELETE /provider/deleteImage/:imagePath
+ * @desc    מחיקת תמונה מה-DB ומהדיסק הפיזי
+ * @access  Private (Provider only)
+ */
+router.delete("/deleteImage/:imagePath", async (req, res) => {
+  const { imagePath } = req.params;
+  const providerId = req.session.user.id;
+
+  if (!imagePath) {
+    return res.status(400).json({
+      success: false,
+      message: "No image path provided.",
+    });
+  }
+
+  try {
+    // 1. מחיקה מ-DB
+    const result = await deleteImage(providerId, imagePath);
+
+    // 2. אם המחיקה ב-DB הצליחה, מוחקים פיזית מהכונן
+    if (result.success) {
+      const fullPath = path.join(__dirname, "../uploads", imagePath);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+        console.log(`File ${imagePath} deleted from server disk.`);
+      }
+    }
+
+    return res.status(result.statusCode).json(result);
+  } catch (error) {
+    console.error("Error in delete process:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error during image deletion.",
+    });
+  }
+});
+/**
+ * @route   POST /provider/mainImage
+ * @desc    עדכון תמונה ראשית עבור הספק
+ * @access  Private (Provider only)
+ */
+router.post("/mainImage", async (req, res) => {
+  try {
+    const { imagePath } = req.body;
+    const providerId = req.session.user.id;
+
+    if (!imagePath) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing image path.",
+      });
+    }
+
+    const result = await setMainImage(providerId, imagePath);
+    return res.status(result.statusCode).json(result);
+  } catch (error) {
+    console.error("Main Image Update Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update main image.",
+    });
+  }
 });
 
 //CALENDAR
@@ -219,72 +291,6 @@ router.get("/MyProfile", async (req, res) => {
   } catch (error) {
     console.error("Error fetching profile:", error);
     res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-router.get("/MyImages", async (req, res) => {
-  try {
-    const providerId = req.session.user.id;
-    const result = await getAllImages(providerId);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    console.error("Error fetching profile:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-router.delete("/deleteImage/:imagePath", async (req, res) => {
-  const imagePath = req.params.imagePath;
-
-  if (!imagePath) {
-    return res
-      .status(400)
-      .json({ success: false, message: "No image path provided" });
-  }
-
-  try {
-    const dbResult = await deleteImage(imagePath);
-
-    if (dbResult.affectedRows > 0) {
-      const fullPath = path.join(__dirname, "../uploads", imagePath);
-
-      if (fs.existsSync(fullPath)) {
-        fs.unlinkSync(fullPath); // מוחק פיזית מהכונן
-        console.log(`File ${imagePath} deleted from server disk.`);
-      }
-
-      return res.json({
-        success: true,
-        message: "Image deleted from DB and disk",
-      });
-    } else {
-      return res
-        .status(404)
-        .json({ success: false, message: "Image not found in database" });
-    }
-  } catch (error) {
-    console.error("Error in delete process:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Server error during deletion" });
-  }
-});
-router.post("/mainImage", async (req, res) => {
-  try {
-    const { imagePath } = req.body;
-    const providerId = req.session.user.id;
-
-    if (!imagePath)
-      return res
-        .status(400)
-        .json({ success: false, msg: "Missing image path" });
-
-    await setMainImage(providerId, imagePath);
-    res.json({ success: true, message: "Main image updated!" });
-  } catch (error) {
-    console.error("Main Image Update Error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to update main image" });
   }
 });
 

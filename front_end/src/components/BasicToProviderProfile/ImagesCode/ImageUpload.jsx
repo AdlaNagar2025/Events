@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import classes from "./ImageUpload.module.css";
-import axios from "axios";
+import API from "../../../services/api";
 import ImageItem from "./ImageItem";
 import { FaTimes } from "react-icons/fa";
 
@@ -9,23 +9,22 @@ import { FaTimes } from "react-icons/fa";
  * ImageUpload Component
  * ---------------------
  * קומפוננטה לניהול גלריית העסק (עד 5 תמונות).
- * * תכונות עיקריות:
- * - טעינת תמונות קיימות מה-Backend לפי הרשאות (Role).
- * - העלאת תמונות חדשות בפורמט FormData עם וולידציה (סוג קובץ וגודל).
- * - ניהול תצוגה מקדימה לפני שמירה.
- * - אינטגרציה עם ImageItem להצגת כל תמונה בנפרד.
+ *
+ * @param {Object} props
+ * @param {string} props.role - תפקיד המשתמש (Chief / Hall_Owner / Admin / Customer)
+ * @param {Object} props.provider - פרטי הספק (בעת צפייה של אדמין/לקוח)
+ * @param {Function} props.ok - Callback לעדכון טופס האב האם יש לפחות תמונה אחת
  */
 export default function ImageUpload({ role, provider, ok }) {
-  const [images, setImages] = useState([]); //images that the provider selesct
+  const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [existingImages, setExistingImages] = useState([]); //images from DB
-  const [error, setError] = useState(""); // מצב חדש להודעות שגיאה
+  const [existingImages, setExistingImages] = useState([]);
+  const [error, setError] = useState("");
   const MAX_IMAGES = 5;
   const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
   const totalImages = images.length + existingImages.length;
 
   useEffect(() => {
-    // בדיקה בטוחה: האם 'ok' הוא פונקציה?
     if (typeof ok === "function") {
       const isValid = existingImages && existingImages.length > 0;
       ok(isValid);
@@ -37,11 +36,11 @@ export default function ImageUpload({ role, provider, ok }) {
     try {
       let url;
       if (role === "Chief" || role === "Hall_Owner") {
-        url = "http://localhost:3030/provider/MyImages";
+        url = "/provider/MyImages";
       } else {
-        url = `http://localhost:3030/${role?.toLowerCase()}/ProviderImages/${provider?.id}`;
+        url = `/${role?.toLowerCase()}/ProviderImages/${provider?.id}`;
       }
-      const response = await axios.get(url, { withCredentials: true });
+      const response = await API.get(url);
       if (response.data.success) {
         setExistingImages(response.data.data || []);
       }
@@ -55,17 +54,19 @@ export default function ImageUpload({ role, provider, ok }) {
   }, [provider?.id, role]);
 
   const submitGallery = async () => {
+    console.log(images);
     if (images.length === 0) return;
     setUploading(true);
     const loadingToast = toast.loading("Uploading images...");
     try {
       const formData = new FormData();
       images.forEach((img) => formData.append("images", img));
-      const response = await axios.post(
-        "http://localhost:3030/provider/upload-gallery",
-        formData,
-        { withCredentials: true },
-      );
+      console.log(formData);
+      const response = await API.post("/provider/upload-gallery", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       if (response.data.success) {
         toast.success(response.data.message || "Gallery updated! ✨", {
           id: loadingToast,
@@ -110,11 +111,9 @@ export default function ImageUpload({ role, provider, ok }) {
   const handleSetMain = async (path) => {
     const loadingToast = toast.loading("Updating main image...");
     try {
-      const response = await axios.post(
-        "http://localhost:3030/provider/mainImage",
-        { imagePath: path },
-        { withCredentials: true },
-      );
+      const response = await API.post("/provider/mainImage", {
+        imagePath: path,
+      });
       if (response.data.success) {
         toast.success("Main image updated!", { id: loadingToast });
         fetchAllImages();
@@ -128,10 +127,7 @@ export default function ImageUpload({ role, provider, ok }) {
 
     const loadingToast = toast.loading("Deleting image...");
     try {
-      const response = await axios.delete(
-        `http://localhost:3030/provider/deleteImage/${path}`,
-        { withCredentials: true },
-      );
+      const response = await API.delete(`/provider/deleteImage/${path}`);
       if (response.data.success) {
         toast.success("Image deleted.", { id: loadingToast });
         fetchAllImages();
@@ -192,6 +188,7 @@ export default function ImageUpload({ role, provider, ok }) {
             onRemove={() =>
               setImages((prev) => prev.filter((_, i) => i !== index))
             }
+            role={role}
           />
         ))}
       </div>
