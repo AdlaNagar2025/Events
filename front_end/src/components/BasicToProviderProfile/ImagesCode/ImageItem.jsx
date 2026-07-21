@@ -15,6 +15,7 @@ import { FaStar, FaRegStar, FaTimes } from "react-icons/fa";
  * @param {string} props.role - תפקיד המשתמש המחובר
  */
 const ImageItem = ({ img, isExisting, onRemove, onSetMain, isMain, role }) => {
+  console.log("I AM IN IMAGE ITEM I ", role, img);
   const isProvider = role === "Chief" || role === "Hall_Owner";
   const imageSrc = isExisting
     ? `http://localhost:3030/uploads/${img.image_path}`

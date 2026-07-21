@@ -22,6 +22,9 @@ export default function ImageUpload({ role, provider, ok }) {
   const [error, setError] = useState("");
   const MAX_IMAGES = 5;
   const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
+  const validExisting = Array.isArray(existingImages) ? existingImages : [];
+
   const totalImages = images.length + existingImages.length;
 
   useEffect(() => {
@@ -41,11 +44,14 @@ export default function ImageUpload({ role, provider, ok }) {
         url = `/${role?.toLowerCase()}/ProviderImages/${provider?.id}`;
       }
       const response = await API.get(url);
-      if (response.data.success) {
-        setExistingImages(response.data.data || []);
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        setExistingImages(response.data.data);
+      } else {
+        setExistingImages([]);
       }
     } catch (error) {
       console.error("Error fetching images:", error);
+      setExistingImages([]);
     }
   };
 
@@ -106,6 +112,7 @@ export default function ImageUpload({ role, provider, ok }) {
     );
 
     setImages((prev) => [...prev, ...validFiles]);
+    e.target.value = "";
   };
 
   const handleSetMain = async (path) => {
@@ -168,7 +175,7 @@ export default function ImageUpload({ role, provider, ok }) {
       )}
 
       <div className={classes.previewContainer}>
-        {existingImages.map((img, index) => (
+        {validExisting.map((img, index) => (
           <ImageItem
             key={img.image_id || index}
             img={img}

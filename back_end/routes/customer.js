@@ -1,5 +1,9 @@
 const express = require("express");
 const {
+  getProviderImagesHandler,
+} = require("../controllers/providerImagesController");
+
+const {
   writeReport,
   getAllReports,
   updateStatusReport,
@@ -56,16 +60,7 @@ router.get("/Profile/:id", async (req, res) => {
   }
 });
 
-router.get("/ProviderImages/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-    const result = await getAllImages(id);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    console.error("Error fetching images:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
+router.get("/ProviderImages/:id", getProviderImagesHandler);
 
 router.get("/ProviderCalendar/:id", async (req, res) => {
   try {
