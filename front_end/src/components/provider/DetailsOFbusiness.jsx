@@ -3,24 +3,22 @@ import BusinessAccount from "../BasicToProviderProfile/BusinessAccount";
 import ImageUpload from "../BasicToProviderProfile/ImagesCode/ImageUpload";
 import Calendar from "../BasicToProviderProfile/Calendar/Calendar";
 import classes from "./DetailsOFbusiness.module.css";
-import { FaTimes } from "react-icons/fa";
-import axios from "axios";
+import { FaTimes, FaUserAlt, FaImages, FaCalendarAlt } from "react-icons/fa";
+import API from "../../services/api";
 
 function DetailsOFbusiness({ user }) {
+  const [activeTab, setActiveTab] = useState(1);
   const [isDisable, setIsDisable] = useState(false);
   const [currentStatus, setCurrentStatus] = useState("");
   const [currentRating, setCurrentRating] = useState("");
-  const [check, setCheck] = useState(false); // בדיקת תמונות
-  const [isProfileFilled, setIsProfileFilled] = useState(false); // ✨ בדיקת מילוי שדות העסק
+  const [check, setCheck] = useState(false);
+  const [isProfileFilled, setIsProfileFilled] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     const getStatus = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3030/provider/MyBusinessStatusAndRating",
-          { withCredentials: true },
-        );
+        const response = await API.get("/provider/MyBusinessStatusAndRating");
         if (response.data.success) {
           const statusFromServer = response.data.status;
           setCurrentStatus(statusFromServer);
@@ -28,6 +26,7 @@ function DetailsOFbusiness({ user }) {
 
           if (statusFromServer === "PENDING") {
             setIsDisable(true);
+            setActiveTab(1);
           }
         }
       } catch (error) {
@@ -38,31 +37,31 @@ function DetailsOFbusiness({ user }) {
   }, []);
 
   async function handleStatusChange() {
-    try {
-      // 1. בדיקה ראשונה: האם מולאו שדות החובה של פרופיל העסק ונשמרו?
-      if (!isProfileFilled) {
-        setError(
-          "You must fill out and save your business profile details before submitting.",
-        );
-        return;
-      }
-
-      // 2. בדיקה שנייה: האם הועלתה לפחות תמונה אחת?
-      if (!check) {
-        setError("You must upload at least one image before submitting.");
-        return;
-      }
-
-      setError("");
-      const tableName = user?.role === "Chief" ? "chiefs" : "halls";
-      const id = user?.id;
-      const newStatus = "PENDING";
-
-      const response = await axios.post(
-        "http://localhost:3030/provider/approve-business",
-        { type: tableName, id, newStatus },
-        { withCredentials: true },
+    if (!isProfileFilled) {
+      setError(
+        "You must fill out and save your business profile details before submitting.",
       );
+      setActiveTab(1); // קופץ לטאב 1 כדי שהמשתמש יראה מה חסר
+      return;
+    }
+
+    if (!check) {
+      setError("You must upload at least one image before submitting.");
+      setActiveTab(2); // קופץ לטאב 2
+      return;
+    }
+
+    setError("");
+    const tableName = user?.role === "Chief" ? "chiefs" : "halls";
+    const id = user?.id;
+    const newStatus = "PENDING";
+
+    try {
+      const response = await API.post("/provider/approve-business", {
+        type: tableName,
+        id,
+        newStatus,
+      });
 
       alert(response.data.message);
       setCurrentStatus("PENDING");
@@ -92,34 +91,49 @@ function DetailsOFbusiness({ user }) {
         </div>
       )}
 
-      <section className={classes.stepCard}>
-        <div className={classes.stepNumber}>1</div>
-        {/* ✨ מעבירים את ה-Setter כדי ש-BusinessAccount יעדכן אותו */}
-        <BusinessAccount
-          user={user}
-          isDisable={isDisable}
-          setIsProfileFilled={setIsProfileFilled}
-        />
-      </section>
+      <div className={classes.tabsHeader}>
+        <button
+          className={`${classes.tabBtn} ${activeTab === 1 ? classes.activeTab : ""}`}
+          onClick={() => setActiveTab(1)}
+        >
+          <FaUserAlt /> 1. Business Profile
+        </button>
+        <button
+          className={`${classes.tabBtn} ${activeTab === 2 ? classes.activeTab : ""}`}
+          onClick={() => setActiveTab(2)}
+        >
+          <FaImages /> 2. Gallery
+        </button>
+        <button
+          className={`${classes.tabBtn} ${activeTab === 3 ? classes.activeTab : ""}`}
+          onClick={() => setActiveTab(3)}
+        >
+          <FaCalendarAlt /> 3. Availability
+        </button>
+      </div>
 
-      <div className={classes.divider} />
+      <div className={classes.tabContent}>
+        {activeTab === 1 && (
+          <BusinessAccount
+            user={user}
+            isDisable={isDisable}
+            setIsProfileFilled={setIsProfileFilled}
+          />
+        )}
 
-      <section className={classes.stepCard}>
-        <div className={classes.stepNumber}>2</div>
-        <ImageUpload
-          role={user?.role}
-          provider={user}
-          ok={setCheck}
-          isDisable={isDisable}
-        />
-      </section>
+        {activeTab === 2 && (
+          <ImageUpload
+            role={user?.role}
+            provider={user}
+            ok={setCheck}
+            isDisable={isDisable}
+          />
+        )}
 
-      <div className={classes.divider} />
-
-      <section className={classes.stepCard}>
-        <div className={classes.stepNumber}>3</div>
-        <Calendar role={user?.role} user={user} isDisable={isDisable} />
-      </section>
+        {activeTab === 3 && (
+          <Calendar role={user?.role} user={user} isDisable={isDisable} />
+        )}
+      </div>
 
       {currentStatus !== "APPROVED" && (
         <button

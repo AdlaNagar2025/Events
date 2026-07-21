@@ -1,6 +1,6 @@
 import classes from "./BusinessProfile.module.css";
 import React from "react";
-import axios from "axios";
+import API from "../../services/api";
 import { useState, useEffect } from "react";
 import ImageUpload from "../BasicToProviderProfile/ImagesCode/ImageUpload";
 import Calendar from "../BasicToProviderProfile/Calendar/Calendar";
@@ -14,9 +14,9 @@ export default function BusinessProfile({ user, provider }) {
     const fetchProfile = async () => {
       try {
         const rolePath = user.role.toLowerCase();
-        const url = `http://localhost:3030/${rolePath}/Profile/${provider.id}`;
+        const url = `/${rolePath}/Profile/${provider.id}`;
 
-        const response = await axios.get(url, { withCredentials: true });
+        const response = await API.get(url);
         setData(response.data.data);
       } catch (error) {
         console.error("Error fetching profile:", error);
