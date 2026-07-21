@@ -325,4 +325,3 @@ async function updateTimeAvail(date, providerId, removeStart, removeEnd) {
 
 module.exports = { fillCalendar, getCalandar, updateCalendar };
 
-const doQuery = require("../query");

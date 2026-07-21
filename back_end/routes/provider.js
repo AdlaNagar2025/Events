@@ -83,13 +83,13 @@ router.post("/businessAccount", async (req, res) => {
 
 // --- IMAGES ---
 router.post("/upload-gallery", handleUploadGallery);
-router.get("/MyImages", handleGetMyImages);
+router.get("/MyImages", handleGetImages);
 router.delete("/deleteImage/:imagePath", handleDeleteImage);
 router.post("/mainImage", handleSetMainImage);
 
 // --- CALENDAR ---
 router.post("/fillCalendar", handleFillCalendar);
-router.get("/getMyCalendar", handleGetMyCalendar);
+router.get("/getMyCalendar", handleGetCalendar);
 router.post("/updateCalendar", handleUpdateCalendar);
 
 router.get("/Profile/:id", async (req, res) => {
