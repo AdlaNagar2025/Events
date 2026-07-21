@@ -1,7 +1,8 @@
 const express = require("express");
-const {
-  getProviderImagesHandler,
-} = require("../controllers/providerImagesController");
+
+const { handleGetImages } = require("../controllers/imagesController");
+
+const { handleGetCalendar } = require("../controllers/calendarController");
 
 const {
   writeReport,
@@ -59,19 +60,10 @@ router.get("/Profile/:id", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+//PROVIDERSDATA
+router.get("/ProviderCalendar/:id", handleGetCalendar);
+router.get("/ProviderImages/:id", handleGetImages);
 
-router.get("/ProviderImages/:id", getProviderImagesHandler);
-
-router.get("/ProviderCalendar/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-    const result = await getCalandar(id);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    console.error("Error fetching Calendar:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
 router.get("/MainFoto/:id", async (req, res) => {
   try {
     const id = req.params.id;

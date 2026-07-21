@@ -230,19 +230,7 @@ export default function Calendar({ role, user }) {
     const slotDate = slot.start.split("T")[0]; // מוציא רק את ה-YYYY-MM-DD
     const slotStart = slot.start.split("T")[1].substring(0, 5); // מוציא את ה-HH:MM
     const slotEnd = slot.end.split("T")[1].substring(0, 5); // מוציא את ה-HH:MM
-    // console.log(
-    //   slotDate,
-    //   availableData.available_date,
-    //   "",
-    //   slotStart,
-    //   " ",
-    //   availableData.start_time,
-    //   "",
-    //   slotEnd,
-    //   "",
-    //   availableData.end_time,
-    // );
-
+ 
     return (
       slotDate === availableData.available_date &&
       slotStart <= availableData.start_time &&
