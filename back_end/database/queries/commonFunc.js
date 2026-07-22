@@ -27,50 +27,101 @@ const { createNotification } = require("./notifications");
 
 //   return result && result.length > 0 ? result[0] : null;
 // }
-async function getProfile(id) {
-  const role = await getRole(id);
-  let sql;
-  let result;
+// async function getProfile(id) {
+//   const role = await getRole(id);
+//   let sql;
+//   let result;
 
-  if (role === "Chief") {
-    sql = `SELECT chiefs.*, users.first_name, users.last_name, users.role 
-           FROM users 
-           LEFT JOIN chiefs ON chiefs.chief_id = users.id 
-           WHERE users.id = ?`;
-    result = await doQuery(sql, [id]);
+//   if (role === "Chief") {
+//     sql = `SELECT chiefs.*, users.first_name, users.last_name, users.role
+//            FROM users
+//            LEFT JOIN chiefs ON chiefs.chief_id = users.id
+//            WHERE users.id = ?`;
+//     result = await doQuery(sql, [id]);
 
-    if (result && result.length > 0 && result[0].chief_id !== null) {
-      result[0].experience_years =
-        new Date().getFullYear() - result[0].start_year;
-    }
-  } else if (role === "Hall_Owner") {
-    sql = `SELECT halls.*, users.first_name, users.last_name, users.role 
-           FROM users 
-           LEFT JOIN halls ON halls.hall_id = users.id 
-           WHERE users.id = ?`;
-    result = await doQuery(sql, [id]);
-  }
+//     if (result && result.length > 0 && result[0].chief_id !== null) {
+//       result[0].experience_years =
+//         new Date().getFullYear() - result[0].start_year;
+//     }
+//   } else if (role === "Hall_Owner") {
+//     sql = `SELECT halls.*, users.first_name, users.last_name, users.role
+//            FROM users
+//            LEFT JOIN halls ON halls.hall_id = users.id
+//            WHERE users.id = ?`;
+//     result = await doQuery(sql, [id]);
+//   }
 
-  // מחזירים את התוצאה, ואם היא ריקה מחזירים אובייקט ריק מסומן
-  if (result && result.length > 0) {
-    // אם השדות של הפרופיל הראשי ריקים (LEFT JOIN החזיר NULL), זה אומר שזה משתמש חדש
-    const isNewProfile =
-      role === "Chief" ? !result[0].chief_id : !result[0].hall_id;
+//   // מחזירים את התוצאה, ואם היא ריקה מחזירים אובייקט ריק מסומן
+//   if (result && result.length > 0) {
+//     // אם השדות של הפרופיל הראשי ריקים (LEFT JOIN החזיר NULL), זה אומר שזה משתמש חדש
+//     const isNewProfile =
+//       role === "Chief" ? !result[0].chief_id : !result[0].hall_id;
 
-    if (isNewProfile) {
-      return {
-        isNew: true,
-        role: result[0].role,
-        first_name: result[0].first_name,
-        last_name: result[0].last_name,
-      };
-    }
+//     if (isNewProfile) {
+//       return {
+//         isNew: true,
+//         role: result[0].role,
+//         first_name: result[0].first_name,
+//         last_name: result[0].last_name,
+//       };
+//     }
 
-    return result[0];
-  }
+//     return result[0];
+//   }
 
-  return null;
-}
+//   return null;
+// }
+
+// פונקציית SQL אחודה
+// async function getFullProviderData(providerId) {
+//   const role = await getRole(providerId);
+//   if (!role) return null;
+
+//   const isChief = role === "Chief";
+//   const tableName = isChief ? "chiefs" : "halls";
+//   const idColumn = isChief ? "chief_id" : "hall_id";
+//   const priceColumn = isChief ? "price_per_hour" : "price";
+
+//   const sql = `
+//     SELECT
+//       u.id AS provider_id,
+//       u.first_name,
+//       u.last_name,
+//       u.email,
+//       u.phone,
+//       u.role,
+//       b.*,
+//       b.${priceColumn} AS display_price,
+//       i.image_path AS main_image,
+//       COALESCE(ROUND(AVG(r.rating), 1), 0) AS avgRating,
+//       COUNT(r.rating) AS totalReviews
+//     FROM users u
+//     LEFT JOIN ${tableName} b ON b.${idColumn} = u.id
+//     LEFT JOIN provider_images i ON i.provider_id = u.id AND i.is_main = 1
+//     LEFT JOIN reviews r ON r.provider_id = u.id
+//     WHERE u.id = ?
+//     GROUP BY u.id, b.${idColumn}, i.image_path
+//   `;
+
+//   const result = await doQuery(sql, [providerId]);
+
+//   if (result && result.length > 0) {
+//     const provider = result[0];
+
+//     // חישוב שמות וניסיון
+//     provider.displayName = isChief
+//       ? `${provider.first_name} ${provider.last_name}`.trim()
+//       : provider.hall_name || `${provider.first_name} ${provider.last_name}`;
+
+//     if (isChief && provider.start_year) {
+//       provider.experience_years = new Date().getFullYear() - provider.start_year;
+//     }
+
+//     return provider;
+//   }
+
+//   return null;
+// }
 
 async function getMainFoto(id) {
   const sql = `SELECT * FROM provider_images WHERE is_main=1 AND provider_id=?;`;
@@ -226,7 +277,6 @@ async function getAllCommentsAndReviews(providerId) {
 }
 module.exports = {
   updateBusinessStatus,
-  getProfile,
   getMainFoto,
   getAllEventsApproved,
   getAllCommentsAndReviews,

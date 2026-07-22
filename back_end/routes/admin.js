@@ -6,6 +6,9 @@
 const { handleGetImages } = require("../controllers/imagesController");
 
 const { handleGetCalendar } = require("../controllers/calendarController");
+const {
+  handleGetProviderDetails,
+} = require("../controllers/providerController");
 
 const {
   writeReport,
@@ -212,17 +215,18 @@ router.post("/approve-business", async (req, res) => {
   }
 });
 
-router.get("/Profile/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-    const result = await getProfile(id);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    console.error("Error fetching profile:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
+// router.get("/Profile/:id", async (req, res) => {
+//   try {
+//     const id = req.params.id;
+//     const result = await getProfile(id);
+//     res.json({ success: true, data: result });
+//   } catch (error) {
+//     console.error("Error fetching profile:", error);
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// });
 //PROVIDERSDATA
+router.get("/provider-details/:id", handleGetProviderDetails);
 router.get("/ProviderCalendar/:id", handleGetCalendar);
 router.get("/ProviderImages/:id", handleGetImages);
 

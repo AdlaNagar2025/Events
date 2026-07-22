@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import classes from "./serviceCard.module.css";
-import axios from "axios";
+import API from "../../../services/api";
 import BusinessProfile from "../../CommonComponents/BusinessProfile";
 import { MdOutlineFavoriteBorder } from "react-icons/md";
 import { MdFavorite } from "react-icons/md";
@@ -11,6 +11,7 @@ export default function ServiceCard({
   isFavorite,
   handleFavorite,
 }) {
+  console.log("IAM IN SERVICECARD I ", user, provider, isFavorite);
   const [showProfile, setShowProfile] = useState(false);
   const [cardData, setCardData] = useState(null);
   const [imageLoading, setImageLoading] = useState(true);
@@ -41,8 +42,8 @@ export default function ServiceCard({
       try {
         setImageLoading(true);
         const rolePath = (user?.role || "customer").toLowerCase();
-        const url = `http://localhost:3030/${rolePath}/CardData/${provider.id}`;
-        const response = await axios.get(url, { withCredentials: true });
+        const url = `/${rolePath}/provider-details/${provider.id}`;
+        const response = await API.get(url);
 
         if (!cancelled && response.data.success) {
           setCardData(response.data.data);

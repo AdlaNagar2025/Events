@@ -5,17 +5,24 @@ const { handleGetImages } = require("../controllers/imagesController");
 const { handleGetCalendar } = require("../controllers/calendarController");
 
 const {
+  handleGetProviderDetails,
+} = require("../controllers/providerController");
+
+const {
   writeReport,
   getAllReports,
   updateStatusReport,
 } = require("../database/queries/report");
 const { isConnected, isCustomer, isActive } = require("../Middleware/auth");
+
 const {
   getProfile,
   getMainFoto,
   getAllEventsApproved,
   getAllCommentsAndReviews,
 } = require("../database/queries/commonFunc");
+
+
 const { getAllImages } = require("../database/queries/uploadImages");
 const { getCalandar } = require("../database/queries/calendar");
 const {
@@ -50,17 +57,32 @@ router.use(isConnected);
 router.use(isActive);
 router.use(isCustomer);
 
-router.get("/Profile/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-    const result = await getProfile(id);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    console.error("Error fetching profile:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
+// router.get("/Profile/:id", async (req, res) => {
+//   try {
+//     const id = req.params.id;
+//     const result = await getProfile(id);
+//     res.json({ success: true, data: result });
+//   } catch (error) {
+//     console.error("Error fetching profile:", error);
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// });
+// router.get("/CardData/:id", async (req, res) => {
+//   try {
+//     const id = req.params.id;
+//     const result = await getProviderCardData(id);
+//     res.json({ success: true, data: result });
+//   } catch (error) {
+//     console.error("Error fetching Main Foto:", error);
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// });
+
+// נתיב בודד לשליפת כל המידע על ספק ספציפי
+
 //PROVIDERSDATA
+router.get("/provider-details/:id", handleGetProviderDetails);
+
 router.get("/ProviderCalendar/:id", handleGetCalendar);
 router.get("/ProviderImages/:id", handleGetImages);
 
@@ -90,17 +112,6 @@ router.post("/Searching", async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Internal Server Error" });
-  }
-});
-
-router.get("/CardData/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-    const result = await getProviderCardData(id);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    console.error("Error fetching Main Foto:", error);
-    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
