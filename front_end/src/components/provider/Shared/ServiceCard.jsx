@@ -5,6 +5,8 @@ import BusinessProfile from "../../CommonComponents/BusinessProfile";
 import { MdOutlineFavoriteBorder } from "react-icons/md";
 import { MdFavorite } from "react-icons/md";
 
+const UPLOADS_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/uploads/`;
+
 export default function ServiceCard({
   user,
   provider,
@@ -95,7 +97,11 @@ export default function ServiceCard({
             </div>
 
             <div className={classes.modalBody}>
-              <BusinessProfile user={user} provider={provider} />
+              <BusinessProfile
+                user={user}
+                provider={provider}
+                profile={cardData}
+              />
             </div>
           </div>
         </div>
@@ -116,7 +122,7 @@ export default function ServiceCard({
             <div className={classes.noImage}>Loading image...</div>
           ) : cardData?.main_image ? (
             <img
-              src={`http://localhost:3030/uploads/${cardData.main_image}`}
+              src={`${UPLOADS_BASE_URL}${cardData.main_image}`}
               alt={displayName}
             />
           ) : (

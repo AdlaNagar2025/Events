@@ -1,58 +1,11 @@
 import classes from "./BusinessProfile.module.css";
-import React, { useEffect, useState } from "react";
-import API from "../../services/api";
+import React from "react";
 import ImageUpload from "../provider/Components/ImageGallery/ImageUpload";
 import Calendar from "../provider/Components/Calander/Calendar";
 import CommentsAndReviews from "../provider/CommentsAndReviews";
 
-export default function BusinessProfile({
-  user,
-  provider,
-  profile: initialProfile,
-}) {
-  const [profile, setProfile] = useState(initialProfile || null);
-  const [loading, setLoading] = useState(!initialProfile);
-  console.log("I AM IN BUSINESS", user, provider, profile);
-
-  const providerId = provider?.id || provider?.chief_id || provider?.hall_id;
-
-  useEffect(() => {
-    // אם כבר קיבלנו profile מוכן, אין צורך לקרוא לשרת שוב
-    if (initialProfile) {
-      setProfile(initialProfile);
-      setLoading(false);
-      return;
-    }
-
-    if (!providerId) return;
-
-    const fetchFullProfile = async () => {
-      try {
-        setLoading(true);
-        const rolePath = (user?.role || "customer").toLowerCase();
-        const response = await API.get(
-          `/${rolePath}/provider-details/${providerId}`,
-        );
-
-        if (response.data.success) {
-          setProfile(response.data.data);
-        }
-      } catch (error) {
-        console.error("Error loading profile details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFullProfile();
-  }, [providerId, user?.role, initialProfile]);
-
-  if (loading) {
-    return (
-      <div className={classes.emptyState}>Loading business details...</div>
-    );
-  }
-
+export default function BusinessProfile({ user, provider, profile }) {
+  console.log("I AM IN BUSINESSPROFILE", user, provider, profile);
   if (!profile) {
     return (
       <div className={classes.emptyState}>No data found for this business.</div>
@@ -60,9 +13,9 @@ export default function BusinessProfile({
   }
 
   const roleLabel =
-    profile.role === "Hall_Owner" || provider?.provider_type === "Hall_Owner"
+    profile.role === "Hall_Owner" || provider.provider_type === "Hall_Owner"
       ? "Venue"
-      : profile.role === "Chief" || provider?.provider_type === "Chief"
+      : profile.role === "Chief" || provider.provider_type === "Chief"
         ? "Catering"
         : "Provider";
 
@@ -88,10 +41,10 @@ export default function BusinessProfile({
 
         <div className={classes.infoItem}>
           <strong>Contact</strong>
-          {profile.phone || profile.email || provider?.email || "—"}
+          {profile.phone || profile.email || provider.email || "—"}
         </div>
 
-        {profile.role === "Chief" || provider?.provider_type === "Chief" ? (
+        {profile.role === "Chief" || provider.provider_type === "Chief" ? (
           <>
             <div className={classes.infoItem}>
               <strong>Specialty</strong>

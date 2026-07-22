@@ -160,7 +160,7 @@ router.get("/allServices", async (req, res) => {
       .json({ success: false, message: "Failed to fetch services " });
   }
 });
-
+// ץץ
 router.get("/allServices/:status", async (req, res) => {
   try {
     const status = req.params.status;
