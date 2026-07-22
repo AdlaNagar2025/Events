@@ -11,7 +11,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// 2. פונקציית השליחה שתיקרא מתוך ה-API Router שלך
 const sendEmail = async (to, subject, text) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,

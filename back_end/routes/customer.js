@@ -16,7 +16,6 @@ const {
 const { isConnected, isCustomer, isActive } = require("../Middleware/auth");
 
 const {
-  getProfile,
   getMainFoto,
   getAllEventsApproved,
   getAllCommentsAndReviews,

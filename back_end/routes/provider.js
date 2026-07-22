@@ -22,6 +22,8 @@ const {
   handleGetProviderDetails,
 } = require("../controllers/providerController");
 
+const { handleApproveBusiness } = require("../controllers/adminController");
+
 const { writeReport } = require("../database/queries/report");
 const { getProviderRating } = require("../database/queries/helpingFunc");
 const {
@@ -36,7 +38,6 @@ const {
 } = require("../database/queries/businessAccount");
 
 const {
-  getProfile,
   updateBusinessStatus,
   getAllCommentsAndReviews,
 } = require("../database/queries/commonFunc");
@@ -61,6 +62,37 @@ router.use(isConnected); // שלב 1: האם הוא בכלל מחובר?
 router.use(isActive); // שלב 2: האם החשבון שלו פעיל?
 router.use(isProvider); // שלב 3: האם הוא ספק (Chief/Hall_Owner)?
 // router.use(isApproved);
+
+// --- IMAGES ---
+router.post("/upload-gallery", handleUploadGallery);
+router.get("/MyImages", handleGetImages);
+router.delete("/deleteImage/:imagePath", handleDeleteImage);
+router.post("/mainImage", handleSetMainImage);
+
+// --- CALENDAR ---
+router.post("/fillCalendar", handleFillCalendar);
+router.get("/getMyCalendar", handleGetCalendar);
+router.post("/updateCalendar", handleUpdateCalendar);
+
+router.get("/MyProfile", handleGetProviderDetails);
+
+router.post("/approve-business", handleApproveBusiness);
+
+// router.post("/approve-business", async (req, res) => {
+//   const { type, id, newStatus } = req.body;
+//   if (!type || !id || !newStatus) {
+//     return res
+//       .status(400)
+//       .json({ success: false, message: "Missing required fields" });
+//   }
+//   try {
+//     await updateBusinessStatus(type, id, newStatus);
+//     res.json({ success: true, message: `Status updated to ${newStatus}` });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Update failed" });
+//   }
+// });
+
 /**
  *
  *
@@ -84,18 +116,6 @@ router.post("/businessAccount", async (req, res) => {
     });
   }
 });
-
-// --- IMAGES ---
-router.post("/upload-gallery", handleUploadGallery);
-router.get("/MyImages", handleGetImages);
-router.delete("/deleteImage/:imagePath", handleDeleteImage);
-router.post("/mainImage", handleSetMainImage);
-
-// --- CALENDAR ---
-router.post("/fillCalendar", handleFillCalendar);
-router.get("/getMyCalendar", handleGetCalendar);
-router.post("/updateCalendar", handleUpdateCalendar);
-
 router.get("/Profile/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -111,19 +131,7 @@ router.get("/Profile/:id", async (req, res) => {
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
-router.get("/MyProfile", handleGetProviderDetails);
 
-// router.get("/MyBusinessStatus", async (req, res) => {
-//   try {
-//     const { id, role } = req.session.user;
-//     const status = await checkStatus(id, role);
-//     const avgRating = await getProviderRating(id);
-//     console.log(avgRating )
-//     res.json({ success: true, status: status, avgRating: avgRating });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: "Error checking status" });
-//   }
-// });
 router.get("/MyBusinessStatusAndRating", async (req, res) => {
   try {
     const { id, role } = req.session.user;
@@ -145,45 +153,40 @@ router.get("/MyBusinessStatusAndRating", async (req, res) => {
   }
 });
 
-router.post("/approve-business", async (req, res) => {
-  const { type, id, newStatus } = req.body;
-  if (!type || !id || !newStatus) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Missing required fields" });
-  }
-  try {
-    await updateBusinessStatus(type, id, newStatus);
-    res.json({ success: true, message: `Status updated to ${newStatus}` });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Update failed" });
-  }
-});
+// router.post("/approve-business", async (req, res) => {
+//   const { type, id, newStatus } = req.body;
+//   if (!type || !id || !newStatus) {
+//     return res
+//       .status(400)
+//       .json({ success: false, message: "Missing required fields" });
+//   }
+//   try {
+//     await updateBusinessStatus(type, id, newStatus);
+//     res.json({ success: true, message: `Status updated to ${newStatus}` });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Update failed" });
+//   }
+// });
+
+// router.post("/approve-business", async (req, res) => {
+//   const { type, id, newStatus } = req.body;
+//   if (!type || !id || !newStatus) {
+//     return res
+//       .status(400)
+//       .json({ success: false, message: "Missing required fields" });
+//   }
+//   try {
+//     await updateBusinessStatus(type, id, newStatus);
+//     res.json({ success: true, message: `Status updated to ${newStatus}` });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Update failed" });
+//   }
+// });
 
 router.get("/myEventsData", async (req, res) => {
   const result = await getAllEvents(req.session.user.id);
   return res.json({ data: result });
 });
-
-// router.put("/changeEventStatus/:eventId", async (req, res) => {
-//   const eventId = req.params.eventId;
-//   const status = req.body.status;
-//   const eventData = req.body.eventData;
-
-//   try {
-//     const result = await changeStatusEvent(
-//       req.session.user.id,
-//       eventId,
-//       status,
-//       eventData,
-//     );
-
-//     return res.json(result);
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ success: false, message: "Server error" });
-//   }
-// });
 
 router.put("/changeEventStatus/:eventId", async (req, res) => {
   const eventId = req.params.eventId;

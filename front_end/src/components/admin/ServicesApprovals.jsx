@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import classes from "./servicesapprovals.module.css";
 import BusinessProfile from "../shared/BusinessProfile/BusinessProfile";
 
@@ -7,14 +7,14 @@ export default function ServicesApprovals({ user, newType }) {
   const [type, setType] = useState("pending");
   const [providers, setProviders] = useState([]);
   const [selectedProvider, setSelectedProvider] = useState(null);
-  console.log(providers);
+
+
   useEffect(() => {
-    console.log(user);
     const fetchAllProviders = async () => {
       try {
         if (newType) setType(newType);
-        let url = `http://localhost:3030/admin/allServices/${type}`;
-        const response = await axios.get(url, { withCredentials: true });
+        let url = `/admin/allServices/${type}`;
+        const response = await API.get(url);
         if (response.data.success) {
           setProviders(response.data.data);
         }
@@ -24,7 +24,6 @@ export default function ServicesApprovals({ user, newType }) {
     };
     fetchAllProviders();
   }, [type]);
-  console.log(providers);
 
   async function handleStatusChange(
     id,
@@ -34,10 +33,9 @@ export default function ServicesApprovals({ user, newType }) {
   ) {
     try {
       const tableName = provider_type === "Chief" ? "chiefs" : "halls";
-      const response = await axios.post(
-        "http://localhost:3030/admin/approve-business",
+      const response = await API.post(
+        "/admin/approve-business",
         { type: tableName, id, newStatus, reason },
-        { withCredentials: true },
       );
       alert(response.data.message);
       setProviders((prev) => prev.filter((p) => p.id !== id));
@@ -91,7 +89,7 @@ export default function ServicesApprovals({ user, newType }) {
           <table className={classes.customtable}>
             <thead>
               <tr>
-                <th>Service Name &Provider</th>
+                <th>Service Name & Provider</th>
                 <th>Type</th>
                 <th>Submitted Date</th>
                 <th>Status</th>
@@ -103,7 +101,7 @@ export default function ServicesApprovals({ user, newType }) {
               {providers.map((provider) => (
                 <tr key={provider.id}>
                   <td>
-                    {provider.ServiceName}
+                    {provider.ServiceName } "     "
                     {provider.provider_type === "Hall_Owner"
                       ? provider.first_name
                       : ""}

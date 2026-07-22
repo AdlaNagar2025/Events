@@ -197,7 +197,7 @@ async function updateBusinessStatus(type, id, newStatus, reason = null) {
   // בניית השאילתה בצורה חכמה לפי הסטטוס החדש
   if (statusUpper === "PENDING") {
     // בעל העסק שולח לאישור בפעם הראשונה או מחדש
-    sql = `UPDATE ${type} SET status = ?, submitted_at = NOW() WHERE ${idColumn} = ?`;
+    sql = `UPDATE ${type} SET status = ? WHERE ${idColumn} = ?`;
     queryParams = [newStatus, id];
   } else if (statusUpper === "DENY" || statusUpper === "DENIED") {
     // האדמין דחה את הבקשה
@@ -209,7 +209,6 @@ async function updateBusinessStatus(type, id, newStatus, reason = null) {
     queryParams = [newStatus, id];
   }
 
-  // 1. עדכון בבסיס הנתונים
   const result = await doQuery(sql, queryParams);
 
   // 2. קביעת הודעה מתאימה להתראה (Notification)

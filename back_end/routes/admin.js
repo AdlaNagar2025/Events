@@ -1,14 +1,13 @@
-/**
- * ראוטר לניהול מערכת (Admin Router)
- * מכיל את כל נתיבי ה-API שחשופים רק למנהלי מערכת.
- */
-
 const { handleGetImages } = require("../controllers/imagesController");
-
 const { handleGetCalendar } = require("../controllers/calendarController");
 const {
   handleGetProviderDetails,
 } = require("../controllers/providerController");
+
+const {
+  handleApproveBusiness,
+  handleGetServicesByStatus,
+} = require("../controllers/adminController");
 
 const {
   writeReport,
@@ -27,17 +26,13 @@ const {
   getAllHallsOwnerProfile,
   getAllServices,
   deactivateUser,
-  getAllServicesAccordingToStatus,
   getAllUserStats,
 } = require("../database/queries/adminFunc");
 const {
-  getProfile,
   updateBusinessStatus,
   getAllEventsApproved,
   getAllCommentsAndReviews,
 } = require("../database/queries/commonFunc");
-const { getAllImages } = require("../database/queries/uploadImages");
-const { getCalandar } = require("../database/queries/calendar");
 
 const {
   getAllNotification,
@@ -54,6 +49,14 @@ const router = express.Router();
 router.use(isConnected);
 router.use(isActive);
 router.use(isAdmin);
+
+//PROVIDERSDATA
+router.get("/provider-details/:id", handleGetProviderDetails);
+router.get("/ProviderCalendar/:id", handleGetCalendar);
+router.get("/ProviderImages/:id", handleGetImages);
+
+router.post("/approve-business", handleApproveBusiness);
+router.get("/allServices/:status", handleGetServicesByStatus);
 
 /**
  * שליפת כל המשתמשים במערכת
@@ -147,88 +150,8 @@ router.get("/pending-businesses", async (req, res) => {
   }
 });
 
-router.get("/allServices", async (req, res) => {
-  try {
-    const result = await getAllServices();
-    res.json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to fetch services " });
-  }
-});
-// ץץ
-router.get("/allServices/:status", async (req, res) => {
-  try {
-    const status = req.params.status;
-    const result = await getAllServicesAccordingToStatus(status);
-    res.json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to fetch pending services " });
-  }
-});
 
-/**
- *  אישור עסק
- * כאן האדמין מקבל החלטה על עסק שממתין. הוא שולח 'approved' או 'deny'.
- */
-// router.post("/approve-business", async (req, res) => {
-//   console.log(req.body);
-//   const { type, id, newStatus } = req.body;
-//   if (!type || !id || !newStatus) {
-//     return res
-//       .status(400)
-//       .json({ success: false, message: "Missing required fields" });
-//   }
-//   try {
-//     await updateBusinessStatus(type, id, newStatus);
-//     res.json({ success: true, message: `Status updated to ${newStatus}` });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: "Update failed" });
-//   }
-// });
 
-router.post("/approve-business", async (req, res) => {
-  console.log(req.body);
-  const { type, id, newStatus, reason } = req.body;
-
-  if (!type || !id || !newStatus) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Missing required fields" });
-  }
-
-  try {
-    await updateBusinessStatus(type, id, newStatus, reason);
-    res.json({ success: true, message: `Status updated to ${newStatus}` });
-  } catch (error) {
-    console.error("Update failed:", error);
-    res.status(500).json({ success: false, message: "Update failed" });
-  }
-});
-
-// router.get("/Profile/:id", async (req, res) => {
-//   try {
-//     const id = req.params.id;
-//     const result = await getProfile(id);
-//     res.json({ success: true, data: result });
-//   } catch (error) {
-//     console.error("Error fetching profile:", error);
-//     res.status(500).json({ success: false, message: "Server error" });
-//   }
-// });
-//PROVIDERSDATA
-router.get("/provider-details/:id", handleGetProviderDetails);
-router.get("/ProviderCalendar/:id", handleGetCalendar);
-router.get("/ProviderImages/:id", handleGetImages);
 
 router.get("/ProviderEvents/:id", async (req, res) => {
   try {
@@ -277,7 +200,6 @@ router.get("/userStats", async (req, res) => {
   try {
     const result = await getAllUserStats();
 
-    // ✨ תיקון: לוקחים את האיבר הראשון במערך שחוזר מה-DB
     const stats = result[0] || {
       totalUsers: 0,
       activeUsers: 0,

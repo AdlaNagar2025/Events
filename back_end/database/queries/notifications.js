@@ -10,10 +10,21 @@ async function updateReadToNotification(userId, notificationId) {
   return await doQuery(sql, [notificationId, userId]);
 }
 
+/**
+ * @desc    יוצרת התראה חדשה במסד הנתונים עבור משתמש ספציפי
+ * @param   {Object} NotificationData - אובייקט המוביל את פרטי ההתראה
+ * @param   {string} NotificationData.message - תוכן ההודעה שתישלח למשתמש
+ * @param   {number|string} NotificationData.userId - המזהה (ID) של המשתמש שיקבל את ההתראה
+ * @returns {Promise<Object>} תוצאת שאילתת ההכנסה ל-DB
+ */
 async function createNotification(NotificationData) {
   const { message, userId } = NotificationData;
   const sql = `INSERT INTO notifications (message , user_id ) VALUES (? ,? )`;
   return await doQuery(sql, [message, userId]);
 }
 
-module.exports = { getAllNotification, updateReadToNotification, createNotification }; 
+module.exports = {
+  getAllNotification,
+  updateReadToNotification,
+  createNotification,
+};
