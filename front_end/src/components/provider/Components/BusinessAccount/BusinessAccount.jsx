@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import API from "../../../../services/api";
 import toast from "react-hot-toast";
 import classes from "./BusinessAccount.module.css";
-import FormInput from "../BasicToProviderProfile/FormInput";
+import FormInput from "./FormInput";
 
 const initialChief = {
   specialty: "",

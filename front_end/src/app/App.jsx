@@ -19,7 +19,7 @@ import Login from "../pages/auth/Login";
 import Account from "../pages/user/Account";
 import Home from "../pages/Home";
 import NotFound from "../pages/NotFound";
-import DetailsOFbusiness from "../components/provider/DetailsOFbusiness";
+import DetailsOFbusiness from "../components/provider/DetailsOfBusiness/DetailsOFbusiness";
 import UsersManagment from "../components/admin/UsersManagment";
 import ServicesApprovals from "../components/admin/ServicesApprovals";
 import FindAVendor from "../components/customer/findAvendors/FindAVendor";

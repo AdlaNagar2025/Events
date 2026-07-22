@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import axios from "axios";
 import classes from "./findavendor.module.css";
-import CitySelect from "../../provider/CitySelect";
+import CitySelect from "../../provider/Shared/CitySelect";
 
 export default function Search({
   setProviders,
@@ -43,7 +43,9 @@ export default function Search({
         { ...searchParams, guest_number: capacity },
         { withCredentials: true },
       );
-      const results = Array.isArray(response.data.data) ? response.data.data : [];
+      const results = Array.isArray(response.data.data)
+        ? response.data.data
+        : [];
       setProviders(
         results.map((provider) => ({
           ...provider,

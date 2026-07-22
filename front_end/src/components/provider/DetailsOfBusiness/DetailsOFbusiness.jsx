@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import BusinessAccount from "../../BasicToProviderProfile/BusinessAccount";
-import ImageUpload from "../../BasicToProviderProfile/ImagesCode/ImageUpload";
-import Calendar from "../../BasicToProviderProfile/Calendar/Calendar";
+import BusinessAccount from "../Components/BusinessAccount/BusinessAccount";
+import ImageUpload from "../Components/ImageGallery/ImageUpload";
+import Calendar from "../Components/Calander/Calendar";
 import classes from "./DetailsOFbusiness.module.css";
 import { FaTimes, FaUserAlt, FaImages, FaCalendarAlt } from "react-icons/fa";
 import API from "../../../services/api";
