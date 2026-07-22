@@ -1,7 +1,38 @@
 const doQuery = require("../query");
 const { createNotification } = require("./notifications");
-const { sendEmail } = require("./emailService");
+const { sendEmail } = require("./mail");
 
+/**
+ * @desc בודק אם יש לעסק אירועים/הזמנות עתידיות פעילות
+ */
+async function hasActiveUpcomingBookings(type, id) {
+  let sql;
+  if (type === "chiefs") {
+    // לשף בודקים ב-event_providers
+    sql = `
+      SELECT COUNT(*) as count 
+      FROM event_providers 
+      WHERE provider_id = ? 
+        AND requested_date >= CURDATE() 
+        AND status IN ('APPROVED')
+    `;
+  } else {
+    // לאולם בודקים ב-events
+    sql = `
+      SELECT COUNT(*) as count 
+      FROM events 
+      WHERE hall_id = ? 
+        AND requested_date >= CURDATE() 
+        AND status IN ('APPROVED')
+    `;
+  }
+
+  const result = await doQuery(sql, [id]);
+  return result && result[0].count > 0;
+}
+
+//   // ... המשך הקוד הרגיל של עדכון ה-DB ושליחת המיילים ...
+// }
 /**
  * @desc    שולפת את פרטי האדמין (ID ומייל)
  */
@@ -44,7 +75,10 @@ async function updateBusinessStatus(type, id, newStatus, reason = null) {
       : null;
 
   if (!normalizedType) {
-    throw new Error("INVALID_TABLE_NAME");
+    return {
+      success: false,
+      message: "Invalid business type provided.",
+    };
   }
 
   const idColumn = normalizedType === "chiefs" ? "chief_id" : "hall_id";
@@ -57,6 +91,17 @@ async function updateBusinessStatus(type, id, newStatus, reason = null) {
     sql = `UPDATE ${normalizedType} SET status = ? WHERE ${idColumn} = ?`;
     queryParams = [newStatus, id];
   } else if (statusUpper === "DENY" || statusUpper === "DENIED") {
+    // 🛑 בדיקת אירועים עתידיים לפני דחייה
+    const hasBookings = await hasActiveUpcomingBookings(normalizedType, id);
+    if (hasBookings) {
+      return {
+        success: false,
+        code: "HAS_ACTIVE_BOOKINGS",
+        message:
+          "Cannot reject this business profile because it has active upcoming bookings.",
+      };
+    }
+
     sql = `UPDATE ${normalizedType} SET status = ?, rejection_reason = ? WHERE ${idColumn} = ?`;
     queryParams = [newStatus, reason || "No reason provided", id];
   } else {
@@ -67,24 +112,18 @@ async function updateBusinessStatus(type, id, newStatus, reason = null) {
 
   const result = await doQuery(sql, queryParams);
 
-  // 📧 🔔 טיפול בהתראות ומיילים
+  // 📧 🔔 טיפול בהתראות ומיילים ברקע
   const provider = await getProviderDetails(normalizedType, id);
 
   try {
     if (statusUpper === "PENDING") {
-      // ----------------------------------------------------
-      // תרחיש 1: בעל העסק שלח/עדכן טופס -> שולחים לאדמין!
-      // ----------------------------------------------------
       const admin = await getAdminDetails();
-
       if (admin) {
-        // התראה במערכת לאדמין
         await createNotification({
           message: `New business profile pending approval for: ${provider?.first_name || "Provider"}`,
           userId: admin.id,
         });
 
-        // מייל לאדמין
         if (admin.email) {
           await sendEmail(
             admin.email,
@@ -94,9 +133,6 @@ async function updateBusinessStatus(type, id, newStatus, reason = null) {
         }
       }
     } else {
-      // ----------------------------------------------------
-      // תרחיש 2: האדמין אישר או דחה -> שולחים לבעל העסק!
-      // ----------------------------------------------------
       if (provider) {
         let notificationMessage = "";
         let emailSubject = "";
@@ -113,29 +149,30 @@ async function updateBusinessStatus(type, id, newStatus, reason = null) {
           emailText = `Hello ${provider.first_name},\n\nYour business profile request was not approved.\nReason: ${reason || "No reason specified"}\n\nPlease update your profile details and submit again.`;
         }
 
-        // התראה במערכת לבעל העסק
         await createNotification({
           message: notificationMessage,
           userId: provider.id,
         });
 
-        // מייל לבעל העסק
         if (provider.email) {
           await sendEmail(provider.email, emailSubject, emailText);
         }
       }
     }
   } catch (emailError) {
-    // עוטפים ב-try/catch כדי שאם המייל ייכשל (למשל כי הסיסמה של גוגל עוד לא מוגדרת), ה-DB עדיין יתעדכן בהצלחה!
     console.error(
       "Notification/Email process failed, but status was updated:",
       emailError,
     );
   }
 
-  return result;
+  // ✅ החזרת תשובת הצלחה נקייה
+  return {
+    success: true,
+    message: `Business status successfully updated to ${newStatus}.`,
+    dbResult: result,
+  };
 }
-
 /**
  * @desc    שולפת את כל השירותים (שפים ובעלי אולמות) לפי סטטוס מסוים, כולל ממוצע דירוגים וכמות חוות דעת
  * @param   {string} status - הסטטוס המבוקש לסינון (כגון 'PENDING', 'APPROVED')

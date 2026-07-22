@@ -4,26 +4,63 @@ import classes from "./servicesapprovals.module.css";
 import BusinessProfile from "../shared/BusinessProfile/BusinessProfile";
 
 export default function ServicesApprovals({ user, newType }) {
-  const [type, setType] = useState("pending");
+  // 1. אתחול הסטייט עם newType במידה וקיים (מונע בלולאה ב-useEffect)
+  const [type, setType] = useState(newType || "pending");
   const [providers, setProviders] = useState([]);
   const [selectedProvider, setSelectedProvider] = useState(null);
 
+  // 2. סטייטים לחיפוש, טעינה ומודאל דחייה
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [targetProvider, setTargetProvider] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   useEffect(() => {
     const fetchAllProviders = async () => {
+      setLoading(true);
       try {
-        if (newType) setType(newType);
-        let url = `/admin/allServices/${type}`;
+        const url = `/admin/allServices/${type}`;
         const response = await API.get(url);
         if (response.data.success) {
           setProviders(response.data.data);
         }
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching providers:", error);
+      } finally {
+        setLoading(false);
       }
     };
+
     fetchAllProviders();
   }, [type]);
+
+  // פונקציית עדכון סטטוס בשרת
+  // async function handleStatusChange(
+  //   id,
+  //   provider_type,
+  //   newStatus,
+  //   reason = null,
+  // ) {
+  //   try {
+  //     const tableName = provider_type === "Chief" ? "chiefs" : "halls";
+  //     const response = await API.post("/admin/approve-business", {
+  //       type: tableName,
+  //       id,
+  //       newStatus,
+  //       reason,
+  //     });
+
+  //     // הסרת הפריט מהטבלה לאחר עדכון
+  //     setProviders((prev) => prev.filter((p) => p.id !== id));
+
+  //     // לסגור מודאל במידה והיה פתוח
+  //     closeRejectModal();
+  //   } catch (error) {
+  //     console.error("Error updating status:", error);
+  //     alert("Failed to update status. Please try again.");
+  //   }
+  // }
 
   async function handleStatusChange(
     id,
@@ -33,24 +70,69 @@ export default function ServicesApprovals({ user, newType }) {
   ) {
     try {
       const tableName = provider_type === "Chief" ? "chiefs" : "halls";
-      const response = await API.post(
-        "/admin/approve-business",
-        { type: tableName, id, newStatus, reason },
-      );
-      alert(response.data.message);
-      setProviders((prev) => prev.filter((p) => p.id !== id));
+      const response = await API.post("/admin/approve-business", {
+        type: tableName,
+        id,
+        newStatus,
+        reason,
+      });
+
+      // בדיקה האם השרת החזיר success: true/false
+      if (response.data.success) {
+        alert(response.data.message || "Status updated successfully!");
+        setProviders((prev) => prev.filter((p) => p.id !== id));
+        closeRejectModal();
+      } else {
+        // כאן תיכנס ההודעה במידה ויש אירועים פעילים!
+        alert(response.data.message);
+      }
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("Error updating status:", error);
+      alert("An unexpected error occurred. Please try again.");
     }
   }
+
+  // פתיחה וסגירה של מודאל הדחייה
+  const openRejectModal = (provider) => {
+    setTargetProvider(provider);
+    setRejectionReason("");
+    setRejectModalOpen(true);
+  };
+
+  const closeRejectModal = () => {
+    setTargetProvider(null);
+    setRejectionReason("");
+    setRejectModalOpen(false);
+  };
+
+  const handleConfirmReject = () => {
+    handleStatusChange(
+      targetProvider.id,
+      targetProvider.provider_type,
+      "Deny",
+      rejectionReason,
+    );
+  };
 
   function getStatusClass(status) {
     const s = status?.toLowerCase();
     if (s === "pending") return classes.statusPending;
-    if (s === "approved") return classes.statusApproved;
+    if (s === "approved" || s === "approve") return classes.statusApproved;
     return classes.statusDeny;
   }
 
+  // סינון הנתונים לפי תיבת החיפוש
+  const filteredProviders = providers.filter((p) => {
+    const nameMatch = p.ServiceName?.toLowerCase().includes(
+      searchTerm.toLowerCase(),
+    );
+    const emailMatch = p.email
+      ?.toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    return nameMatch || emailMatch;
+  });
+
+  // אם נבחר פרופיל מסוים — מציגים את תצוגת הפרופיל המלא
   if (selectedProvider) {
     return (
       <div className={classes.detailView}>
@@ -58,7 +140,7 @@ export default function ServicesApprovals({ user, newType }) {
           className={classes.backBtn}
           onClick={() => setSelectedProvider(null)}
         >
-          Go Back
+          ← Back to Approvals List
         </button>
         <BusinessProfile user={user} provider={selectedProvider} />
       </div>
@@ -67,24 +149,41 @@ export default function ServicesApprovals({ user, newType }) {
 
   return (
     <div className={classes.page}>
+      {/* כותרת הדף */}
       <div className={classes.pageHeader}>
         <h2>Service Approvals</h2>
         <p>Review, approve, or deny provider service requests</p>
       </div>
 
+      {/* סרגל כלים: סינון סטטוס + תיבת חיפוש */}
       <div className={classes.toolbar}>
-        <select
-          className={classes.filterSelect}
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-        >
-          <option value="pending">⏳ Pending Services</option>
-          <option value="approved">✅ Approved Services</option>
-          <option value="deny">❌ Denied Services</option>
-        </select>
+        <div className={classes.filterGroup}>
+          <select
+            className={classes.filterSelect}
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          >
+            <option value="pending">⏳ Pending Services</option>
+            <option value="approved">✅ Approved Services</option>
+            <option value="deny">❌ Denied Services</option>
+          </select>
+        </div>
+
+        <div className={classes.searchGroup}>
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className={classes.searchInput}
+          />
+        </div>
       </div>
 
-      {providers.length !== 0 ? (
+      {/* תצוגת טבלה / טעינה / ריק */}
+      {loading ? (
+        <div className={classes.loadingState}>Loading services...</div>
+      ) : filteredProviders.length > 0 ? (
         <div className={classes.tableContainer}>
           <table className={classes.customtable}>
             <thead>
@@ -93,18 +192,19 @@ export default function ServicesApprovals({ user, newType }) {
                 <th>Type</th>
                 <th>Submitted Date</th>
                 <th>Status</th>
+                {type === "deny" && <th>Rejection Reason</th>}
                 <th>Show Profile</th>
-                <th>Action</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {providers.map((provider) => (
+              {filteredProviders.map((provider) => (
                 <tr key={provider.id}>
                   <td>
-                    {provider.ServiceName } "     "
-                    {provider.provider_type === "Hall_Owner"
-                      ? provider.first_name
-                      : ""}
+                    <div className={classes.providerCell}>
+                      <strong>{provider.ServiceName}</strong>
+                      <span className={classes.subText}>{provider.email}</span>
+                    </div>
                   </td>
                   <td>
                     {provider.provider_type === "Hall_Owner"
@@ -119,12 +219,20 @@ export default function ServicesApprovals({ user, newType }) {
                       {provider.status}
                     </span>
                   </td>
+
+                  {/* הצגת סיבת דחייה אם הטאב הוא 'Denied' */}
+                  {type === "deny" && (
+                    <td className={classes.reasonCell}>
+                      {provider.rejection_reason || "N/A"}
+                    </td>
+                  )}
+
                   <td>
                     <button
                       className={classes.showBtn}
                       onClick={() => setSelectedProvider(provider)}
                     >
-                      View Details
+                      View Profile
                     </button>
                   </td>
                   <td>
@@ -146,22 +254,7 @@ export default function ServicesApprovals({ user, newType }) {
                       {type !== "deny" && (
                         <button
                           className={classes.denyBtn}
-                          onClick={() => {
-                            const reason = prompt(
-                              "Please enter the reason for rejection:",
-                            );
-                            if (reason === null) return; // האדמין לחץ על Cancel, לא עושים כלום
-                            if (reason.trim() === "") {
-                              alert("You must provide a reason for rejection.");
-                              return;
-                            }
-                            handleStatusChange(
-                              provider.id,
-                              provider.provider_type,
-                              "Deny",
-                              reason,
-                            );
-                          }}
+                          onClick={() => openRejectModal(provider)}
                         >
                           Deny
                         </button>
@@ -174,9 +267,42 @@ export default function ServicesApprovals({ user, newType }) {
           </table>
         </div>
       ) : (
-        <p className={classes.emptyState}>
-          No services found for this category.
-        </p>
+        <div className={classes.emptyState}>
+          <p>No services found for this category.</p>
+        </div>
+      )}
+
+      {/* -------------------------------------------------- */}
+      {/* 🎨 Custom Modal: מודאל מעוצב לקבלת סיבת דחייה */}
+      {/* -------------------------------------------------- */}
+      {rejectModalOpen && (
+        <div className={classes.modalOverlay}>
+          <div className={classes.modalContent}>
+            <h3>Reject Service Request</h3>
+            <p>
+              Please provide a reason for rejecting{" "}
+              <strong>{targetProvider?.ServiceName}</strong>:
+            </p>
+            <textarea
+              className={classes.modalTextarea}
+              rows="4"
+              placeholder="Type the rejection reason here..."
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+            />
+            <div className={classes.modalActions}>
+              <button className={classes.cancelBtn} onClick={closeRejectModal}>
+                Cancel
+              </button>
+              <button
+                className={classes.confirmDenyBtn}
+                onClick={handleConfirmReject}
+              >
+                Confirm Rejection
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
