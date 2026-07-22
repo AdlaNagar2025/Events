@@ -28,7 +28,7 @@ import MyBooking from "../components/customer/MYEVENTS/MyBooking";
 import MyEventsACalender from "../components/Events/MyEventsACalender";
 import FavoriteProviders from "../components/customer/FavoriteProviders";
 import Notification from "../components/Notifications/Notification";
-import CommentsAndReviews from "../components/provider/CommentsAndReviews";
+import CommentsAndReviews from "../components/shared/CommentsAndReviews";
 import Dashboard from "../components/provider/Dashboard";
 import AddUser from "../components/admin/AddUser";
 import ContentModeration from "../components/admin/contentModeration";

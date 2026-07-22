@@ -2,7 +2,7 @@ const { getFullProviderData } = require("../database/queries/providers");
 
 const handleGetProviderDetails = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id || req.session?.user?.id;
     const providerData = await getFullProviderData(id);
 
     if (!providerData) {

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import axios from "axios";
 import classes from "./findavendor.module.css";
-import CitySelect from "../../provider/Shared/CitySelect";
+import CitySelect from "../../shared/CitySelect";
 
 export default function Search({
   setProviders,

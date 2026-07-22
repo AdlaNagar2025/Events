@@ -1,5 +1,5 @@
 import classes from "./bookEvent.module.css";
-import CitySelect from "../../provider/Shared/CitySelect";
+import CitySelect from "../../shared/CitySelect";
 
 export default function EventData({
   dataToEvent,

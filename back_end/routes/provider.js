@@ -18,6 +18,10 @@ const {
   handleUpdateCalendar,
 } = require("../controllers/calendarController");
 
+const {
+  handleGetProviderDetails,
+} = require("../controllers/providerController");
+
 const { writeReport } = require("../database/queries/report");
 const { getProviderRating } = require("../database/queries/helpingFunc");
 const {
@@ -107,16 +111,7 @@ router.get("/Profile/:id", async (req, res) => {
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
-router.get("/MyProfile", async (req, res) => {
-  try {
-    const providerId = req.session.user.id;
-    const result = await getProfile(providerId);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    console.error("Error fetching profile:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
+router.get("/MyProfile", handleGetProviderDetails);
 
 // router.get("/MyBusinessStatus", async (req, res) => {
 //   try {

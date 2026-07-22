@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import classes from "./serviceCard.module.css";
 import API from "../../../services/api";
-import BusinessProfile from "../../CommonComponents/BusinessProfile";
+import BusinessProfile from "../BusinessProfile/BusinessProfile";
 import { MdOutlineFavoriteBorder } from "react-icons/md";
 import { MdFavorite } from "react-icons/md";
 

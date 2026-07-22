@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import ServiceCard from "../provider/Shared/ServiceCard";
+import ServiceCard from "../shared/ServiceCard/ServiceCard";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import classes from "./favorites.module.css";

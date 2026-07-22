@@ -1,6 +1,6 @@
 import React from "react";
 import MyBooking from "../customer/MYEVENTS/MyBooking";
-import Calendar from "../provider/Components/Calander/Calendar";
+import Calendar from "../provider/Calander/Calendar";
 import { useState } from "react";
 
 export default function MyEventsACalender({ user }) {
