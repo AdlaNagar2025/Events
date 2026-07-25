@@ -78,16 +78,72 @@ async function getPotentialProviders(dataToSearch) {
   return providers.map((p) => p.provider_id);
 }
 
+// async function getResultSearching(dataToSearch) {
+//   console.log(dataToSearch);
+//   // 1. ולידציה של הנתונים שהוזנו
+//   const validation = validateDataToSearch(dataToSearch);
+//   if (!validation.success) {
+//     return { success: false, message: validation.message, data: [] };
+//   }
+
+//   try {
+//     // 2. שליפת ספקים פוטנציאליים לפי השדות שהוזנו
+//     const potentialIds = await getPotentialProviders(dataToSearch);
+
+//     if (potentialIds.length === 0) {
+//       return { success: true, data: [] };
+//     }
+
+//     let finalIds = potentialIds;
+
+//     // 3. בדיקת חפיפת אירועים ב-AvailToEvent תתבצע רק אם הלקוח מילא תאריך + שעת התחלה + שעת סיום!
+//     if (
+//       dataToSearch.requested_date &&
+//       dataToSearch.start_time &&
+//       dataToSearch.end_time
+//     ) {
+//       const availabilityChecks = await Promise.all(
+//         potentialIds.map(async (id) => {
+//           const isAvailable = await AvailToEvent(
+//             dataToSearch.event_id || null,
+//             dataToSearch.requested_date,
+//             id,
+//             dataToSearch.start_time,
+//             dataToSearch.end_time,
+//           );
+//           return isAvailable ? id : null;
+//         }),
+//       );
+//       finalIds = availabilityChecks.filter((id) => id !== null);
+//     }
+
+//     if (finalIds.length === 0) {
+//       return { success: true, data: [] };
+//     }
+
+//     // 4. שליפת פרטי המשתמשים
+//     const placeholders = finalIds.map(() => "?").join(",");
+//     const sqlUsers = `SELECT *, role AS provider_type FROM users WHERE id IN (${placeholders})`;
+//     const finalResults = await doQuery(sqlUsers, finalIds);
+
+//     return { success: true, data: finalResults };
+//   } catch (error) {
+//     console.error("Search failed:", error);
+//     throw error;
+//   }
+// }
+
 async function getResultSearching(dataToSearch) {
   console.log(dataToSearch);
-  // 1. ולידציה של הנתונים שהוזנו
+
+  // 1. ולידציה
   const validation = validateDataToSearch(dataToSearch);
   if (!validation.success) {
     return { success: false, message: validation.message, data: [] };
   }
 
   try {
-    // 2. שליפת ספקים פוטנציאליים לפי השדות שהוזנו
+    // 2. שליפת ספקים פוטנציאליים לפי הסינונים
     const potentialIds = await getPotentialProviders(dataToSearch);
 
     if (potentialIds.length === 0) {
@@ -96,7 +152,7 @@ async function getResultSearching(dataToSearch) {
 
     let finalIds = potentialIds;
 
-    // 3. בדיקת חפיפת אירועים ב-AvailToEvent תתבצע רק אם הלקוח מילא תאריך + שעת התחלה + שעת סיום!
+    // 3. בדיקת זמינות
     if (
       dataToSearch.requested_date &&
       dataToSearch.start_time &&
@@ -121,10 +177,51 @@ async function getResultSearching(dataToSearch) {
       return { success: true, data: [] };
     }
 
-    // 4. שליפת פרטי המשתמשים
+    // 4. שליפת פרטי הספקים עם השדות המלאים והאחידים!
     const placeholders = finalIds.map(() => "?").join(",");
-    const sqlUsers = `SELECT *, role AS provider_type FROM users WHERE id IN (${placeholders})`;
-    const finalResults = await doQuery(sqlUsers, finalIds);
+
+    const sqlUsers = `
+      SELECT 
+          u.id, 
+          u.first_name, 
+          u.last_name,
+          u.email, 
+          u.phone,
+          'Chief' AS provider_type, 
+          c.status,
+          u.first_name AS ServiceName,
+          c.submitted_at,
+          c.rejection_reason,
+          c.price_per_hour AS price,
+          COALESCE((SELECT ROUND(AVG(rating), 1) FROM reviews WHERE provider_id = u.id), 0.0) AS avgRating,
+          (SELECT COUNT(rating) FROM reviews WHERE provider_id = u.id) AS totalReviews
+      FROM users u
+      INNER JOIN chiefs c ON u.id = c.chief_id
+      WHERE u.id IN (${placeholders})
+
+      UNION ALL
+
+      SELECT 
+          u.id, 
+          u.first_name, 
+          u.last_name,
+          u.email, 
+          u.phone,
+          'Hall_Owner' AS provider_type, 
+          h.status,
+          h.hall_name AS ServiceName,
+          h.submitted_at,
+          h.rejection_reason,
+          h.price AS price,
+          COALESCE((SELECT ROUND(AVG(rating), 1) FROM reviews WHERE provider_id = u.id), 0.0) AS avgRating,
+          (SELECT COUNT(rating) FROM reviews WHERE provider_id = u.id) AS totalReviews
+      FROM users u
+      INNER JOIN halls h ON u.id = h.hall_id
+      WHERE u.id IN (${placeholders})
+    `;
+
+    // אנו מעבירים את המערך פעמיים כיוון שיש שני מזהים של placeholders ב-UNION ALL
+    const finalResults = await doQuery(sqlUsers, [...finalIds, ...finalIds]);
 
     return { success: true, data: finalResults };
   } catch (error) {
@@ -132,7 +229,6 @@ async function getResultSearching(dataToSearch) {
     throw error;
   }
 }
-
 async function getEventData(Data, customerId) {
   const {
     dataToEvent,

@@ -20,7 +20,7 @@ export default function FindAVendors({ user }) {
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [validationError, setValidationError] = useState("");
-  const [providersFavorite, setProvidersFavorite ] = useState([]);
+  const [providersFavorite, setProvidersFavorite] = useState([]);
 
   const hasSearchParams = Object.values(searchParams).some(
     (val) => val !== "" && val !== null && val !== undefined,
@@ -114,6 +114,7 @@ export default function FindAVendors({ user }) {
       <EventSummaryBar
         selectedHallId={selectedHallId}
         selectedChiefIds={selectedChiefIds}
+        searchParams={searchParams}
         providers={providers}
         onProceed={() => console.log("Proceed to booking!")}
       />
