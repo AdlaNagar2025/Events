@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import API from "../../../services/api";
-import { formatLocalDate, validateTimes } from "./calendarUtils";
+import { formatLocalDate, validateTimes } from "../../../utils/validation";
 
 export const useCalendar = (role, user) => {
   const [availableData, setAvailableData] = useState({

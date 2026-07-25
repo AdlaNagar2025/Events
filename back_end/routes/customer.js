@@ -1,5 +1,8 @@
 const express = require("express");
 
+const { isConnected, isCustomer, isActive } = require("../Middleware/auth");
+
+
 const { handleGetImages } = require("../controllers/imagesController");
 
 const { handleGetCalendar } = require("../controllers/calendarController");
@@ -8,12 +11,17 @@ const {
   handleGetProviderDetails,
 } = require("../controllers/providerController");
 
+const customerController = require("../controllers/customerController");
+
+const { handleGetServicesByStatus } = require("../controllers/adminController");
+
 const {
   writeReport,
   getAllReports,
   updateStatusReport,
 } = require("../database/queries/report");
-const { isConnected, isCustomer, isActive } = require("../Middleware/auth");
+
+
 
 const {
   getMainFoto,
@@ -21,32 +29,23 @@ const {
   getAllCommentsAndReviews,
 } = require("../database/queries/commonFunc");
 
-
-const { getAllImages } = require("../database/queries/uploadImages");
-const { getCalandar } = require("../database/queries/calendar");
-const {
-  getAllServicesAccordingToStatus,
-} = require("../database/queries/adminFunc");
 const {
   getAllNotification,
   updateReadToNotification,
   createNotification,
 } = require("../database/queries/notifications");
+
 const {
   getResultSearching,
   getEventData,
   getAllEventsData,
   updateEventData,
   cancelEvent,
-  addFavorite,
-  removeFavorite,
-  getAllFavorites,
-  getAllFavoritesProviders,
   ReviewProvider,
   disCancelEvent,
   ReviewAndComment,
 } = require("../database/queries/customerFunc");
-const { getProviderCardData } = require("../database/queries/businessAccount");
+
 const router = express.Router();
 /**
  * הגנה גלובלית על כל נתיבי משתמש.
@@ -56,34 +55,28 @@ router.use(isConnected);
 router.use(isActive);
 router.use(isCustomer);
 
-// router.get("/Profile/:id", async (req, res) => {
-//   try {
-//     const id = req.params.id;
-//     const result = await getProfile(id);
-//     res.json({ success: true, data: result });
-//   } catch (error) {
-//     console.error("Error fetching profile:", error);
-//     res.status(500).json({ success: false, message: "Server error" });
-//   }
-// });
-// router.get("/CardData/:id", async (req, res) => {
-//   try {
-//     const id = req.params.id;
-//     const result = await getProviderCardData(id);
-//     res.json({ success: true, data: result });
-//   } catch (error) {
-//     console.error("Error fetching Main Foto:", error);
-//     res.status(500).json({ success: false, message: "Server error" });
-//   }
-// });
-
-// נתיב בודד לשליפת כל המידע על ספק ספציפי
-
-//PROVIDERSDATA
 router.get("/provider-details/:id", handleGetProviderDetails);
 
 router.get("/ProviderCalendar/:id", handleGetCalendar);
 router.get("/ProviderImages/:id", handleGetImages);
+
+router.get("/AllServices/:status", handleGetServicesByStatus);
+router.post("/Searching", customerController.handlesearchProviders);
+
+// ❤️ מועדפים (Favorites)
+router.get(
+  "/AllFavoritesProvidersId",
+  customerController.getAllFavoritesProvidersId,
+);
+router.get(
+  "/AllFavoritesProviders",
+  customerController.getAllFavoritesProviders,
+);
+router.post("/addFavoriteProvider", customerController.addFavoriteProvider);
+router.delete(
+  "/removeFavoriteProvider/:providerId",
+  customerController.removeFavoriteProvider,
+);
 
 router.get("/MainFoto/:id", async (req, res) => {
   try {
@@ -93,24 +86,6 @@ router.get("/MainFoto/:id", async (req, res) => {
   } catch (error) {
     console.error("Error fetching Main Foto:", error);
     res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-router.get("/AllServices", async (req, res) => {
-  const result = await getAllServicesAccordingToStatus("APPROVED");
-  console.log("I am in BACKEND " + result);
-  return res.json({ success: true, data: result });
-});
-
-router.post("/Searching", async (req, res) => {
-  try {
-    const result = await getResultSearching(req.body);
-    return res.json({ success: true, data: result });
-  } catch (error) {
-    console.error("Route Error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal Server Error" });
   }
 });
 
@@ -168,31 +143,6 @@ router.put("/disCancelEvent/:id", async (req, res) => {
   }
 });
 
-// --- Routes ---
-
-router.get("/AllFavoritesProvidersId", async (req, res) => {
-  const providerIds = await getAllFavorites(req.session.user.id);
-  return res.json({ success: true, data: providerIds });
-});
-
-router.post("/addFavoriteProvider", async (req, res) => {
-  const providerId = req.body.providerId;
-  const result = await addFavorite(req.session.user.id, req.body.providerId);
-  return res.json(result);
-});
-
-router.delete("/removeFavoriteProvider/:providerId", async (req, res) => {
-  const result = await removeFavorite(
-    req.session.user.id,
-    req.params.providerId,
-  );
-  return res.json(result);
-});
-
-router.get("/AllFavoritesProviders", async (req, res) => {
-  const providers = await getAllFavoritesProviders(req.session.user.id);
-  return res.json({ success: true, data: providers });
-});
 
 router.post("/ReviewProvider", async (req, res) => {
   try {

@@ -12,8 +12,10 @@ export default function ServiceCard({
   provider,
   isFavorite,
   handleFavorite,
+  isSelected,
+  onSelect,
+  isDateAndTimeSelected,
 }) {
-  console.log("IAM IN SERVICECARD I ", user, provider, isFavorite);
   const [showProfile, setShowProfile] = useState(false);
   const [cardData, setCardData] = useState(null);
   const [imageLoading, setImageLoading] = useState(true);
@@ -163,7 +165,58 @@ export default function ServiceCard({
                 →
               </span>
             </button>
+
+            {/* 🎯 כפתור בחירת הספק לאירוע */}
+            {/* 🎯 כפתור בחירת הספק לאירוע */}
+            {onSelect && (
+              <div>
+                <button
+                  type="button"
+                  disabled={!isDateAndTimeSelected}
+                  onClick={() => onSelect(provider.id)}
+                  style={{
+                    backgroundColor: !isDateAndTimeSelected
+                      ? "#ccc" // צבע אפור כשהוא חסום
+                      : isSelected
+                        ? "#2e7d32"
+                        : "#1976d2",
+                    color: !isDateAndTimeSelected ? "#666" : "white",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                    border: "none",
+                    cursor: !isDateAndTimeSelected ? "not-allowed" : "pointer",
+                    fontWeight: "bold",
+                    marginTop: "8px",
+                    width: "100%",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  {!isDateAndTimeSelected
+                    ? "🔒 Select Date & Guests First"
+                    : provider.provider_type === "Hall_Owner"
+                      ? isSelected
+                        ? "✔️ Venue Selected"
+                        : "🏛️ Select as Venue"
+                      : isSelected
+                        ? "➖ Remove Chef"
+                        : "➕ Add Chef"}
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* <div className={classes.actions}>
+            <button
+              type="button"
+              onClick={() => setShowProfile(true)}
+              className={classes.detailsBtn}
+            >
+              <span>View Details</span>
+              <span className={classes.detailsBtnArrow} aria-hidden="true">
+                →
+              </span>
+            </button>
+          </div> */}
         </div>
       </div>
     </>

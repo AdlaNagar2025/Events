@@ -34,38 +34,6 @@ export default function FindAVendor({ user }) {
 
   const eventToUpdate = location.state?.Event;
 
-  //GET ALL SERVICES IN THE WEB
-  //   setAllProviders(data);
-  // setProviders(data);
-  const fetchAllServices = async () => {
-    setIsInitialLoading(true);
-    setLoadError("");
-    try {
-      const response = await API.get("/customer/AllServices/APPROVED");
-      if (response.data.success) {
-        const data = (
-          Array.isArray(response.data.data) ? response.data.data : []
-        ).filter((p) => p && p.id);
-        setAllProviders(data);
-        setProviders(data);
-      } else {
-        setLoadError("Could not load vendors.");
-      }
-    } catch (error) {
-      console.error("Fetch failed:", error.message);
-      setLoadError(
-        error.response?.data?.message ||
-          "Failed to load vendors. Make sure you are logged in as a customer.",
-      );
-    } finally {
-      setIsInitialLoading(false);
-    }
-  };
-
-  // --- Effect 1: טעינה ראשונית של כל הספקים ---
-  useEffect(() => {
-    fetchAllServices();
-  }, []);
 
   // --- Effect 2: אתחול נתונים במצב עדכון (מגיע מ-My Booking) ---
   useEffect(() => {
@@ -175,7 +143,7 @@ export default function FindAVendor({ user }) {
   };
 
   async function fetchAllFavoriteProviders() {
-    const response = await API.get("customer/AllFavoritesProvidersId");
+    const response = await API.get("/API/AllFavoritesProvidersId");
     setProvidersFavorite(response.data.data);
   }
 

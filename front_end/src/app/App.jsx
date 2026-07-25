@@ -34,6 +34,7 @@ import AddUser from "../components/admin/AddUser";
 import ContentModeration from "../components/admin/contentModeration";
 import ReportSection from "../components/Events/ReportSection";
 import AdminDashboard from "../components/admin/AdminDashboard";
+import FindAVendors from "../components/customer/vendorsAndEvent/FindAVendors";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -95,7 +96,7 @@ function App() {
               />
             }
           >
-            <Route path="find-vendor" element={<FindAVendor user={user} />} />
+            <Route path="find-vendor" element={<FindAVendors user={user} />} />
             <Route path="book-event" element={<BookEvent user={user} />} />
             <Route path="my-booking" element={<MyBooking user={user} />} />
             <Route

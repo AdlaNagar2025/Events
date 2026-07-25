@@ -11,7 +11,7 @@ import {
   formatLocalTime,
   validateTimes,
   getTodayString,
-} from "./calendarUtils";
+} from "../../../utils/validation";
 
 export default function Calendar({ role, user }) {
   const {
