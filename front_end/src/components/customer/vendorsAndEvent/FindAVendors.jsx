@@ -20,6 +20,7 @@ export default function FindAVendors({ user }) {
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [validationError, setValidationError] = useState("");
+  const [providersFavorite, setProvidersFavorite ] = useState([]);
 
   const hasSearchParams = Object.values(searchParams).some(
     (val) => val !== "" && val !== null && val !== undefined,
@@ -65,6 +66,31 @@ export default function FindAVendors({ user }) {
   useEffect(() => {
     handleSearch();
   }, [searchParams]);
+
+  async function handleFavorite(provider) {
+    const providerId = provider.id;
+    try {
+      if (providersFavorite.includes(provider.id)) {
+        await API.delete(`/customer/removeFavoriteProvider/${providerId}`);
+      } else {
+        await API.post("/customer/addFavoriteProvider", {
+          providerId: providerId,
+        });
+      }
+      fetchAllFavoriteProviders();
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
+  }
+
+  async function fetchAllFavoriteProviders() {
+    const response = await API.get("customer/AllFavoritesProvidersId");
+    setProvidersFavorite(response.data.data);
+  }
+
+  useEffect(() => {
+    fetchAllFavoriteProviders();
+  }, []);
 
   function handleSelectHall(hallId) {
     if (hallId === selectedHallId) setSelectedHallId(null);
@@ -141,11 +167,13 @@ export default function FindAVendors({ user }) {
             return (
               <ServiceCard
                 key={provider.id}
-                provider={provider}
                 user={user}
+                provider={provider}
                 isSelected={isSelected}
                 onSelect={handleSelect}
                 isDateAndTimeSelected={isDateAndTimeSelected}
+                isFavorite={providersFavorite.includes(provider.id)}
+                handleFavorite={handleFavorite}
               />
             );
           })}
