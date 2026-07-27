@@ -4,8 +4,12 @@ import SearchFilters from "./SearchFilters";
 import ServiceCard from "../../shared/ServiceCard/ServiceCard";
 import API from "../../../services/api";
 import { validateSearchParams } from "../../../utils/validation"; // 👈 ייבוא פונקציית הולדיציה
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function FindAVendors({ user }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [searchParams, setSearchParams] = useState({
     requested_date: "",
     start_time: "",
@@ -21,6 +25,7 @@ export default function FindAVendors({ user }) {
   const [loading, setLoading] = useState(false);
   const [validationError, setValidationError] = useState("");
   const [providersFavorite, setProvidersFavorite] = useState([]);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const hasSearchParams = Object.values(searchParams).some(
     (val) => val !== "" && val !== null && val !== undefined,
@@ -106,6 +111,23 @@ export default function FindAVendors({ user }) {
       }
     });
   }
+  const eventToUpdate = location.state?.Event || location.state?.dataToEvent;
+
+  useEffect(() => {
+    if (eventToUpdate) {
+      setSearchParams({
+        city: "",
+        guest_number: eventToUpdate.guest_number || "",
+        requested_date: eventToUpdate.requested_date || "",
+        start_time: eventToUpdate.start_time || "",
+        end_time: eventToUpdate.end_time || "",
+        event_id: eventToUpdate.event_id || null,
+      });
+      setIsUpdating(true);
+      setSelectedHallId(location.state?.hallId || null);
+      setSelectedChiefIds(location.state?.ChiefIds || []);
+    }
+  }, [eventToUpdate]);
 
   return (
     <div>
@@ -116,7 +138,6 @@ export default function FindAVendors({ user }) {
         selectedChiefIds={selectedChiefIds}
         searchParams={searchParams}
         providers={providers}
-        onProceed={() => console.log("Proceed to booking!")}
       />
 
       <SearchFilters

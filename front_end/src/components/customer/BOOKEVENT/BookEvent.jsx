@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import API from "../../../services/api";
 import classes from "./bookEvent.module.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import EventData from "./EventData";
@@ -40,26 +40,24 @@ export default function BookEvent({ user }) {
       setLoading(true);
       try {
         if (hallId) {
-          const hallRes = await axios.get(
-            `http://localhost:3030/customer/CardData/${hallId}`,
-            { withCredentials: true },
-          );
+          const hallRes = await API.get(`/customer/provider-details/${hallId}`);
           if (hallRes.data.success) setHallData(hallRes.data.data);
         }
 
+        // ✅ מהיר: שליפת כל הספקים במקביל
         if (selectedChiefsId.length > 0) {
-          const tempChiefs = [];
-          for (const id of selectedChiefsId) {
-            try {
-              const response = await axios.get(
-                `http://localhost:3030/customer/Profile/${id}`,
-                { withCredentials: true },
-              );
-              tempChiefs.push(response.data.data);
-            } catch (err) {
+          const requests = selectedChiefsId.map((id) =>
+            API.get(`/customer/provider-details/${id}`).catch((err) => {
               console.error(`Failed to fetch chef ${id}:`, err);
-            }
-          }
+              return null;
+            }),
+          );
+
+          const responses = await Promise.all(requests);
+          const tempChiefs = responses
+            .filter((res) => res && res.data?.success)
+            .map((res) => res.data.data);
+
           setChiefsData(tempChiefs);
         }
       } catch (error) {
@@ -79,18 +77,14 @@ export default function BookEvent({ user }) {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:3030/customer/eventData",
-        {
-          dataToEvent,
-          hallId,
-          selectedChiefsId,
-          location: hallId ? hallData?.hall_name : eventLocation,
-          notesToHall,
-          noteToChef,
-        },
-        { withCredentials: true },
-      );
+      const response = await API.post("/customer/eventData", {
+        dataToEvent,
+        hallId,
+        selectedChiefsId,
+        location: hallId ? hallData?.hall_name : eventLocation,
+        notesToHall,
+        noteToChef,
+      });
       if (response.data.success) {
         alert("Event Booked Successfully!");
         navigate("/customer/my-booking");
@@ -106,8 +100,19 @@ export default function BookEvent({ user }) {
 
   const shouldShowButton = hallId ? !!hallData : !!eventLocation;
 
+  const handleBack = () => {
+    navigate("/customer/find-vendor", {
+      state: {
+        dataToEvent: dataToEvent,
+        hallId: hallId,
+        ChiefIds: selectedChiefsId,
+      },
+    });
+  };
+
   return (
     <div className={classes.page}>
+      <button onClick={handleBack}> Back</button>
       <div className={classes.pageHeader}>
         <h1>Book Your Event</h1>
         <p>Review details and confirm your booking</p>

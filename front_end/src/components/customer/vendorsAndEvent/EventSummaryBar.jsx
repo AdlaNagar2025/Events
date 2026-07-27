@@ -1,12 +1,16 @@
 import React from "react";
+import BookEvent from "../BOOKEVENT/BookEvent";
+import { useNavigate, useLocation } from "react-router-dom";
+
 
 export default function EventSummaryBar({
   selectedHallId,
   selectedChiefIds,
   providers,
-  searchParams, // 👈 מקבלים את פרטי החיפוש (כולל start_time ו-end_time)
-  onProceed,
+  searchParams,
 }) {
+    const navigate = useNavigate();
+  const location = useLocation();
   // 1. חישוב כמות השעות מתוך start_time ו-end_time
   const calculateHours = (startTime, endTime) => {
     if (!startTime || !endTime) return 1; // ברירת מחדל: שעה אחת אם לא נבחרו שעות
@@ -54,6 +58,18 @@ export default function EventSummaryBar({
 
   const totalPrice = hallPrice + chiefsPrice;
   const hasSelections = selectedHall || selectedChiefs.length > 0;
+
+
+
+    const handleBookingClick = () => {
+      navigate("/customer/book-event", {
+        state: {
+          dataToEvent: searchParams,
+          hallId: selectedHallId,
+          selectedChiefsId: selectedChiefIds,
+        },
+      });
+    };
 
   return (
     <div
@@ -149,7 +165,7 @@ export default function EventSummaryBar({
         <button
           type="button"
           disabled={!hasSelections}
-          onClick={onProceed}
+          onClick={handleBookingClick}
           style={{
             backgroundColor: hasSelections ? "#2e7d32" : "#ccc",
             color: "white",
@@ -160,8 +176,7 @@ export default function EventSummaryBar({
             fontSize: "1rem",
             cursor: hasSelections ? "pointer" : "not-allowed",
             transition: "all 0.2s ease",
-          }}
-        >
+          }}>
           Proceed to Booking Order →
         </button>
       </div>
