@@ -1,213 +1,284 @@
-// בקוד הנוכחי שלך, המבנה הכללי מצוין! יצרת זרימה של 3 שלבים (פרטים, תמונות, ויומן) ובסוף כפתור שליחה לאדמין.
+import classes from "./eventCard.module.css";
+import { Rating } from "@mui/material";
+import ReviewSection from "./ReviewSection";
+import ReportSection from "./ReportSection";
 
-// עם זאת, יש **מספר באגים קריטיים ובעיות לוגיות** ברכיב `DetailsOFbusiness` שמונעים מהתהליך לעבוד בצורה תקינה. הנה רשימת הבעיות שמצאתי ואיך נתקן אותן כדי שהזרימה תעבוד בדיוק כמו שאתה רוצה.
+import { useState } from "react";
 
-// ---
+function getStatusClass(status) {
+  const s = (status || "").toUpperCase();
+  if (s === "APPROVED") return "statusApproved";
+  if (s === "REJECTED" || s === "DENY") return "statusRejected";
+  if (s === "CANCELLED") return "statusCancelled";
+  return "statusPending";
+}
 
-// ## 🔍 הבעיות המרכזיות שמצאתי בקוד שלך:
+export default function EventRow({
+  event,
+  rolePath,
+  role,
+  isFuture,
+  onUpdate,
+  onCancel,
+  onDisCancel,
+  onChangeStatus,
+}) {
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const status = event.finalStatus || event.status;
 
-// 1. **שימוש במשתנה לא קיים (`status`):** בתוך ה-`useEffect` כתבת `if (status === "PENDING")`. המשתנה `status` לא מוגדר שם, היית צריך להשתמש ב-`response.data.status`.
-// 2. **סינטקס שבור בהצגת הדירוג (רכיב הסטאר):**
-// כתבת `{currentRating > 0 ? currentRating > 0 \`⭐` :""}`. זה סינטקס לא חוקי ב-JavaScript שגורם לקריסת הרכיב.
-// 3. **בדיקת מילוי שלב 1 (פרטי העסק):**
-// כרגע, בעל העסק יכול ללחוץ על "Submit To Admin" גם אם הוא לא מילא את שלב 1 (הטופס של `BusinessAccount`) אלא רק העלה תמונה. אנחנו צריכים לוודא שהוא אכן שמר את הפרטים לפני שהוא שולח לאדמין.
+  const startTime = event.start_time?.slice(0, 5) || "";
+  const endTime = event.end_time?.slice(0, 5) || "";
 
-// ---
+  const canProviderAction =
+    rolePath === "provider" && isFuture && event.status !== "CANCELLED";
 
-// ## 🛠️ הקוד המתוקן והמשופר (`DetailsOFbusiness.jsx`)
+  const checkIfFuture = (event) => {
+    const today = new Date().toISOString().split("T")[0];
+    const currentTime = new Date().toTimeString().slice(0, 5);
+    const startTime = event.start_time.slice(0, 5);
 
-// הנה הקוד המתוקן. שים לב שהוספתי משתנה סטייט חדש בשם `isProfileSaved` כדי לוודא שבעל העסק באמת שמר את הפרטים שלו לפחות פעם אחת לפני השליחה לאדמין.
+    return (
+      event.requested_date > today ||
+      (event.requested_date === today && startTime > currentTime)
+    );
+  };
+  // החליפי את פונקציית handleProviderReject ואת הכפתורים של הספק בגרסה הזו:
 
-// ```jsx
-// import React, { useState, useEffect } from "react";
-// import BusinessAccount from "../BasicToProviderProfile/BusinessAccount";
-// import ImageUpload from "../BasicToProviderProfile/ImagesCode/ImageUpload";
-// import Calendar from "../BasicToProviderProfile/Calendar/Calendar";
-// import classes from "./DetailsOFbusiness.module.css";
-// import { FaTimes } from "react-icons/fa";
-// import axios from "axios";
+  const handleProviderActionWithReason = (actionStatus) => {
+    const actionName =
+      actionStatus === "CANCELLED" ? "cancelling" : "rejecting";
+    const userReason = prompt(
+      `Please enter the reason for ${actionName} this request:`,
+    );
 
-// function DetailsOFbusiness({ user }) {
-//   const [isDisable, setIsDisable] = useState(false);
-//   const [currentStatus, setCurrentStatus] = useState("");
-//   const [currentRating, setCurrentRating] = useState(0);
-//   const [isProfileSaved, setIsProfileSaved] = useState(false); // סטייט חדש לבדיקה אם שלב 1 בוצע
-//   const [check, setCheck] = useState(false); // בדיקת העלאת תמונות (שלב 2)
-//   const [error, setError] = useState("");
+    // אם הספק לחץ על "ביטול" בתיבת ה-prompt, נעצור
+    if (userReason === null) return;
 
-//   const getStatus = async () => {
-//     try {
-//       const response = await axios.get(
-//         "http://localhost:3030/provider/MyBusinessStatusAndRating",
-//         { withCredentials: true },
-//       );
-//       if (response.data.success) {
-//         console.log("Data", response.data);
-//         const status = response.data.status;
-//         setCurrentStatus(status);
-//         setCurrentRating(response.data.avgRating || 0);
-        
-//         // תיקון באג: שימוש בסטטוס מתוך ה-response
-//         if (status === "PENDING" || status === "APPROVED") {
-//           setIsDisable(true);
-//         }
+    const cleanReason =
+      userReason.trim() || "No reason provided by the business owner.";
 
-//         // אם חזרו נתונים של העסק, נסמן ששלב 1 כבר מולא בעבר
-//         if (response.data.hasProfile) {
-//           setIsProfileSaved(true);
-//         }
-//       }
-//     } catch (error) {
-//       console.error("Failed to fetch status:", error);
-//     }
-//   };
+    // קריאה לפונקציית האב עם 4 פרמטרים
+    onChangeStatus(event, event.event_id, actionStatus, cleanReason);
+  };
 
-//   useEffect(() => {
-//     if (user?.id) {
-//       getStatus();
-//     }
-//   }, [user?.id]);
+  return (
+    <>
+      {rolePath === "customer" && (
+        <tr className={classes.eventCard}>
+          <td>{event.requested_date}</td>
+          <td>
+            {startTime} - {endTime}
+          </td>
+          <td>
+            <span
+              className={`${classes.statusBadge} ${classes[getStatusClass(status)]}`}
+            >
+              {status}
+            </span>
+          </td>
+          <td>{event.guest_number}</td>
 
-//   async function handleStatusChange() {
-//     try {
-//       // 1. הגנה: בדיקה ששלב 1 בוצע (מילוי הטופס)
-//       if (!isProfileSaved) {
-//         setError("You must save your business details (Step 1) before submitting.");
-//         return;
-//       }
+          <td>
+            <div className={classes.detailsSection}>
+              <strong>Hall:</strong> {event.hall_name} |{" "}
+              <span>
+                {event.hall_status} || {event?.hall_reason}
+              </span>
+              <br />
+              <strong>Chiefs:</strong>
+              {event.chiefs?.map((chief) => (
+                <p key={chief.id} className={classes.smallText}>
+                  {chief.name} |{" "}
+                  <span className={classes[chief.status?.toLowerCase()]}>
+                    {chief.status} || {event.chiefs_reason}
+                  </span>
+                </p>
+              ))}
+              {event.rejection_reason && (
+                <div
+                  className={classes.reasonBox}
+                  style={{
+                    marginTop: "8px",
+                    color: "#dc3545",
+                    fontSize: "0.9em",
+                  }}
+                >
+                  <strong>⚠️ Note:</strong> "{event.rejection_reason}"
+                </div>
+              )}
+            </div>
+          </td>
 
-//       // 2. הגנה: בדיקה ששלב 2 בוצע (העלאת תמונות)
-//       if (!check) {
-//         setError("You must upload at least one image (Step 2) before submitting.");
-//         return;
-//       }
+          <td>
+            <div className={classes.actions}>
+              {isFuture ? (
+                <>
+                  <button
+                    className={classes.updateBtn}
+                    onClick={() => onUpdate(event)}
+                  >
+                    Update
+                  </button>
+                  {event.finalStatus !== "CANCELLED" && (
+                    <button
+                      className={classes.rejectBtn}
+                      onClick={() => onCancel(event)}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  {event.finalStatus === "CANCELLED" && (
+                    <button
+                      className={classes.rejectBtn}
+                      onClick={() => onDisCancel(event)}
+                    >
+                      DisCancel
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  {event.finalStatus === "APPROVED" && (
+                    <div>
+                      <button
+                        className={classes.reviewBtn}
+                        onClick={() => setIsReviewOpen(true)}
+                      >
+                        Write a Review
+                      </button>
+                      <button
+                        className={classes.reviewBtn}
+                        onClick={() => setIsReportOpen(true)}
+                      >
+                        🚩 Report
+                      </button>
+                    </div>
+                  )}
 
-//       setError("");
-//       const tableName = user?.role === "Chief" ? "chiefs" : "halls";
-//       const id = user?.id;
-//       const newStatus = "PENDING";
-      
-//       const response = await axios.post(
-//         "http://localhost:3030/provider/approve-business",
-//         { type: tableName, id, newStatus },
-//         { withCredentials: true },
-//       );
+                  {event.rating && (
+                    <div className={classes.reviewReceived}>
+                      <h4>Client Review</h4>
+                      <Rating value={event.rating} readOnly size="small" />
+                      <p>"{event.comment}"</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
 
-//       alert(response.data.message || "Submitted successfully for review!");
-//       setIsDisable(true);
-//       setCurrentStatus("PENDING");
-//     } catch (error) {
-//       console.error("Error updating status:", error);
-//       setError("Failed to submit profile. Try again later.");
-//     }
-//   }
+            {isReviewOpen && (
+              <ReviewSection
+                event={event}
+                onClose={() => setIsReviewOpen(false)}
+              />
+            )}
 
-//   return (
-//     <div className={`${classes.mainContainer} ${isDisable ? classes.disabledArea : ""}`}>
-//       <header className={classes.header}>
-//         <h1>Business Setup</h1>
-//         <p>
-//           Status: <strong className={classes[currentStatus] || ""}>{currentStatus || "NOT SUBMITTED"}</strong>
-//         </p>
-//         {/* תיקון סינטקס הדירוג */}
-//         {currentRating > 0 && (
-//           <p className={classes.ratingDisplay}>
-//             Rating: {currentRating} ⭐
-//           </p>
-//         )}
-//       </header>
+            {isReportOpen && (
+              <ReportSection
+                event={event}
+                onClose={() => setIsReportOpen(false)}
+              />
+            )}
+          </td>
+        </tr>
+      )}
 
-//       {/* שלב 1: פרטי העסק */}
-//       <section className={classes.stepCard}>
-//         <div className={classes.stepNumber}>1</div>
-//         {/* פונקציית getStatus מועברת כדי לעדכן את הסטייט ברגע ששומרים את הטופס */}
-//         <BusinessAccount 
-//           user={user} 
-//           isDisable={isDisable} 
-//           onSaveSuccess={() => setIsProfileSaved(true)} 
-//         />
-//       </section>
+      {rolePath === "provider" && (
+        <tr className={classes.eventCard}>
+          <td>{event.first_name}</td>
+          <td>{event.requested_date}</td>
+          <td>
+            {startTime} - {endTime}
+          </td>
+          <td>{event.finalStatus || event.status}</td>
+          <td>{event.guest_number}</td>
+          {role === "Chief" && <td>{event.location}</td>}
+          <td>
+            {event.notes}
 
-//       <div className={classes.divider} />
+            {event.rejection_reason && (
+              <div
+                style={{
+                  fontStyle: "italic",
+                  color: "#6c757d",
+                  marginTop: "4px",
+                }}
+              >
+                Reason sent: "{event.rejection_reason}"
+              </div>
+            )}
+          </td>
 
-//       {/* שלב 2: תמונות */}
-//       <section className={classes.stepCard}>
-//         <div className={classes.stepNumber}>2</div>
-//         <ImageUpload
-//           role={user?.role}
-//           provider={user}
-//           ok={setCheck}
-//           isDisable={isDisable}
-//         />
-//       </section>
+          <td>
+            {/* {canProviderAction && (
+              <>
+                <button
+                  className={classes.approveBtn}
+                  onClick={() =>
+                    onChangeStatus(event, event.event_id, "CANCELLED")
+                  }
+                >
+                  Cancel
+                </button>
 
-//       <div className={classes.divider} />
-      
-//       {/* שלב 3: יומן */}
-//       <section className={classes.stepCard}>
-//         <div className={classes.stepNumber}>3</div>
-//         <Calendar role={user?.role} user={user} isDisable={isDisable} />
-//       </section>
+                {event.status !== "APPROVED" && (
+                  <button
+                    className={classes.approveBtn}
+                    onClick={() =>
+                      onChangeStatus(event, event.event_id, "APPROVED", null)
+                    }
+                  >
+                    Approve
+                  </button>
+                )}
+                {event.status !== "REJECTED" && (
+                  <button
+                    className={classes.rejectBtn}
+                    onClick={handleProviderReject} // ✨ קריאה לפונקציה שמבקשת סיבה
+                  >
+                    Reject
+                  </button>
+                )}
+              </>
+            )} */}
 
-//       {/* כפתור שליחה סופי לאדמין */}
-//       <button
-//         onClick={handleStatusChange}
-//         disabled={isDisable}
-//         className={classes.submitBtn}
-//       >
-//         {isDisable 
-//           ? currentStatus === "PENDING" 
-//             ? "Waiting for Admin Approval..." 
-//             : "Profile Approved!" 
-//           : "Submit To Admin"}
-//       </button>
+            <td>
+              {canProviderAction && (
+                <>
+                  {/* כפתור ביטול יזום על ידי הספק - דורש סיבה */}
+                  <button
+                    className={classes.rejectBtn}
+                    onClick={() => handleProviderActionWithReason("CANCELLED")}
+                  >
+                    Cancel Event
+                  </button>
 
-//       {error && (
-//         <div className={classes.errorMessage}>
-//           <span>{error}</span>
-//           <button onClick={() => setError("")} className={classes.closeError}>
-//             <FaTimes />
-//           </button>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
+                  {status !== "APPROVED" && (
+                    <button
+                      className={classes.approveBtn}
+                      onClick={() =>
+                        onChangeStatus(event, event.event_id, "APPROVED", null)
+                      }
+                    >
+                      Approve
+                    </button>
+                  )}
 
-// export default DetailsOFbusiness;
-
-// ```
-
-// ---
-
-// ## 🔗 מה אתה צריך לעדכן ברכיב הבן `BusinessAccount`?
-
-// כדי שהרכיב האבא (`DetailsOFbusiness`) ידע שבעל העסק אכן שמר בהצלחה את הטופס, אנחנו צריכים לקרוא לפונקציה `onSaveSuccess` מתוך `BusinessAccount` ברגע שהשמירה מצליחה.
-
-// פתח את הקובץ של `BusinessAccount` ובצע את הפיקס הקטן הזה:
-
-// 1. קבל את ה-prop החדש בהגדרת הפונקציה:
-
-// ```javascript
-// export default function BusinessAccount({ user, isDisable, onSaveSuccess }) { // <-- הוסף את ה-prop כאן
-
-// ```
-
-// 2. בתוך פונקציית הצירוף `submitProfile`, מיד אחרי שהתראה של ההצלחה קופצת, תקרא לפונקציה הזו:
-
-// ```javascript
-// if (response.data.success) {
-//   toast.success(response.data.message || "Saved successfully! ✨", {
-//     id: loadingId,
-//   });
-//   fetchProfile();
-//   if (onSaveSuccess) onSaveSuccess(); // <-- הוסף את השורה הזו כאן!
-// }
-
-// ```
-
-// ## 💡 טיפ חשוב לצד השרת (Backend)
-
-// בנתיב `http://localhost:3030/provider/MyBusinessStatusAndRating`, בנוסף ל-`status` ו-`avgRating`, מומלץ להחזיר משתנה בוליאני בשם `hasProfile`.
-
-// השרת פשוט יבדוק: אם קיימת שורה בטבלת ה-`chiefs` או `halls` עבור ה-`id` הזה, הוא יחזיר `hasProfile: true`, אחרת `false`. זה יבטיח שגם אם המשתמש ירענן את הדף, המערכת תדע שהוא כבר מילא את שלב 1.
+                  {status !== "REJECTED" && (
+                    <button
+                      className={classes.rejectBtn}
+                      onClick={() => handleProviderActionWithReason("REJECTED")}
+                    >
+                      Reject
+                    </button>
+                  )}
+                </>
+              )}
+            </td>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}

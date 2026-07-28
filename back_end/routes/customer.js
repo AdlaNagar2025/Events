@@ -2,7 +2,6 @@ const express = require("express");
 
 const { isConnected, isCustomer, isActive } = require("../Middleware/auth");
 
-
 const { handleGetImages } = require("../controllers/imagesController");
 
 const { handleGetCalendar } = require("../controllers/calendarController");
@@ -21,8 +20,6 @@ const {
   updateStatusReport,
 } = require("../database/queries/report");
 
-
-
 const {
   getMainFoto,
   getAllEventsApproved,
@@ -37,7 +34,7 @@ const {
 
 const {
   getResultSearching,
-  getEventData,
+  createEventData,
   getAllEventsData,
   updateEventData,
   cancelEvent,
@@ -73,6 +70,7 @@ router.get(
   customerController.getAllFavoritesProviders,
 );
 router.post("/addFavoriteProvider", customerController.addFavoriteProvider);
+
 router.delete(
   "/removeFavoriteProvider/:providerId",
   customerController.removeFavoriteProvider,
@@ -89,10 +87,10 @@ router.get("/MainFoto/:id", async (req, res) => {
   }
 });
 
-router.post("/eventData", async (req, res) => {
+router.post("/createEvent", async (req, res) => {
   try {
     console.log(req.body);
-    const result = await getEventData(req.body, req.session.user.id);
+    const result = await createEventData(req.body, req.session.user.id);
     return res.json(result);
   } catch (error) {
     console.error("Error:", error);
@@ -101,8 +99,13 @@ router.post("/eventData", async (req, res) => {
 });
 
 router.get("/myEventsData", async (req, res) => {
-  const result = await getAllEventsData(req.session.user.id);
-  return res.json({ sucess: true, data: result });
+  try {
+    const result = await getAllEventsData(req.session.user.id);
+    return res.json({ success: true, data: result });
+  } catch (error) {
+    console.error("Error in /myEventsData:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 router.put("/updateEventData/:id", async (req, res) => {
@@ -142,7 +145,6 @@ router.put("/disCancelEvent/:id", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
 
 router.post("/ReviewProvider", async (req, res) => {
   try {

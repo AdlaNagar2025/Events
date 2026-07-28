@@ -1,6 +1,7 @@
 const doQuery = require("../query");
 const { getRole, getStatusEvent, AvailToEvent } = require("./helpingFunc");
 const { createNotification } = require("./notifications");
+const { sendEmail } = require("./mail");
 
 function validateDataToSearch(dataToSearch) {
   const today = new Date().toISOString().split("T")[0];
@@ -229,7 +230,8 @@ async function getResultSearching(dataToSearch) {
     throw error;
   }
 }
-async function getEventData(Data, customerId) {
+
+async function createEventData(Data, customerId) {
   const {
     dataToEvent,
     hallId,
@@ -239,10 +241,34 @@ async function getEventData(Data, customerId) {
     noteToChef,
   } = Data;
 
-  const sql = `INSERT INTO events (user_id, hall_id, requested_date, start_time, end_time, notesToHall, guest_number) 
-               VALUES (?, ?, ?, ?, ?, ?, ?)`;
+  if (
+    !dataToEvent ||
+    !dataToEvent.requested_date ||
+    !dataToEvent.start_time ||
+    !dataToEvent.end_time ||
+    !dataToEvent.guest_number
+  ) {
+    return {
+      success: false,
+      message: "Missing required event date, time, or guest count.",
+    };
+  }
+  const hasHall = Boolean(hallId);
+  const hasChiefs =
+    Array.isArray(selectedChiefsId) && selectedChiefsId.length > 0;
 
-  let values = [
+  if (!hasHall && !hasChiefs) {
+    return {
+      success: false,
+      message: "Event must include at least a hall or one chef.",
+    };
+  }
+
+  const sqlEvent = `
+    INSERT INTO events (user_id, hall_id, requested_date, start_time, end_time, notesToHall, guest_number) 
+    VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
+  const valuesEvent = [
     customerId,
     hallId || null,
     dataToEvent.requested_date,
@@ -252,54 +278,125 @@ async function getEventData(Data, customerId) {
     dataToEvent.guest_number,
   ];
 
-  const result = await doQuery(sql, values);
+  const result = await doQuery(sqlEvent, valuesEvent);
   const newEventId = result.insertId;
 
-  const sql1 = `INSERT INTO event_providers (event_id, provider_id, noteToChef, location) 
-                VALUES (?, ?, ?, ?)`;
+  // 4️⃣ הכנסת השפים לטבלת event_providers (אם נבחרו)
+  if (hasChiefs) {
+    const sqlProvider = `
+      INSERT INTO event_providers (event_id, provider_id, noteToChef, location) 
+      VALUES (?, ?, ?, ?)`;
 
-  if (selectedChiefsId && selectedChiefsId.length > 0) {
-    for (const pId of selectedChiefsId) {
-      const specificChefNote =
-        noteToChef && noteToChef[pId] ? noteToChef[pId] : "";
-
-      await doQuery(sql1, [
+    const providerPromises = selectedChiefsId.map((chefId) => {
+      const specificChefNote = noteToChef?.[chefId] || "";
+      return doQuery(sqlProvider, [
         newEventId,
-        pId,
+        chefId,
         specificChefNote,
         location || null,
       ]);
-    }
+    });
+
+    await Promise.all(providerPromises);
   }
 
   // =================================================================
   // ✨ הוספת התראות (Notifications) עבור יצירת אירוע חדש
   // =================================================================
   try {
-    // 1. שליחת התראה לבעל האולם (אם נבחר אולם)
-    if (hallId) {
-      await createNotification({
-        message: `You have received a new booking request for an event on ${dataToEvent.requested_date}. Please review and respond.`,
-        userId: hallId,
-      });
-    }
+    const emailPromises = [];
+    const notifPromises = [];
 
-    // 2. שליחת התראה לכל אחד מהשפים שנבחרו
-    if (selectedChiefsId && selectedChiefsId.length > 0) {
-      for (const pId of selectedChiefsId) {
-        await createNotification({
-          message: `A customer has requested your chef services for an event on ${dataToEvent.requested_date}.`,
-          userId: pId,
-        });
+    // שליפה של מיילי הספקים (אולם ושפים) בשאילתה אחת מהירה
+    const allProviderIds = [...(hallId ? [hallId] : []), ...selectedChiefsId];
+
+    if (allProviderIds.length > 0) {
+      const placeholders = allProviderIds.map(() => "?").join(",");
+      const usersRows = await doQuery(
+        `SELECT id, email, first_name FROM users WHERE id IN (${placeholders})`,
+        allProviderIds,
+      );
+
+      const userMap = new Map(usersRows.map((u) => [u.id, u]));
+
+      // 🏠 Notification + Email for Hall Owner
+      if (hallId && userMap.has(hallId)) {
+        const hallUser = userMap.get(hallId);
+
+        notifPromises.push(
+          createNotification({
+            message: `You received a new booking request for ${dataToEvent.requested_date}.`,
+            userId: hallId,
+          }),
+        );
+
+        emailPromises.push(
+          sendEmail({
+            to: hallUser.email,
+            subject: "New Event Booking Request!",
+            html: `
+              <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                <h2>Hello ${hallUser.first_name},</h2>
+                <p>You have received a new booking request for your venue!</p>
+                <ul>
+                  <li><strong>Date:</strong> ${dataToEvent.requested_date}</li>
+                  <li><strong>Time:</strong> ${dataToEvent.start_time} - ${dataToEvent.end_time}</li>
+                  <li><strong>Guests:</strong> ${dataToEvent.guest_number}</li>
+                </ul>
+                <p>Please log in to your dashboard to review and manage this request.</p>
+                <br/>
+                <p>Best regards,<br/><strong>Event Management Team</strong></p>
+              </div>
+            `,
+          }),
+        );
       }
+
+      // 👨‍🍳 Notification + Email for Each Chef
+      selectedChiefsId.forEach((chefId) => {
+        if (userMap.has(chefId)) {
+          const chefUser = userMap.get(chefId);
+
+          notifPromises.push(
+            createNotification({
+              message: `A customer requested your chef services for ${dataToEvent.requested_date}.`,
+              userId: chefId,
+            }),
+          );
+
+          emailPromises.push(
+            sendEmail({
+              to: chefUser.email,
+              subject: "New Catering Request!",
+              html: `
+                <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                  <h2>Hello ${chefUser.first_name},</h2>
+                  <p>A customer has requested your chef services for an upcoming event!</p>
+                  <ul>
+                    <li><strong>Date:</strong> ${dataToEvent.requested_date}</li>
+                    <li><strong>Time:</strong> ${dataToEvent.start_time} - ${dataToEvent.end_time}</li>
+                    <li><strong>Guests:</strong> ${dataToEvent.guest_number}</li>
+                  </ul>
+                  <p>Please log in to your dashboard to accept or decline this request.</p>
+                  <br/>
+                  <p>Best regards,<br/><strong>Event Management Team</strong></p>
+                </div>
+              `,
+            }),
+          );
+        }
+      });
+
+      await Promise.all([...notifPromises, ...emailPromises]);
     }
   } catch (notifError) {
-    // תופסים שגיאה של התראות כדי שהיא לא תכשיל את יצירת האירוע עצמו
-    console.error("Failed to send creation notifications:", notifError);
+    console.error(
+      "Notifications/Emails failed during event creation:",
+      notifError,
+    );
   }
-  // =================================================================
 
-  return { success: true };
+  return { success: true, eventId: newEventId };
 }
 
 async function getAllEventsData(customerId) {
@@ -309,7 +406,7 @@ async function getAllEventsData(customerId) {
     e.start_time,
     e.end_time,
     e.guest_number,
-    e.notesToHall,            -- שליפת ההערות של האולם
+    e.notesToHall,       
     e.rejection_reason  AS hall_reason ,
     e.status AS hall_status,
     e.hall_id,
@@ -318,9 +415,9 @@ async function getAllEventsData(customerId) {
     u.first_name AS chief_name,
     ep.provider_id AS chief_id,
     ep.status AS chief_status,
-    ep.noteToChef,            -- שליפת ההערה הספציפית של השף הזה
+    ep.noteToChef,     
     ep.rejection_reason  AS chiefs_reason ,
-    ep.location AS chef_event_location, -- שליפת מיקום האירוע עבור השף
+    ep.location AS chef_event_location,
     c.price_per_hour
   FROM events e
   LEFT JOIN halls h ON e.hall_id = h.hall_id
@@ -330,17 +427,60 @@ async function getAllEventsData(customerId) {
   WHERE e.user_id = ?
   ORDER BY e.requested_date DESC, e.start_time ASC`;
 
-  const result = await doQuery(sql, [customerId]);
-  const fresult = [];
+  const rows = await doQuery(sql, [customerId]);
 
-  for (const row of result) {
-    const finalStatus = await getStatusEvent(row.event_id);
-    row.finalStatus = finalStatus;
-    fresult.push(row);
+  const eventsMap = new Map();
+
+  for (const row of rows) {
+    // אם זו פעם ראשונה שאנחנו רואים את האירוע הזה, ניצור את האובייקט שלו
+    if (!eventsMap.has(row.event_id)) {
+      eventsMap.set(row.event_id, {
+        event_id: row.event_id,
+        requested_date: row.requested_date,
+        start_time: row.start_time,
+        end_time: row.end_time,
+        guest_number: row.guest_number,
+        notesToHall: row.notesToHall,
+        hall_reason: row.hall_reason,
+        hall_status: row.hall_status,
+        hall_id: row.hall_id,
+        hall_name: row.hall_name,
+        hall_price: row.hall_price,
+        chiefs: [], // מערך ייעודי שיכיל את כל השפים של האירוע
+      });
+    }
+
+    const currentEvent = eventsMap.get(row.event_id);
+
+    // 2. אם בשורה הנוכחית קיים שף, נוסיף אותו למערך ה-chiefs
+    if (row.chief_id) {
+      currentEvent.chiefs.push({
+        chief_id: row.chief_id,
+        chief_name: row.chief_name,
+        chief_status: row.chief_status,
+        chiefs_reason: row.chiefs_reason,
+        noteToChef: row.noteToChef,
+        chef_event_location: row.chef_event_location,
+        price_per_hour: row.price_per_hour,
+      });
+    }
   }
 
-  console.log(fresult);
-  return fresult;
+  // 3. הפיכת ה-Map למערך אירועים ייחודיים
+  const eventsList = Array.from(eventsMap.values());
+
+  // 4. חישוב הסטטוס הסופי לכל אירוע ייחודי במקביל (Promise.all)
+  const finalResults = await Promise.all(
+    eventsList.map(async (event) => {
+      const finalStatus = await getStatusEvent(event.event_id);
+      return {
+        ...event,
+        finalStatus: finalStatus,
+      };
+    }),
+  );
+
+  return finalResults;
 }
 
 async function updateEventData(updatingData, customerId, eventId) {
@@ -691,7 +831,7 @@ async function getAllCommentsAndReviews(providerId) {
 
 module.exports = {
   getResultSearching,
-  getEventData,
+  createEventData,
   getAllEventsData,
   updateEventData,
   cancelEvent,

@@ -77,7 +77,7 @@ export default function BookEvent({ user }) {
     }
 
     try {
-      const response = await API.post("/customer/eventData", {
+      const response = await API.post("/customer/createEvent", {
         dataToEvent,
         hallId,
         selectedChiefsId,

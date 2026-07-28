@@ -1,14 +1,14 @@
 import classes from "./myBooking.module.css";
 import { React, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import API from "../../../services/api";
 
 import EventCard from "../../Events/EventCard";
 import EventRow from "../../Events/EventRow";
 
 export default function MyBooking({ user, onStatusChange }) {
   const navigate = useNavigate();
-
+  const [type, setType] = useState("All");
   const [events, setEvents] = useState([]);
 
   let rolePath = user?.role.toLowerCase();
@@ -16,10 +16,11 @@ export default function MyBooking({ user, onStatusChange }) {
 
   const fetchAllEvents = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:3030/${rolePath}/myEventsData`,
-        { withCredentials: true },
-      );
+      let url = `/${rolePath}/myEventsData`;
+      if (type === "All") url = `/${rolePath}/myEventsData`;
+      else url = `/${rolePath}/AllEventsAccordingToStatus/${type}`;
+
+      const response = await API.get(url);
       const rawData = response.data.data;
       const grouped = rawData.reduce((acc, current) => {
         const existingEvent = acc.find(
@@ -67,10 +68,10 @@ export default function MyBooking({ user, onStatusChange }) {
 
   useEffect(() => {
     fetchAllEvents();
-  }, [user, rolePath]);
+  }, [user, rolePath, type]);
 
   function update(e) {
-    navigate("/findavendor", {
+    navigate("/customer/find-vendor", {
       state: {
         Event: e,
         hallId: e.hall_id,
@@ -100,27 +101,59 @@ export default function MyBooking({ user, onStatusChange }) {
     return Math.max(0, durationInHours);
   };
 
-  async function handlechangeStatus(event, eventId, status) {
+  // async function handlechangeStatus(event, eventId, status) {
+  //   try {
+  //     const response = await axios.put(
+  //       `http://localhost:3030/provider/changeEventStatus/${eventId}`,
+  //       { status: status, eventData: event },
+  //       { withCredentials: true },
+  //     );
+
+  //     if (response.data.success) {
+  //       alert("Status updated successfully!");
+  //       // 1. רענון הרשימה המקומית ב-MyBooking
+  //       fetchAllEvents();
+  //       // 2. הפעלת הריענון ב-Calendar דרך רכיב האב
+  //       if (onStatusChange) {
+  //         onStatusChange();
+  //       }
+  //     } else {
+  //       alert(response.data.message);
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }
+
+  // סרקי והחליפי את הפונקציה הזו בתוך MyBooking שלך:
+
+  async function handlechangeStatus(event, eventId, status, reason = null) {
     try {
-      const response = await axios.put(
-        `http://localhost:3030/provider/changeEventStatus/${eventId}`,
-        { status: status, eventData: event },
-        { withCredentials: true },
-      );
+      // קביעת מי יזם את הביטול במידה והסטטוס הוא ביטול
+      let cancelledBy = null;
+      if (status === "CANCELLED" || status === "CANCELED") {
+        cancelledBy = "PROVIDER";
+      }
+
+      const response = await API.put(`/provider/changeEventStatus/${eventId}`, {
+        status: status,
+        eventData: event,
+        reason: reason, // ✨ נשלח לשרת
+        cancelledBy: cancelledBy, // ✨ נשלח לשרת
+      });
 
       if (response.data.success) {
-        alert("Status updated successfully!");
-        // 1. רענון הרשימה המקומית ב-MyBooking
-        fetchAllEvents();
-        // 2. הפעלת הריענון ב-Calendar דרך רכיב האב
+        alert(`Status updated to ${status} successfully!`);
+        fetchAllEvents(); // רענון הרשימה המקומית
         if (onStatusChange) {
-          onStatusChange();
+          onStatusChange(); // רענון הלוח שנה ברכיב האב
         }
       } else {
         alert(response.data.message);
       }
     } catch (error) {
-      console.log(error);
+      console.log("Error updating event status:", error);
+      alert("An error occurred while updating status.");
     }
   }
 
@@ -128,8 +161,8 @@ export default function MyBooking({ user, onStatusChange }) {
     if (!window.confirm("Are you sure you want to cancel this event?")) return;
     try {
       const eventId = event.event_id;
-      const response = await axios.put(
-        `http://localhost:3030/customer/cancelEvent/${eventId}`,
+      const response = await API.put(
+        `/customer/cancelEvent/${eventId}`,
         {},
         { withCredentials: true },
       );
@@ -150,8 +183,8 @@ export default function MyBooking({ user, onStatusChange }) {
     if (!window.confirm("Are you sure you want to cancel this event?")) return;
     try {
       const eventId = event.event_id;
-      const response = await axios.put(
-        `http://localhost:3030/customer/disCancelEvent/${eventId}`,
+      const response = await API.put(
+        `/customer/disCancelEvent/${eventId}`,
         {},
         { withCredentials: true },
       );
@@ -180,47 +213,64 @@ export default function MyBooking({ user, onStatusChange }) {
   };
 
   return (
-    <div className={classes.eventList}>
-      <table>
-        <thead>
-          <tr>
-            <th>Customer Name</th>
-            <th> Date</th>
-            <th> Time</th>
-            <th>Status</th>
-            <th>Guest Number</th>
-            <th>Notes</th>
-            {user.role === "Chief" && <th>Location</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {" "}
-          {events.map((e) => (
-            <EventRow
-              key={e.event_id}
-              event={e}
-              rolePath={rolePath}
-              isFuture={checkIfFuture(e)}
-              onCancel={handleCancel}
-              onDisCancel={handleDisCancel}
-              onUpdate={update}
-              onChangeStatus={handlechangeStatus}
-            />
-          ))}
-        </tbody>
-      </table>
-      {/* {events.map((e) => (
-        <EventCard
-          key={e.event_id}
-          event={e}
-          rolePath={rolePath}
-          isFuture={checkIfFuture(e)}
-          onCancel={handleCancel}
-          onDisCancel={handleDisCancel}
-          onUpdate={update}
-          onChangeStatus={handlechangeStatus}
-        />
-      ))} */}
+    <div className={classes.page}>
+      <div className={classes.pageHeader}>
+        <h1>My Bookings</h1>
+        <p>Track your events, providers, and booking status</p>
+      </div>
+
+      {rolePath === "provider" && (
+        <div className={classes.toolbar}>
+          <select
+            className={classes.filterSelect}
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          >
+            <option value="All">All Events</option>
+            <option value="pending">Pending Events</option>
+            <option value="approved">Approved Events</option>
+            <option value="rejected">Rejected Events</option>
+          </select>
+        </div>
+      )}
+
+      {events.length === 0 ? (
+        <p className={classes.emptyState}>No bookings found yet.</p>
+      ) : (
+        <div className={`${classes.tableWrapper} ${classes.eventList}`}>
+          <table>
+            <thead>
+              <tr>
+                {rolePath === "provider" && <th>Customer Name</th>}
+                <th>Date</th>
+                <th>Time</th>
+                {rolePath === "customer" && <th>Status</th>}
+                {rolePath === "provider" && <th>Status</th>}
+                <th>Guests</th>
+                {rolePath === "customer" && <th>Providers</th>}
+                {user?.role === "Chief" && <th>Location</th>}
+                {rolePath === "provider" && <th>Notes</th>}
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {events.map((e) => (
+                <EventRow
+                  key={e.event_id}
+                  event={e}
+                  rolePath={rolePath}
+                  role={user.role}
+                  isFuture={checkIfFuture(e)}
+                  onCancel={handleCancel}
+                  onDisCancel={handleDisCancel}
+                  onUpdate={update}
+                  onChangeStatus={handlechangeStatus}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
