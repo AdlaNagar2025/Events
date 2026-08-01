@@ -70,15 +70,15 @@ export default function EventData({
           <div className={classes.chefsBlock}>
             <p className={classes.blockTitle}>Selected Chefs &amp; Notes</p>
             {chiefsData.map((chief) => (
-              <div key={chief.id} className={classes.chefCard}>
+              <div key={chief.chief_id} className={classes.chefCard}>
                 <p className={classes.chefName}>
                   Chef {chief.first_name} {chief.last_name}
                 </p>
                 <div className={classes.inputGroup}>
                   <textarea
-                    value={noteToChef[chief.id] || ""}
+                    value={noteToChef[chief.chief_id] || ""}
                     onChange={(e) =>
-                      handleChefNoteChange(chief.id, e.target.value)
+                      handleChefNoteChange(chief.chief_id, e.target.value)
                     }
                     placeholder={`Notes for Chef ${chief.first_name}...`}
                   />

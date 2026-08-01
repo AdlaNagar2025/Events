@@ -168,7 +168,7 @@ export default function Register({ onLoginSuccess }) {
               onChange={handleInputChange}
               checked={formData.role === "Chief"}
             />
-            Chief
+            Chef
           </label>
         </div>
       </section>
