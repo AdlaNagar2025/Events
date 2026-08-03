@@ -897,6 +897,195 @@ async function getAllEventsAccordingToStatus(
 //   return { success: true, message: `Event status successfully updated to ${newStatus}.` };
 // }
 
+// async function changeStatusEvent(
+//   providerId,
+//   eventId,
+//   newStatus,
+//   eventData,
+//   options = {},
+// ) {
+//   const { reason = null, cancelledBy = null } = options; // ברירת מחדל null עבור SQL
+//   const role = await getRole(providerId);
+//   let providersName = "";
+//   const statusUpper = newStatus.toUpperCase();
+
+//   // === 1. בדיקת זמינות וחפיפות במקרה של APPROVED ===
+//   if (statusUpper === "APPROVED") {
+//     const availabilitySql = `
+//       SELECT * FROM availability 
+//       WHERE provider_id = ? AND available_date = ? AND start_time <= ? AND end_time >= ?`;
+//     const isAvailable = await doQuery(availabilitySql, [
+//       providerId,
+//       eventData.requested_date,
+//       eventData.start_time,
+//       eventData.end_time,
+//     ]);
+
+//     if (isAvailable.length === 0) {
+//       return {
+//         success: false,
+//         message:
+//           "Cannot approve event: This time range is not marked as available.",
+//       };
+//     }
+
+//     let checkSql =
+//       role === "Chief"
+//         ? `SELECT * FROM events e JOIN event_providers ep ON e.event_id = ep.event_id WHERE e.requested_date = ? AND ep.provider_id = ? AND ep.status = 'APPROVED' AND e.event_id != ? AND e.start_time < ? AND e.end_time > ?`
+//         : `SELECT * FROM events WHERE requested_date = ? AND hall_id = ? AND status = 'APPROVED' AND event_id != ? AND start_time < ? AND end_time > ?`;
+
+//     const overlaps = await doQuery(checkSql, [
+//       eventData.requested_date,
+//       providerId,
+//       eventId,
+//       eventData.end_time,
+//       eventData.start_time,
+//     ]);
+//     if (overlaps.length > 0) {
+//       return {
+//         success: false,
+//         message:
+//           "Cannot approve event: You have an overlapping approved event.",
+//       };
+//     }
+//   }
+
+//   // === 2. שליפת שם הספק ===
+//   if (role === "Chief") {
+//     const eventChief = await doQuery(
+//       `SELECT first_name FROM users WHERE id = ?`,
+//       [providerId],
+//     );
+//     providersName = eventChief[0]?.first_name || "The Chef";
+//   } else {
+//     const eventhall = await doQuery(
+//       `SELECT hall_name FROM halls WHERE hall_id = ?`,
+//       [providerId],
+//     );
+//     providersName = eventhall[0]?.hall_name || "The Venue";
+//   }
+
+//   // === 3. עדכון הסטטוס והסיבות בבסיס הנתונים ===
+//   let updateSql = "";
+//   if (role === "Chief") {
+//     updateSql = `
+//       UPDATE event_providers 
+//       SET status = ?, rejection_reason = ?, cancelled_by = ? 
+//       WHERE provider_id = ? AND event_id = ?`;
+//   } else {
+//     updateSql = `
+//       UPDATE events 
+//       SET status = ?, rejection_reason = ?, cancelled_by = ? 
+//       WHERE hall_id = ? AND event_id = ?`;
+//   }
+//   await doQuery(updateSql, [
+//     newStatus,
+//     reason,
+//     cancelledBy,
+//     providerId,
+//     eventId,
+//   ]);
+//   if(newStatus==="APPROVED")
+// {
+//   let updateSql1=""
+//   const events=getAllPendingEventsAccording(
+//     providerId,
+//     eventData.requested_date,
+//     eventData.start_time,
+//   eventData.end_time);
+//   events.map((event), 
+//       if (role === "Chief") {
+//       updateSql1 = `
+//       UPDATE event_providers 
+//       SET status = ?, rejection_reason = ?, cancelled_by = ? 
+//       WHERE provider_id = ? AND event_id = ?`;
+//     } else {
+//       updateSql1 = `
+//       UPDATE events 
+//       SET status = ?, rejection_reason = ?, cancelled_by = ? 
+//       WHERE hall_id = ? AND event_id = ?`;
+//     }
+//     await doQuery(updateSql1, [
+//       "REJECTED",
+//       reason,
+//       cancelledBy,
+//       providerId,
+//       event,
+//     ]);
+// )
+
+// }
+//   // === 4. שליפת מזהה הלקוח ושליחת התראה ===
+//   const eventOwner = await doQuery(
+//     `SELECT user_id FROM events WHERE event_id = ?`,
+//     [eventId],
+//   );
+//   const customerId = eventOwner[0]?.user_id;
+
+//   if (customerId) {
+//     let notificationMessage = "";
+//     const cleanDate = eventData.requested_date
+//       ? eventData.requested_date.split("T")[0]
+//       : "the requested date";
+
+//     if (statusUpper === "APPROVED") {
+//       notificationMessage = `Great news! Your booking for ${cleanDate} has been APPROVED by ${providersName}.`;
+//     } else if (statusUpper === "REJECTED") {
+//       notificationMessage = `Notice: ${providersName} has DECLINED your request for ${cleanDate}.${reason ? ` Reason: "${reason}".` : ""}`;
+//     } else if (statusUpper === "CANCELED") {
+//       notificationMessage = `Important Notice: ${providersName} had to CANCEL the event on ${cleanDate}.${reason ? ` Reason: "${reason}".` : ""}`;
+//     } else {
+//       notificationMessage = `The status of your event on ${cleanDate} was updated to ${newStatus} by ${providersName}.`;
+//     }
+
+//     try {
+//       await createNotification({
+//         message: notificationMessage,
+//         userId: customerId,
+//       });
+//     } catch (err) {
+//       console.error("Failed to send notification:", err);
+//     }
+//   }
+
+//   return {
+//     success: true,
+//     message: `Event status successfully updated to ${newStatus}.`,
+//   };
+// }
+
+
+
+// async function getAllPendingEventsAccording(
+//   providerId,
+//   requested_date,
+//   start_time,
+//   end_time,
+// ) {
+//   let sql = "";
+//   const params = [requested_date, end_time, start_time, providerId];
+
+//   if ((await getRole(providerId)) === "Chief") {
+//     sql = `
+//       SELECT 
+//         events.event_id, 
+//       FROM events 
+//       JOIN event_providers ON event_providers.event_id = events.event_id 
+//      and events.requested_date=? and events.start_time <= ? and end_time >= ?   AND event_providers.status = "PENDING" AND event_providers.provider_id = ?   `;
+
+//     params = [providerId, providerId];
+//   } else {
+//     sql = `SELECT event_id FROM events WHERE requested_date = ? and start_time <= ? AND end_time >= ? and status ="PENDING"  and hall_id=?`;
+//   }
+
+//   const result = await doQuery(sql, params);
+//   return result;
+// }
+
+
+
+
+
 async function changeStatusEvent(
   providerId,
   eventId,
@@ -904,7 +1093,7 @@ async function changeStatusEvent(
   eventData,
   options = {},
 ) {
-  const { reason = null, cancelledBy = null } = options; // ברירת מחדל null עבור SQL
+  const { reason = null, cancelledBy = null } = options;
   const role = await getRole(providerId);
   let providersName = "";
   const statusUpper = newStatus.toUpperCase();
@@ -986,7 +1175,64 @@ async function changeStatusEvent(
     eventId,
   ]);
 
-  // === 4. שליפת מזהה הלקוח ושליחת התראה ===
+  // === ✨ 3.1 דחייה אוטומטית של כל האירועים החופפים שב-PENDING ===
+  if (statusUpper === "APPROVED") {
+    const pendingEvents = await getAllPendingEventsAccording(
+      providerId,
+      eventId, // מעבירים את ה-eventId הנוכחי כדי לנטרל אותו
+      eventData.requested_date,
+      eventData.start_time,
+      eventData.end_time,
+    );
+
+    const autoRejectReason =
+      "Auto-declined: Venue/Chef approved another event during this time slot.";
+
+    for (const pendingEv of pendingEvents) {
+      let rejectSql = "";
+      if (role === "Chief") {
+        rejectSql = `
+          UPDATE event_providers 
+          SET status = 'REJECTED', rejection_reason = ?, cancelled_by = 'SYSTEM' 
+          WHERE provider_id = ? AND event_id = ?`;
+      } else {
+        rejectSql = `
+          UPDATE events 
+          SET status = 'REJECTED', rejection_reason = ?, cancelled_by = 'SYSTEM' 
+          WHERE hall_id = ? AND event_id = ?`;
+      }
+
+      await doQuery(rejectSql, [
+        autoRejectReason,
+        providerId,
+        pendingEv.event_id,
+      ]);
+
+      // שליחת התראה ללקוח שהאירוע שלו נדחה
+      try {
+        const ownerQuery = await doQuery(
+          `SELECT user_id FROM events WHERE event_id = ?`,
+          [pendingEv.event_id],
+        );
+        const rejectedCustomerId = ownerQuery[0]?.user_id;
+
+        if (rejectedCustomerId) {
+          const cleanDate = eventData.requested_date
+            ? eventData.requested_date.split("T")[0]
+            : "the requested date";
+
+          await createNotification({
+            message: `Notice: ${providersName} has DECLINED your request for ${cleanDate}. Reason: "${autoRejectReason}".`,
+            userId: rejectedCustomerId,
+          });
+        }
+      } catch (notifErr) {
+        console.error("Failed to notify auto-rejected customer:", notifErr);
+      }
+    }
+  }
+
+  // === 4. שליפת מזהה הלקוח ושליחת התראה ללקוח שאושר/נסגר ===
   const eventOwner = await doQuery(
     `SELECT user_id FROM events WHERE event_id = ?`,
     [eventId],
@@ -1025,6 +1271,50 @@ async function changeStatusEvent(
   };
 }
 
+// === פונקציית עזר לשליפת אירועים חופפים ב-PENDING ===
+async function getAllPendingEventsAccording(
+  providerId,
+  currentEventId,
+  requested_date,
+  start_time,
+  end_time,
+) {
+  const isChef = (await getRole(providerId)) === "Chief";
+  let sql = "";
+
+  if (isChef) {
+    sql = `
+      SELECT e.event_id 
+      FROM events e
+      JOIN event_providers ep ON ep.event_id = e.event_id 
+      WHERE e.requested_date = ? 
+        AND ep.provider_id = ? 
+        AND ep.status = 'PENDING' 
+        AND e.event_id != ? 
+        AND e.start_time < ? 
+        AND e.end_time > ?`;
+  } else {
+    sql = `
+      SELECT event_id 
+      FROM events 
+      WHERE requested_date = ? 
+        AND hall_id = ? 
+        AND status = 'PENDING' 
+        AND event_id != ? 
+        AND start_time < ? 
+        AND end_time > ?`;
+  }
+
+  const params = [
+    requested_date,
+    providerId,
+    currentEventId,
+    end_time,
+    start_time,
+  ];
+  const result = await doQuery(sql, params);
+  return result;
+}
 async function getAllEventsApproved(providerId) {
   const role = await getRole(providerId);
   let sql = `SELECT requested_date, start_time, end_time

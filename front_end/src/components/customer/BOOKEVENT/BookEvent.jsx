@@ -19,6 +19,8 @@ export default function BookEvent({ user }) {
   const [chiefsData, setChiefsData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [eventLocation, setEventLocation] = useState("");
   const [notesToHall, setNotesToHall] = useState("");
   const [noteToChef, setNoteToChef] = useState({}); // תיקון: אובייקט ריק חלק {} במקום מערך [{}]
@@ -76,6 +78,7 @@ export default function BookEvent({ user }) {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const response = await API.post("/customer/createEvent", {
         dataToEvent,
@@ -92,6 +95,7 @@ export default function BookEvent({ user }) {
     } catch (error) {
       console.error("Save failed:", error);
       alert("Failed to book event.");
+      setIsSubmitting(false);
     }
   }
 
@@ -134,8 +138,12 @@ export default function BookEvent({ user }) {
 
       {/* תיקון הרינדור של התנאי הלוגי */}
       {shouldShowButton && (
-        <button className={classes.confirmBtn} onClick={saveData}>
-          Confirm & Book Now
+        <button
+          className={classes.confirmBtn}
+          onClick={saveData}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Booking..." : "Confirm & Book Now"}
         </button>
       )}
     </div>
