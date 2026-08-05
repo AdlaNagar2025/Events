@@ -334,7 +334,7 @@ async function changeStatusEvent(
       notificationMessage = `Great news! Your booking for ${cleanDate} has been APPROVED by ${providersName}.`;
     } else if (statusUpper === "REJECTED") {
       notificationMessage = `Notice: ${providersName} has DECLINED your request for ${cleanDate}.${reason ? ` Reason: "${reason}".` : ""}`;
-    } else if (statusUpper === "CANCELED") {
+    } else if (statusUpper === "CANCELLED") {
       notificationMessage = `Important Notice: ${providersName} had to CANCEL the event on ${cleanDate}.${reason ? ` Reason: "${reason}".` : ""}`;
     } else {
       notificationMessage = `The status of your event on ${cleanDate} was updated to ${newStatus} by ${providersName}.`;

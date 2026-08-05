@@ -6,27 +6,36 @@ async function getRole(id) {
   return role[0]?.role;
 }
 
-// STATUS enum('PENDING', 'REJECTED', 'APPROVED', 'CANCELED'...
+// STATUS enum('PENDING', 'REJECTED', 'APPROVED', 'CANCELLED'...
 async function getStatusEvent(eventId) {
-  const allStatusesSql = `
-    SELECT status FROM events WHERE event_id = ?
-    UNION ALL
-    SELECT status FROM event_providers WHERE event_id = ?`;
+  const hall = await doQuery(
+    `SELECT hall_id FROM events WHERE event_id = ?`,
+    [eventId],
+  );
 
-  const rows = await doQuery(allStatusesSql, [eventId, eventId]);
+  let rows;
+  if (!hall[0] || hall[0].hall_id == null) {
+    rows = await doQuery(
+      `SELECT status FROM event_providers WHERE event_id = ?`,
+      [eventId],
+    );
+  } else {
+    rows = await doQuery(
+      `SELECT status FROM events WHERE event_id = ?
+       UNION ALL
+       SELECT status FROM event_providers WHERE event_id = ?`,
+      [eventId, eventId],
+    );
+  }
 
-  // 3. הפיכת מערך האובייקטים למערך של טקסט פשוט (Strings)
-  // rows נראה ככה: [{status: 'PENDING'}, {status: 'APPROVED'}]
   const statusList = rows.map((row) => row.status.toUpperCase());
 
-  // 4. הבדיקה על ה-statusList הפשוט
   if (statusList.includes("REJECTED")) return "REJECTED";
   if (statusList.includes("PENDING")) return "PENDING";
   if (statusList.includes("CANCELLED")) return "CANCELLED";
 
   return statusList.length > 0 ? "APPROVED" : "PENDING";
 }
-
 async function AvailToEvent(eventId, date, providerId, event_start, event_end) {
   const availTimes = await getTimeAvail(eventId, date, providerId);
 

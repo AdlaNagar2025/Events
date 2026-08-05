@@ -66,7 +66,7 @@ export default function MyBooking({ user, onStatusChange }) {
   async function handlechangeStatus(event, eventId, status, reason = null) {
     try {
       let cancelledBy = null;
-      if (status === "CANCELLED" || status === "CANCELED") {
+      if (status === "CANCELLED") {
         cancelledBy = "PROVIDER";
       }
 

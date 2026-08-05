@@ -51,59 +51,6 @@ INNER JOIN halls ON users.id = halls.hall_id; `;
   return await doQuery(sql, []);
 }
 
-
-// async function getAllServicesAccordingToStatus(status) {
-//   const sql = `
-//     SELECT 
-//         u.id, 
-//         u.first_name, 
-//         u.email, 
-//         'Chief' AS provider_type, 
-//         c.status,
-//         u.first_name AS ServiceName,
-//         c.submitted_at,
-//         c.rejection_reason,
-//         (SELECT AVG(rating) FROM reviews WHERE provider_id = u.id) AS avgRating,
-//         (SELECT COUNT(rating) FROM reviews WHERE provider_id = u.id) AS totalReviews
-//     FROM users u
-//     INNER JOIN chiefs c ON u.id = c.chief_id
-//     WHERE c.status = ?
-
-//     UNION ALL
-
-//     SELECT 
-//         u.id, 
-//         u.first_name, 
-//         u.email, 
-//         'Hall_Owner' AS provider_type, 
-//         h.status,
-//         h.hall_name AS ServiceName,
-//         h.submitted_at,
-//         h.rejection_reason,
-//         (SELECT AVG(rating) FROM reviews WHERE provider_id = u.id) AS avgRating,
-//         (SELECT COUNT(rating) FROM reviews WHERE provider_id = u.id) AS totalReviews
-//     FROM users u
-//     INNER JOIN halls h ON u.id = h.hall_id
-//     WHERE h.status = ?
-    
-//     ORDER BY submitted_at ASC
-//   `;
-
-//   const result = await doQuery(sql, [status, status]);
-//   const rows = Array.isArray(result) ? result : [];
-
-//   return rows.map((provider) => ({
-//     ...provider,
-//     avgRating: provider.avgRating
-//       ? parseFloat(provider.avgRating).toFixed(1)
-//       : 0,
-//     totalReviews: provider.totalReviews || 0,
-//     // פורמט תאריך קריא ויפה ל-UI (למשל: 11/06/2026)
-//     submitted_at: provider.submitted_at
-//       ? new Date(provider.submitted_at).toLocaleDateString("he-IL")
-//       : "טרם נשלח",
-//   }));
-// }
 /**
  * השבתה או הפעלה של משתמש במערכת (Soft Delete).
  * משנה את שדה is_active בטבלת users.
