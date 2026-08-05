@@ -8,21 +8,22 @@ export default function BookEvent({ user }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // חילוץ הנתונים מה-state (עכשיו מגיעים רק IDs)
   const {
     dataToEvent = {},
     hallId = null,
     selectedChiefsId = [],
-    eventId = dataToEvent?.event_id || null, // 👈 חילוץ מזהה האירוע
   } = location.state || {};
 
   const [hallData, setHallData] = useState(null);
   const [chiefsData, setChiefsData] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [eventLocation, setEventLocation] = useState("");
   const [notesToHall, setNotesToHall] = useState("");
-  const [noteToChef, setNoteToChef] = useState({});
+  const [noteToChef, setNoteToChef] = useState({}); // תיקון: אובייקט ריק חלק {} במקום מערך [{}]
 
   const handleChefNoteChange = (chefId, text) => {
     setNoteToChef((prev) => ({
@@ -45,9 +46,13 @@ export default function BookEvent({ user }) {
           if (hallRes.data.success) setHallData(hallRes.data.data);
         }
 
+        // ✅ מהיר: שליפת כל הספקים במקביל
         if (selectedChiefsId.length > 0) {
           const requests = selectedChiefsId.map((id) =>
-            API.get(`/customer/provider-details/${id}`).catch((err) => null),
+            API.get(`/customer/provider-details/${id}`).catch((err) => {
+              console.error(`Failed to fetch chef ${id}:`, err);
+              return null;
+            }),
           );
 
           const responses = await Promise.all(requests);
@@ -57,12 +62,6 @@ export default function BookEvent({ user }) {
 
           setChiefsData(tempChiefs);
         }
-
-        // 💡 שיחזור הערות קודמות במידה ומדובר בעדכון אירוע קיים
-        if (eventId && dataToEvent) {
-          if (dataToEvent.notesToHall) setNotesToHall(dataToEvent.notesToHall);
-          if (dataToEvent.noteToChef) setNoteToChef(dataToEvent.noteToChef);
-        }
       } catch (error) {
         console.error("Error fetching providers details:", error);
       } finally {
@@ -71,7 +70,7 @@ export default function BookEvent({ user }) {
     }
 
     fetchProvidersData();
-  }, [hallId, selectedChiefsId, location.state, navigate, eventId]);
+  }, [hallId, selectedChiefsId, location.state, navigate]);
 
   async function saveData() {
     if (!hallId && !eventLocation.trim()) {
@@ -80,43 +79,22 @@ export default function BookEvent({ user }) {
     }
 
     setIsSubmitting(true);
-
-    const payload = {
-      dataToEvent,
-      hallId,
-      selectedChiefsId,
-      location: hallId ? hallData?.hall_name : eventLocation,
-      notesToHall,
-      noteToChef,
-    };
-
     try {
-      let response;
-
-      // 🎯 הבחנה בין עדכון (PUT) לבין יצירה (POST)
-      if (eventId) {
-        response = await API.put(
-          `/customer/updateEventData/${eventId}`,
-          payload,
-        );
-      } else {
-        response = await API.post("/customer/createEvent", payload);
-      }
-
+      const response = await API.post("/customer/createEvent", {
+        dataToEvent,
+        hallId,
+        selectedChiefsId,
+        location: hallId ? hallData?.hall_name : eventLocation,
+        notesToHall,
+        noteToChef,
+      });
       if (response.data.success) {
-        alert(
-          eventId
-            ? "Event Updated Successfully!"
-            : "Event Booked Successfully!",
-        );
+        alert("Event Booked Successfully!");
         navigate("/customer/my-booking");
-      } else {
-        alert(response.data.message || "Action failed.");
       }
     } catch (error) {
-      console.error("Save/Update failed:", error);
-      alert("Failed to save event details.");
-    } finally {
+      console.error("Save failed:", error);
+      alert("Failed to book event.");
       setIsSubmitting(false);
     }
   }
@@ -132,7 +110,6 @@ export default function BookEvent({ user }) {
         dataToEvent: dataToEvent,
         hallId: hallId,
         ChiefIds: selectedChiefsId,
-        Event: eventId ? { ...dataToEvent, event_id: eventId } : null,
       },
     });
   };
@@ -141,7 +118,7 @@ export default function BookEvent({ user }) {
     <div className={classes.page}>
       <button onClick={handleBack}> Back</button>
       <div className={classes.pageHeader}>
-        <h1>{eventId ? "Update Your Event" : "Book Your Event"}</h1>
+        <h1>Book Your Event</h1>
         <p>Review details and confirm your booking</p>
       </div>
 
@@ -159,17 +136,14 @@ export default function BookEvent({ user }) {
         handleChefNoteChange={handleChefNoteChange}
       />
 
+      {/* תיקון הרינדור של התנאי הלוגי */}
       {shouldShowButton && (
         <button
           className={classes.confirmBtn}
           onClick={saveData}
           disabled={isSubmitting}
         >
-          {isSubmitting
-            ? "Saving..."
-            : eventId
-              ? "Update Event Now"
-              : "Confirm & Book Now"}
+          {isSubmitting ? "Booking..." : "Confirm & Book Now"}
         </button>
       )}
     </div>

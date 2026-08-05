@@ -40,7 +40,6 @@ export default function MyBooking({ user, onStatusChange }) {
       state: {
         Event: e,
         hallId: e.hall_id,
-        // חילוץ מזהי השפים במידה וקיימים
         ChiefIds: e.chiefs ? e.chiefs.map((c) => c.chief_id || c.id) : [],
       },
     });

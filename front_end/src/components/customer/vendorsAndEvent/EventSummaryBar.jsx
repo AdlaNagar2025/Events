@@ -2,14 +2,14 @@ import React from "react";
 import BookEvent from "../BOOKEVENT/BookEvent";
 import { useNavigate, useLocation } from "react-router-dom";
 
-
 export default function EventSummaryBar({
+  eventData = null,
   selectedHallId,
   selectedChiefIds,
   providers,
   searchParams,
 }) {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const location = useLocation();
   // 1. חישוב כמות השעות מתוך start_time ו-end_time
   const calculateHours = (startTime, endTime) => {
@@ -59,17 +59,18 @@ export default function EventSummaryBar({
   const totalPrice = hallPrice + chiefsPrice;
   const hasSelections = selectedHall || selectedChiefs.length > 0;
 
+  // EventSummaryBar.js
 
-
-    const handleBookingClick = () => {
-      navigate("/customer/book-event", {
-        state: {
-          dataToEvent: searchParams,
-          hallId: selectedHallId,
-          selectedChiefsId: selectedChiefIds,
-        },
-      });
-    };
+  const handleBookingClick = () => {
+    navigate("/customer/book-event", {
+      state: {
+        dataToEvent: searchParams, // כולל כעת את event_id במידה וזה עדכון
+        hallId: selectedHallId,
+        selectedChiefsId: selectedChiefIds,
+        eventId: searchParams?.event_id || eventData?.event_id || null, // 👈 מזהה האירוע המעודכן
+      },
+    });
+  };
 
   return (
     <div
@@ -176,7 +177,8 @@ export default function EventSummaryBar({
             fontSize: "1rem",
             cursor: hasSelections ? "pointer" : "not-allowed",
             transition: "all 0.2s ease",
-          }}>
+          }}
+        >
           Proceed to Booking Order →
         </button>
       </div>

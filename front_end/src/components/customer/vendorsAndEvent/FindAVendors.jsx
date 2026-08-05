@@ -111,12 +111,13 @@ export default function FindAVendors({ user }) {
       }
     });
   }
-  const eventToUpdate = location.state?.Event || location.state?.dataToEvent;
+  const eventToUpdate =
+    location.state?.Event || location.state?.dataToEvent || null;
 
   useEffect(() => {
     if (eventToUpdate) {
       setSearchParams({
-        city: "",
+        city: eventToUpdate.city || "",
         guest_number: eventToUpdate.guest_number || "",
         requested_date: eventToUpdate.requested_date || "",
         start_time: eventToUpdate.start_time || "",
@@ -128,12 +129,12 @@ export default function FindAVendors({ user }) {
       setSelectedChiefIds(location.state?.ChiefIds || []);
     }
   }, [eventToUpdate]);
-
   return (
     <div>
       <h1>Find Your Vendors</h1>
 
       <EventSummaryBar
+        eventData={eventToUpdate}
         selectedHallId={selectedHallId}
         selectedChiefIds={selectedChiefIds}
         searchParams={searchParams}

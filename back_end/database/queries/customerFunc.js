@@ -79,61 +79,6 @@ async function getPotentialProviders(dataToSearch) {
   return providers.map((p) => p.provider_id);
 }
 
-// async function getResultSearching(dataToSearch) {
-//   console.log(dataToSearch);
-//   // 1. ולידציה של הנתונים שהוזנו
-//   const validation = validateDataToSearch(dataToSearch);
-//   if (!validation.success) {
-//     return { success: false, message: validation.message, data: [] };
-//   }
-
-//   try {
-//     // 2. שליפת ספקים פוטנציאליים לפי השדות שהוזנו
-//     const potentialIds = await getPotentialProviders(dataToSearch);
-
-//     if (potentialIds.length === 0) {
-//       return { success: true, data: [] };
-//     }
-
-//     let finalIds = potentialIds;
-
-//     // 3. בדיקת חפיפת אירועים ב-AvailToEvent תתבצע רק אם הלקוח מילא תאריך + שעת התחלה + שעת סיום!
-//     if (
-//       dataToSearch.requested_date &&
-//       dataToSearch.start_time &&
-//       dataToSearch.end_time
-//     ) {
-//       const availabilityChecks = await Promise.all(
-//         potentialIds.map(async (id) => {
-//           const isAvailable = await AvailToEvent(
-//             dataToSearch.event_id || null,
-//             dataToSearch.requested_date,
-//             id,
-//             dataToSearch.start_time,
-//             dataToSearch.end_time,
-//           );
-//           return isAvailable ? id : null;
-//         }),
-//       );
-//       finalIds = availabilityChecks.filter((id) => id !== null);
-//     }
-
-//     if (finalIds.length === 0) {
-//       return { success: true, data: [] };
-//     }
-
-//     // 4. שליפת פרטי המשתמשים
-//     const placeholders = finalIds.map(() => "?").join(",");
-//     const sqlUsers = `SELECT *, role AS provider_type FROM users WHERE id IN (${placeholders})`;
-//     const finalResults = await doQuery(sqlUsers, finalIds);
-
-//     return { success: true, data: finalResults };
-//   } catch (error) {
-//     console.error("Search failed:", error);
-//     throw error;
-//   }
-// }
-
 async function getResultSearching(dataToSearch) {
   console.log(dataToSearch);
 
@@ -231,174 +176,6 @@ async function getResultSearching(dataToSearch) {
   }
 }
 
-async function createEventData(Data, customerId) {
-  const {
-    dataToEvent,
-    hallId,
-    selectedChiefsId,
-    location,
-    notesToHall,
-    noteToChef,
-  } = Data;
-
-  if (
-    !dataToEvent ||
-    !dataToEvent.requested_date ||
-    !dataToEvent.start_time ||
-    !dataToEvent.end_time ||
-    !dataToEvent.guest_number
-  ) {
-    return {
-      success: false,
-      message: "Missing required event date, time, or guest count.",
-    };
-  }
-  const hasHall = Boolean(hallId);
-  const hasChiefs =
-    Array.isArray(selectedChiefsId) && selectedChiefsId.length > 0;
-
-  if (!hasHall && !hasChiefs) {
-    return {
-      success: false,
-      message: "Event must include at least a hall or one chef.",
-    };
-  }
-
-  const sqlEvent = `
-    INSERT INTO events (user_id, hall_id, requested_date, start_time, end_time, notesToHall, guest_number) 
-    VALUES (?, ?, ?, ?, ?, ?, ?)`;
-
-  const valuesEvent = [
-    customerId,
-    hallId || null,
-    dataToEvent.requested_date,
-    dataToEvent.start_time,
-    dataToEvent.end_time,
-    notesToHall || "",
-    dataToEvent.guest_number,
-  ];
-
-  const result = await doQuery(sqlEvent, valuesEvent);
-  const newEventId = result.insertId;
-
-  // 4️⃣ הכנסת השפים לטבלת event_providers (אם נבחרו)
-  if (hasChiefs) {
-    const sqlProvider = `
-      INSERT INTO event_providers (event_id, provider_id, noteToChef, location) 
-      VALUES (?, ?, ?, ?)`;
-
-    const providerPromises = selectedChiefsId.map((chefId) => {
-      const specificChefNote = noteToChef?.[chefId] || "";
-      return doQuery(sqlProvider, [
-        newEventId,
-        chefId,
-        specificChefNote,
-        location || null,
-      ]);
-    });
-
-    await Promise.all(providerPromises);
-  }
-
-  // =================================================================
-  // ✨ הוספת התראות (Notifications) עבור יצירת אירוע חדש
-  // =================================================================
-  try {
-    const emailPromises = [];
-    const notifPromises = [];
-
-    // שליפה של מיילי הספקים (אולם ושפים) בשאילתה אחת מהירה
-    const allProviderIds = [...(hallId ? [hallId] : []), ...selectedChiefsId];
-
-    if (allProviderIds.length > 0) {
-      const placeholders = allProviderIds.map(() => "?").join(",");
-      const usersRows = await doQuery(
-        `SELECT id, email, first_name FROM users WHERE id IN (${placeholders})`,
-        allProviderIds,
-      );
-
-      const userMap = new Map(usersRows.map((u) => [u.id, u]));
-
-      // 🏠 Notification + Email for Hall Owner
-      if (hallId && userMap.has(hallId)) {
-        const hallUser = userMap.get(hallId);
-
-        notifPromises.push(
-          createNotification({
-            message: `You received a new booking request for ${dataToEvent.requested_date}.`,
-            userId: hallId,
-          }),
-        );
-
-        emailPromises.push(
-          sendEmail({
-            to: hallUser.email,
-            subject: "New Event Booking Request!",
-            html: `
-              <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-                <h2>Hello ${hallUser.first_name},</h2>
-                <p>You have received a new booking request for your venue!</p>
-                <ul>
-                  <li><strong>Date:</strong> ${dataToEvent.requested_date}</li>
-                  <li><strong>Time:</strong> ${dataToEvent.start_time} - ${dataToEvent.end_time}</li>
-                  <li><strong>Guests:</strong> ${dataToEvent.guest_number}</li>
-                </ul>
-                <p>Please log in to your dashboard to review and manage this request.</p>
-                <br/>
-                <p>Best regards,<br/><strong>Event Management Team</strong></p>
-              </div>
-            `,
-          }),
-        );
-      }
-
-      // 👨‍🍳 Notification + Email for Each Chef
-      selectedChiefsId.forEach((chefId) => {
-        if (userMap.has(chefId)) {
-          const chefUser = userMap.get(chefId);
-
-          notifPromises.push(
-            createNotification({
-              message: `A customer requested your chef services for ${dataToEvent.requested_date}.`,
-              userId: chefId,
-            }),
-          );
-
-          emailPromises.push(
-            sendEmail({
-              to: chefUser.email,
-              subject: "New Catering Request!",
-              html: `
-                <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-                  <h2>Hello ${chefUser.first_name},</h2>
-                  <p>A customer has requested your chef services for an upcoming event!</p>
-                  <ul>
-                    <li><strong>Date:</strong> ${dataToEvent.requested_date}</li>
-                    <li><strong>Time:</strong> ${dataToEvent.start_time} - ${dataToEvent.end_time}</li>
-                    <li><strong>Guests:</strong> ${dataToEvent.guest_number}</li>
-                  </ul>
-                  <p>Please log in to your dashboard to accept or decline this request.</p>
-                  <br/>
-                  <p>Best regards,<br/><strong>Event Management Team</strong></p>
-                </div>
-              `,
-            }),
-          );
-        }
-      });
-
-      await Promise.all([...notifPromises, ...emailPromises]);
-    }
-  } catch (notifError) {
-    console.error(
-      "Notifications/Emails failed during event creation:",
-      notifError,
-    );
-  }
-
-  return { success: true, eventId: newEventId };
-}
-
 async function getAllEventsData(customerId) {
   const sql = `SELECT 
     e.event_id, 
@@ -483,79 +260,167 @@ async function getAllEventsData(customerId) {
   return finalResults;
 }
 
-async function updateEventData(updatingData, customerId, eventId) {
+
+
+
+async function createEventData(Data, customerId) {
+  const {
+    dataToEvent,
+    hallId,
+    selectedChiefsId,
+    location,
+    notesToHall,
+    noteToChef,
+  } = Data;
+
+  if (
+    !dataToEvent ||
+    !dataToEvent.requested_date ||
+    !dataToEvent.start_time ||
+    !dataToEvent.end_time ||
+    !dataToEvent.guest_number
+  ) {
+    return {
+      success: false,
+      message: "Missing required event date, time, or guest count.",
+    };
+  }
+
+  const hasHall = Boolean(hallId);
+  const hasChiefs =
+    Array.isArray(selectedChiefsId) && selectedChiefsId.length > 0;
+
+  if (!hasHall && !hasChiefs) {
+    return {
+      success: false,
+      message: "Event must include at least a hall or one chef.",
+    };
+  }
+
   try {
-    console.log(updatingData);
     await doQuery("START TRANSACTION");
 
-    // בדיקה ראשונית
-    const currentEvent = await validateAndGetEvent(customerId, eventId);
+    const sqlEvent = `
+      INSERT INTO events (user_id, hall_id, requested_date, start_time, end_time, notesToHall, guest_number) 
+      VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    const result = await doQuery(sqlEvent, [
+      customerId,
+      hallId || null,
+      dataToEvent.requested_date,
+      dataToEvent.start_time,
+      dataToEvent.end_time,
+      notesToHall || "",
+      dataToEvent.guest_number,
+    ]);
+    const newEventId = result.insertId;
 
-    // עדכון פרטי אירוע ואיפוס אם צריך (מחזיר true אם התאריך/שעה השתנו)
-    const isCritical = await handleEventBasicUpdate(
-      updatingData,
-      currentEvent,
-      eventId,
-    );
-
-    // עדכון שפים
-    await handleChiefsUpdate(updatingData.ChiefsIds, eventId);
-
-    // עדכון אולם
-    await handleHallUpdate(updatingData.hallId, currentEvent.hall_id, eventId);
-
-    // =================================================================
-    // ✨ הוספת התראות עבור עדכון אירוע (לפני ה-COMMIT)
-    // =================================================================
-    try {
-      const eventDate =
-        updatingData.searchParams?.requested_date ||
-        currentEvent.requested_date;
-
-      // 1. אם היה שינוי קריטי בזמנים - מודיעים לכל הספקים הנוכחיים שהם צריכים לאשר מחדש
-      if (isCritical) {
-        // שליפת השפים הנוכחיים של האירוע
-        const currentChiefs = await doQuery(
-          `SELECT provider_id FROM event_providers WHERE event_id = ?`,
-          [eventId],
-        );
-
-        // התראה לאולם
-        if (currentEvent.hall_id) {
-          await createNotification({
-            message: `The details for the event on ${eventDate} have been updated. Please re-approve your availability.`,
-            userId: currentEvent.hall_id,
-          });
-        }
-
-        // התראה לשפים
-        for (const chef of currentChiefs) {
-          await createNotification({
-            message: `The details for the event on ${eventDate} have been updated. Please re-approve your availability.`,
-            userId: chef.provider_id,
-          });
-        }
+    if (hasChiefs) {
+      const sqlProvider = `INSERT INTO event_providers (event_id, provider_id, noteToChef, location) VALUES (?, ?, ?, ?)`;
+      for (const chefId of selectedChiefsId) {
+        await doQuery(sqlProvider, [
+          newEventId,
+          chefId,
+          noteToChef?.[chefId] || "",
+          location || null,
+        ]);
       }
-      // 2. אם לא היה שינוי קריטי בזמנים, אבל הוחלף אולם - נודיע לאולם החדש
-      else if (
-        updatingData.hallId &&
-        updatingData.hallId !== currentEvent.hall_id
-      ) {
+    }
+
+    // שליחת מיילים והתראות
+    const allProviderIds = [...(hallId ? [hallId] : []), ...selectedChiefsId];
+    if (allProviderIds.length > 0) {
+      const placeholders = allProviderIds.map(() => "?").join(",");
+      const usersRows = await doQuery(
+        `SELECT id, email, first_name FROM users WHERE id IN (${placeholders})`,
+        allProviderIds,
+      );
+      const userMap = new Map(usersRows.map((u) => [u.id, u]));
+
+      if (hallId && userMap.has(hallId)) {
+        const hallUser = userMap.get(hallId);
         await createNotification({
-          message: `You have been booked for a new event on ${eventDate}.`,
-          userId: updatingData.hallId,
+          message: `You received a new booking request for ${dataToEvent.requested_date}.`,
+          userId: hallId,
+        });
+        await sendEmail({
+          to: hallUser.email,
+          subject: "New Event Booking Request!",
+          html: `
+              <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                <h2>Hello ${hallUser.first_name},</h2>
+                <p>You have received a new booking request for your venue!</p>
+                <ul>
+                  <li><strong>Date:</strong> ${dataToEvent.requested_date}</li>
+                  <li><strong>Time:</strong> ${dataToEvent.start_time} - ${dataToEvent.end_time}</li>
+                  <li><strong>Guests:</strong> ${dataToEvent.guest_number}</li>
+                </ul>
+                <p>Please log in to your dashboard to review and manage this request.</p>
+                <br/>
+                <p>Best regards,<br/><strong>Event Management Team</strong></p>
+              </div>
+            `,
         });
       }
-    } catch (notifError) {
-      console.error("Failed to send update notifications:", notifError);
+
+      for (const chefId of selectedChiefsId) {
+        if (userMap.has(chefId)) {
+          const chefUser = userMap.get(chefId);
+          await createNotification({
+            message: `A customer requested your chef services for ${dataToEvent.requested_date}.`,
+            userId: chefId,
+          });
+          await sendEmail({
+            to: chefUser.email,
+            subject: "New Catering Request!",
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                  <h2>Hello ${chefUser.first_name},</h2>
+                  <p>A customer has requested your chef services for an upcoming event!</p>
+                  <ul>
+                    <li><strong>Date:</strong> ${dataToEvent.requested_date}</li>
+                    <li><strong>Time:</strong> ${dataToEvent.start_time} - ${dataToEvent.end_time}</li>
+                    <li><strong>Guests:</strong> ${dataToEvent.guest_number}</li>
+                  </ul>
+                  <p>Please log in to your dashboard to accept or decline this request.</p>
+                  <br/>
+                  <p>Best regards,<br/><strong>Event Management Team</strong></p>
+                </div>
+              `,
+          });
+        }
+      }
     }
-    // =================================================================
 
     await doQuery("COMMIT");
-    return { success: true };
+    return { success: true, eventId: newEventId };
   } catch (error) {
     await doQuery("ROLLBACK");
     throw error;
+  }
+}
+
+// פונקציית עזר לבדיקת חלון 48 השעות
+async function validateUpdateDeadline(currentEvent, updatingData) {
+  // 1. בדיקת זמנים של האירוע המקורי
+  const origDateStr = new Date(currentEvent.requested_date)
+    .toISOString()
+    .split("T")[0];
+  const eventDateTimeStr = `${origDateStr}T${currentEvent.start_time}`;
+  const eventDate = new Date(eventDateTimeStr);
+  const now = new Date();
+
+  const hoursDifference = (eventDate - now) / (1000 * 60 * 60);
+
+  if (hoursDifference < 48) {
+    throw new Error(
+      "Events cannot be updated less than 48 hours before the scheduled time.",
+    );
+  }
+
+  // 2. בדיקה שהתאריך החדש (אם נשלח) אינו בעבר
+  const newDate = updatingData.searchParams?.requested_date;
+  if (newDate && new Date(newDate) < new Date().setHours(0, 0, 0, 0)) {
+    throw new Error("Cannot set event date to a past date.");
   }
 }
 
@@ -564,6 +429,79 @@ async function validateAndGetEvent(customerId, eventId) {
   const rows = await doQuery(sql, [customerId, eventId]);
   if (rows.length === 0) throw new Error("Unauthorized or Event not found");
   return rows[0];
+}
+
+async function updateEventData(updatingData, customerId, eventId) {
+  try {
+    console.log(updatingData);
+    await doQuery("START TRANSACTION");
+
+    // 1. בדיקת הרשאות ושליפת האירוע
+    const currentEvent = await validateAndGetEvent(customerId, eventId);
+
+    // 2. בדיקת מדיניות 48 שעות
+    await validateUpdateDeadline(currentEvent, updatingData);
+    // 3. עדכון פרטי אירוע בסיסיים (מחזיר true אם התאריך/שעה/אורחים השתנו)
+    const isCritical = await handleEventBasicUpdate(
+      updatingData,
+      currentEvent,
+      eventId,
+    );
+    console.log("knhlhbdBHD", updatingData);
+
+    // 4. עדכון שפים
+    await handleChiefsUpdate(
+      updatingData.selectedChiefsId ,
+      eventId,
+      currentEvent,
+      isCritical,
+      updatingData.noteToChef,
+      updatingData.location,
+    );
+
+    // 5. עדכון אולם
+    await handleHallUpdate(
+      updatingData.hallId,
+      currentEvent.hall_id,
+      eventId,
+      currentEvent,
+    );
+
+    // 6. התראות לשינוי קריטי בזמנים (לכל הספקים הנוכחיים)
+    if (isCritical) {
+      const eventDate =
+        updatingData.searchParams?.requested_date ||
+        currentEvent.requested_date;
+
+      // שליפת השפים הנוכחיים
+      const currentChiefs = await doQuery(
+        `SELECT provider_id FROM event_providers WHERE event_id = ?`,
+        [eventId],
+      );
+
+      // התראה לאולם (אם קיים)
+      if (currentEvent.hall_id) {
+        await createNotification({
+          message: `The details for the event on ${eventDate} have been updated. Please re-approve your availability.`,
+          userId: currentEvent.hall_id,
+        });
+      }
+
+      // התראה לשפים
+      for (const chef of currentChiefs) {
+        await createNotification({
+          message: `The details for the event on ${eventDate} have been updated. Please re-approve your availability.`,
+          userId: chef.provider_id,
+        });
+      }
+    }
+
+    await doQuery("COMMIT");
+    return { success: true };
+  } catch (error) {
+    await doQuery("ROLLBACK");
+    throw error;
+  }
 }
 
 async function handleEventBasicUpdate(updatingData, currentEvent, eventId) {
@@ -578,81 +516,234 @@ async function handleEventBasicUpdate(updatingData, currentEvent, eventId) {
     "end_time",
     "guest_number",
   ];
+  const searchParams = updatingData.searchParams || {};
 
   relevantFields.forEach((field) => {
-    const newValue = updatingData.searchParams[field]; // גישה נכונה למפתח דינמי
+    const newValue = searchParams[field];
     const oldValue = currentEvent[field];
 
-    if (newValue && newValue !== oldValue) {
+    if (newValue !== undefined && newValue !== null && newValue !== oldValue) {
       fields.push(`${field} = ?`);
       values.push(newValue);
-      isCritical = true; // אם השתנה תאריך/שעה, צריך לאפס סטטוסים לספקים
+      isCritical = true;
     }
   });
 
-  if (fields.length > 0) {
+  // עדכון הערות לאולם במידה ונשלחו
+  if (
+    updatingData.notesToHall !== undefined &&
+    updatingData.notesToHall !== currentEvent.notesToHall
+  ) {
+    fields.push("notesToHall = ?");
+    values.push(updatingData.notesToHall);
+  }
+
+  if (isCritical) {
     fields.push("status = ?");
     values.push("PENDING");
 
+    // איפוס סטטוס לכל הספקים של האירוע כי הפרטים השתנו
+    await doQuery(
+      `UPDATE event_providers SET status = 'PENDING' WHERE event_id = ?`,
+      [eventId],
+    );
+  }
+  if (fields.length > 0) {
     values.push(eventId); // ה-ID עבור ה-WHERE
-
     await doQuery(
       `UPDATE events SET ${fields.join(", ")} WHERE event_id = ?`,
       values,
     );
   }
 
-  if (isCritical) {
-    // איפוס סטטוס לכל הספקים של האירוע כי הפרטים השתנו
-    await doQuery(
-      `UPDATE event_providers SET status = 'pending' WHERE event_id = ?`,
-      [eventId],
-    );
-  }
   return isCritical;
 }
 
-async function handleChiefsUpdate(newChiefsIds, eventId) {
-  // 1. סינון ראשוני - וודא שזה מערך ושיש בו רק ערכים שהם לא null/undefined
+// async function handleChiefsUpdate(
+//   newChiefsIds,
+//   eventId,
+//   currentEvent,
+//   isCritical,
+//   noteToChef = {},
+//   location = null,
+// ) {
+//   const validIds = Array.isArray(newChiefsIds)
+//     ? newChiefsIds.filter((id) => id !== null && id !== undefined)
+//     : [];
+
+//   if (validIds.length === 0) {
+//     await doQuery(`DELETE FROM event_providers WHERE event_id = ?`, [eventId]);
+//     return;
+//   }
+
+//   const rows = await doQuery(
+//     `SELECT provider_id FROM event_providers WHERE event_id = ?`,
+//     [eventId],
+//   );
+//   const existingIds = rows.map((r) => r.provider_id);
+
+//   for (const id of validIds) {
+//     const chefNote = noteToChef?.[id] || "";
+
+//     if (!existingIds.includes(id)) {
+//       // 1. הכנסת שף חדש
+//       await doQuery(
+//         `INSERT INTO event_providers (event_id, provider_id, status, noteToChef, location) VALUES (?, ?, 'PENDING', ?, ?)`,
+//         [eventId, id, chefNote, location],
+//       );
+
+//       // 2. 🔔 + ✉️ התראה ומייל לשף החדש!
+//       if (!isCritical) {
+//         await createNotification({
+//           message: `You have been assigned to a new event booking on ${currentEvent.requested_date}.`,
+//           userId: id,
+//         });
+
+//         const chefUser = await doQuery(
+//           `SELECT email, first_name FROM users WHERE id = ?`,
+//           [id],
+//         );
+//         if (chefUser.length > 0) {
+//           await sendEmail({
+//             to: chefUser[0].email,
+//             subject: "New Catering Request!",
+//             html: `<h2>Hello ${chefUser[0].first_name},</h2><p>You have been assigned to a new event on ${currentEvent.requested_date}!</p>`,
+//           });
+//         }
+//       }
+//     } else {
+//       // עדכון הערות לשף קיים
+//       await doQuery(
+//         `UPDATE event_providers SET noteToChef = ?, location = ? WHERE event_id = ? AND provider_id = ?`,
+//         [chefNote, location, eventId, id],
+//       );
+//     }
+//   }
+
+//   // מחיקת שפים שהוסרו
+//   const placeholders = validIds.map(() => "?").join(",");
+//   await doQuery(
+//     `DELETE FROM event_providers WHERE event_id = ? AND provider_id NOT IN (${placeholders})`,
+//     [eventId, ...validIds],
+//   );
+// }
+
+async function handleChiefsUpdate(
+  newChiefsIds,
+  eventId,
+  currentEvent,
+  isCritical,
+  noteToChef = {},
+  location = null,
+) {
+  console.log("HANDLECHEFS", newChiefsIds, currentEvent);
   const validIds = Array.isArray(newChiefsIds)
     ? newChiefsIds.filter((id) => id !== null && id !== undefined)
     : [];
 
-  // 2. אם המערך ריק לגמרי (או שלא נשלחו שפים) - מחיקת כל השפים הקיימים לאירוע
+  // 1. אם רשימת השפים החדשה ריקה - מוחקים את כל השפים מהאירוע
   if (validIds.length === 0) {
     await doQuery(`DELETE FROM event_providers WHERE event_id = ?`, [eventId]);
     return;
   }
 
-  // 3. בדיקת המצב הקיים ב-DB
+  // 2. 🧹 מחיקת שפים שהוסרו מהאירוע (מבוצע בבטחה בתחילת התהליך)
+  const placeholders = validIds.map(() => "?").join(",");
+  const deleteSql = `DELETE FROM event_providers WHERE event_id = ? AND provider_id NOT IN (${placeholders})`;
+  await doQuery(deleteSql, [eventId, ...validIds]); // 👈 העברת הפרמטרים בסדר המדויק!
+
+  // 3. שליפת השפים שנותרו במערכת לאחר המחיקה
   const rows = await doQuery(
     `SELECT provider_id FROM event_providers WHERE event_id = ?`,
     [eventId],
   );
   const existingIds = rows.map((r) => r.provider_id);
 
-  // 4. הוספת שפים חדשים
+  // 4. הוספה/עדכון של השפים שנבחרו
   for (const id of validIds) {
+    const chefNote = noteToChef?.[id] || "";
+
     if (!existingIds.includes(id)) {
+      // הכנסת שף חדש
       await doQuery(
-        `INSERT INTO event_providers (event_id, provider_id, status) VALUES (?, ?, 'pending')`,
-        [eventId, id],
+        `INSERT INTO event_providers (event_id, provider_id, status, noteToChef, location) VALUES (?, ?, 'PENDING', ?, ?)`,
+        [eventId, id, chefNote, location],
+      );
+
+      // שליחת התראה ומייל לשף החדש בלבד
+      if (!isCritical) {
+        await createNotification({
+          message: `You have been assigned to a new event booking on ${currentEvent.requested_date}.`,
+          userId: id,
+        });
+
+        const chefUser = await doQuery(
+          `SELECT email, first_name FROM users WHERE id = ?`,
+          [id],
+        );
+        if (chefUser.length > 0) {
+          await sendEmail({
+            to: chefUser[0].email,
+            subject: "New Catering Request!",
+            html: `<h2>Hello ${chefUser[0].first_name},</h2><p>You have been assigned to a new event on ${currentEvent.requested_date}!</p>`,
+          });
+        }
+      }
+    } else {
+      // עדכון הערות ומיקום לשף קיים
+      await doQuery(
+        `UPDATE event_providers SET noteToChef = ?, location = ? WHERE event_id = ? AND provider_id = ?`,
+        [chefNote, location, eventId, id],
       );
     }
   }
-
-  // 5. מחיקת שפים שהוסרו
-  const placeholders = validIds.map(() => "?").join(",");
-  await doQuery(
-    `DELETE FROM event_providers WHERE event_id = ? AND provider_id NOT IN (${placeholders})`,
-    [eventId, ...validIds],
-  );
 }
 
-async function handleHallUpdate(updatingHallId, currentHallId, eventId) {
-  if (updatingHallId !== currentHallId) {
+async function handleHallUpdate(
+  updatingHallId,
+  currentHallId,
+  eventId,
+  currentEvent,
+) {
+  // רק אם הוחלף אולם
+  if (updatingHallId && updatingHallId !== currentHallId) {
     const sqlHall = `UPDATE events SET hall_id = ?, status = 'PENDING' WHERE event_id = ?`;
     await doQuery(sqlHall, [updatingHallId, eventId]);
+
+    // שליחת התראה במערכת לאולם החדש
+    await createNotification({
+      message: `You received a new booking request for ${currentEvent.requested_date}.`,
+      userId: updatingHallId,
+    });
+
+    // שליפת פרטי המשתמש של האולם החדש לשליחת מייל
+    const hallQuery = `
+      SELECT u.email, u.first_name 
+      FROM users u 
+      JOIN halls h ON u.id = h.hall_id 
+      WHERE h.hall_id = ?`;
+    const hallUser = await doQuery(hallQuery, [updatingHallId]);
+
+    if (hallUser.length > 0) {
+      await sendEmail({
+        to: hallUser[0].email,
+        subject: "New Event Booking Request!",
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+            <h2>Hello ${hallUser[0].first_name},</h2>
+            <p>You have received a new booking request for your venue!</p>
+            <ul>
+              <li><strong>Date:</strong> ${currentEvent.requested_date}</li>
+              <li><strong>Time:</strong> ${currentEvent.start_time} - ${currentEvent.end_time}</li>
+              <li><strong>Guests:</strong> ${currentEvent.guest_number}</li>
+            </ul>
+            <p>Please log in to your dashboard to review and manage this request.</p>
+            <br/>
+            <p>Best regards,<br/><strong>Event Management Team</strong></p>
+          </div>
+        `,
+      });
+    }
   }
 }
 

@@ -22,7 +22,6 @@ import NotFound from "../pages/NotFound";
 import DetailsOFbusiness from "../components/provider/DetailsOfBusiness/DetailsOFbusiness";
 import UsersManagment from "../components/admin/UsersManagment";
 import ServicesApprovals from "../components/admin/ServicesApprovals";
-import FindAVendor from "../components/customer/findAvendors/FindAVendor";
 import BookEvent from "../components/customer/BOOKEVENT/BookEvent";
 import MyBooking from "../components/customer/MYEVENTS/MyBooking";
 import MyEventsACalender from "../components/Events/MyEventsACalender";
