@@ -92,6 +92,7 @@ export default function MyBooking({ user, onStatusChange }) {
     }
   }
 
+
   async function handleCancel(event) {
     if (!window.confirm("Are you sure you want to cancel this event?")) return;
     try {
@@ -104,18 +105,24 @@ export default function MyBooking({ user, onStatusChange }) {
       if (response.data.success) {
         alert("Event Cancelled Successfully");
         fetchAllEvents();
-        if (onStatusChange) {
-          onStatusChange();
-        }
+        if (onStatusChange) onStatusChange();
+      } else {
+        alert(response.data.message || "Failed to cancel event");
       }
     } catch (error) {
       console.error("Error cancelling event:", error);
-      alert("Failed to cancel event");
+      alert(error.response?.data?.message || "Failed to cancel event");
     }
   }
-
+  
   async function handleDisCancel(event) {
-    if (!window.confirm("Are you sure you want to cancel this event?")) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to reinstate this cancelled event?",
+      )
+    )
+      return;
+  
     try {
       const eventId = event.event_id;
       const response = await API.put(
@@ -124,17 +131,19 @@ export default function MyBooking({ user, onStatusChange }) {
         { withCredentials: true },
       );
       if (response.data.success) {
-        alert("Event Dis Cancelled Successfully");
+        alert("Event reinstated successfully");
         fetchAllEvents();
-        if (onStatusChange) {
-          onStatusChange();
-        }
+        if (onStatusChange) onStatusChange();
+      } else {
+        alert(response.data.message || "Failed to reinstate event");
       }
     } catch (error) {
-      console.error("Error cancelling event:", error);
-      alert("Failed to cancel event");
+      console.error("Error reinstating event:", error);
+      alert(error.response?.data?.message || "Failed to reinstate event");
     }
   }
+  
+
 
   const checkIfFuture = (event) => {
     if (!event.requested_date || !event.start_time) return false;

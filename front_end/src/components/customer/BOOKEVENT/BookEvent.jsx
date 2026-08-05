@@ -115,8 +115,11 @@ export default function BookEvent({ user }) {
       }
     } catch (error) {
       console.error("Save/Update failed:", error);
-      alert("Failed to save event details.");
-    } finally {
+      alert(
+        error.response?.data?.message || "Failed to save event details.",
+      );
+    }
+    finally {
       setIsSubmitting(false);
     }
   }

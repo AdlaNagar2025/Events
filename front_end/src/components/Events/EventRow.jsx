@@ -46,6 +46,14 @@ export default function EventRow({
 
     onChangeStatus(event, event.event_id, actionStatus, cleanReason);
   };
+  const canModifyByPolicy = (() => {
+    if (!event.requested_date || !event.start_time) return false;
+    const dateStr = String(event.requested_date).split("T")[0];
+    const timeStr = String(event.start_time).slice(0, 5);
+    const eventDate = new Date(`${dateStr}T${timeStr}`);
+    const hoursLeft = (eventDate - new Date()) / (1000 * 60 * 60);
+    return hoursLeft >= 48;
+  })();
 
   return (
     <>
@@ -136,31 +144,52 @@ export default function EventRow({
 
           <td>
             <div className={classes.actions}>
-              {isFuture ? (
-                <>
-                  <button
-                    className={classes.updateBtn}
-                    onClick={() => onUpdate(event)}
-                  >
-                    Update
-                  </button>
-                  {event.finalStatus !== "CANCELLED" ? (
-                    <button
-                      className={classes.rejectBtn}
-                      onClick={() => onCancel(event)}
-                    >
-                      Cancel
-                    </button>
-                  ) : (
-                    <button
-                      className={classes.rejectBtn}
-                      onClick={() => onDisCancel(event)}
-                    >
-                      DisCancel
-                    </button>
-                  )}
-                </>
-              ) : (
+            {isFuture ? (
+  <>
+    <button
+      className={classes.updateBtn}
+      disabled={!canModifyByPolicy}
+      title={
+        !canModifyByPolicy
+          ? "Locked within 48 hours of the event. Contact your providers."
+          : ""
+      }
+      onClick={() => onUpdate(event)}
+    >
+      Update
+    </button>
+
+    {event.finalStatus !== "CANCELLED" ? (
+      <button
+        className={classes.rejectBtn}
+        disabled={!canModifyByPolicy}
+        title={
+          !canModifyByPolicy
+            ? "Locked within 48 hours of the event. Contact your providers."
+            : ""
+        }
+        onClick={() => onCancel(event)}
+      >
+        Cancel
+      </button>
+    ) : (
+      <button
+        className={classes.rejectBtn}
+        disabled={!canModifyByPolicy}
+        onClick={() => onDisCancel(event)}
+      >
+        DisCancel
+      </button>
+    )}
+
+    {!canModifyByPolicy && (
+      <p className={classes.policyNote}>
+        Changes and cancellation are locked within 48 hours of the event.
+        Please contact your providers for last-minute arrangements.
+      </p>
+    )}
+  </>
+) :  (
                 <>
                   {event.finalStatus === "APPROVED" && (
                     <div>

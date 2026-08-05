@@ -119,7 +119,10 @@ router.put("/updateEventData/:id", async (req, res) => {
     return res.json({ success: true });
   } catch (error) {
     console.error("Error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(400).json({
+      success: false,
+      message: error.message || "Server error",
+    });
   }
 });
 
