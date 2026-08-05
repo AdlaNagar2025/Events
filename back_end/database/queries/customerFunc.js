@@ -678,100 +678,111 @@ async function handleHallUpdate(
   }
 }
 
-async function cancelEvent(eventId) {
-  // 1. שליפת פרטי האירוע והספקים שלו לצורך יצירת ההתראות
-  const eventRows = await doQuery(
-    `SELECT hall_id, requested_date FROM events WHERE event_id = ?`,
-    [eventId],
-  );
+
+async function cancelEvent(eventId, customerId) {
+  const currentEvent = await validateAndGetEvent(customerId, eventId);
+
+  const origDateStr = new Date(currentEvent.requested_date)
+    .toISOString()
+    .split("T")[0];
+  const eventDateTime = new Date(`${origDateStr}T${currentEvent.start_time}`);
+  const hoursDifference = (eventDateTime - new Date()) / (1000 * 60 * 60);
+
+  if (hoursDifference < 48) {
+    throw new Error(
+      "Events cannot be cancelled less than 48 hours before the scheduled time.",
+    );
+  }
+
   const providerRows = await doQuery(
     `SELECT provider_id FROM event_providers WHERE event_id = ?`,
     [eventId],
   );
 
-  // 2. ביצוע עדכון הסטטוסים ב-DB
-  const sql = `UPDATE events SET status = 'CANCELLED' WHERE event_id = ?`;
-  await doQuery(sql, [eventId]);
+  await doQuery(`UPDATE events SET status = 'CANCELLED' WHERE event_id = ?`, [
+    eventId,
+  ]);
+  await doQuery(
+    `UPDATE event_providers SET status = 'CANCELLED' WHERE event_id = ?`,
+    [eventId],
+  );
 
-  const sqlProviders = `UPDATE event_providers SET status = 'CANCELLED' WHERE event_id = ?`;
-  await doQuery(sqlProviders, [eventId]);
+  const eventDate = currentEvent.requested_date;
+  const hallId = currentEvent.hall_id;
 
-  // 3. שליחת ההתראות (רק אם מצאנו את האירוע)
-  if (eventRows.length > 0) {
-    const eventDate = eventRows[0].requested_date;
-    const hallId = eventRows[0].hall_id;
-
-    try {
-      // התראה לאולם
-      if (hallId) {
-        await createNotification({
-          message: `The event scheduled for ${eventDate} has been CANCELLED by the customer.`,
-          userId: hallId,
-        });
-      }
-
-      // התראה לשפים
-      for (const row of providerRows) {
-        await createNotification({
-          message: `The event scheduled for ${eventDate} has been CANCELLED by the customer.`,
-          userId: row.provider_id,
-        });
-      }
-    } catch (notifError) {
-      console.error("Failed to send cancellation notifications:", notifError);
+  try {
+    if (hallId) {
+      await createNotification({
+        message: `The event scheduled for ${eventDate} has been CANCELLED by the customer.`,
+        userId: hallId,
+      });
     }
+
+    for (const row of providerRows) {
+      await createNotification({
+        message: `The event scheduled for ${eventDate} has been CANCELLED by the customer.`,
+        userId: row.provider_id,
+      });
+    }
+  } catch (notifError) {
+    console.error("Failed to send cancellation notifications:", notifError);
   }
 
   return { success: true };
 }
 
-async function disCancelEvent(eventId) {
-  // 1. שליפת פרטי האירוע והספקים לצורך יצירת ההתראות
-  const eventRows = await doQuery(
-    `SELECT hall_id, requested_date FROM events WHERE event_id = ?`,
-    [eventId],
-  );
+async function disCancelEvent(eventId, customerId) {
+
+  const currentEvent = await validateAndGetEvent(customerId, eventId);
+
+  const origDateStr = new Date(currentEvent.requested_date)
+    .toISOString()
+    .split("T")[0];
+  const eventDateTime = new Date(`${origDateStr}T${currentEvent.start_time}`);
+  const hoursDifference = (eventDateTime - new Date()) / (1000 * 60 * 60);
+
+  if (hoursDifference < 48) {
+    throw new Error(
+      "Cancelled events cannot be reinstated less than 48 hours before the scheduled time.",
+    );
+  }
+
   const providerRows = await doQuery(
     `SELECT provider_id FROM event_providers WHERE event_id = ?`,
     [eventId],
   );
 
-  // 2. עדכון הסטטוסים בחזרה ל-PENDING
-  const sql = `UPDATE events SET status = 'PENDING' WHERE event_id = ?`;
-  await doQuery(sql, [eventId]);
+  await doQuery(`UPDATE events SET status = 'PENDING' WHERE event_id = ?`, [
+    eventId,
+  ]);
+  await doQuery(
+    `UPDATE event_providers SET status = 'PENDING' WHERE event_id = ?`,
+    [eventId],
+  );
 
-  const sqlProviders = `UPDATE event_providers SET status = 'PENDING' WHERE event_id = ?`;
-  await doQuery(sqlProviders, [eventId]);
+  const eventDate = currentEvent.requested_date;
+  const hallId = currentEvent.hall_id;
 
-  // 3. שליחת ההתראות
-  if (eventRows.length > 0) {
-    const eventDate = eventRows[0].requested_date;
-    const hallId = eventRows[0].hall_id;
-
-    try {
-      // התראה לאולם
-      if (hallId) {
-        await createNotification({
-          message: `The cancelled event for ${eventDate} has been reinstated and is pending your re-approval.`,
-          userId: hallId,
-        });
-      }
-
-      // התראה לשפים
-      for (const row of providerRows) {
-        await createNotification({
-          message: `The cancelled event for ${eventDate} has been reinstated and is pending your re-approval.`,
-          userId: row.provider_id,
-        });
-      }
-    } catch (notifError) {
-      console.error("Failed to send disCancel notifications:", notifError);
+  try {
+    if (hallId) {
+      await createNotification({
+        message: `The cancelled event for ${eventDate} has been reinstated and is pending your re-approval.`,
+        userId: hallId,
+      });
     }
+
+    for (const row of providerRows) {
+      await createNotification({
+        message: `The cancelled event for ${eventDate} has been reinstated and is pending your re-approval.`,
+        userId: row.provider_id,
+      });
+    }
+  } catch (notifError) {
+    console.error("Failed to send disCancel notifications:", notifError);
   }
 
   return { success: true };
 }
-
 async function ReviewProvider(ReviewData, userId) {
   const { eventId, providerId, rating, comment } = ReviewData;
   const sql = `

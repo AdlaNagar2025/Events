@@ -123,29 +123,38 @@ router.put("/updateEventData/:id", async (req, res) => {
   }
 });
 
+
+
+
 router.put("/cancelEvent/:id", async (req, res) => {
   try {
-    console.log(req.session.user);
     const eventId = req.params.id;
-    const result = await cancelEvent(eventId);
+    const result = await cancelEvent(eventId, req.session.user.id);
     return res.json(result);
   } catch (error) {
     console.error("Error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-router.put("/disCancelEvent/:id", async (req, res) => {
-  try {
-    console.log(req.session.user);
-    const eventId = req.params.id;
-    const result = await disCancelEvent(eventId);
-    return res.json(result);
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    const statusCode = error.message?.includes("Unauthorized") ? 403 : 400;
+    res.status(statusCode).json({
+      success: false,
+      message: error.message || "Server error",
+    });
   }
 });
 
+router.put("/disCancelEvent/:id", async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    const result = await disCancelEvent(eventId, req.session.user.id);
+    return res.json(result);
+  } catch (error) {
+    console.error("Error:", error);
+    const statusCode = error.message?.includes("Unauthorized") ? 403 : 400;
+    res.status(statusCode).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+});
 router.post("/ReviewProvider", async (req, res) => {
   try {
     console.log(req.body);
