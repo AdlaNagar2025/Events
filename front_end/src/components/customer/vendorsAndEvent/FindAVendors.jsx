@@ -123,11 +123,22 @@ export default function FindAVendors({ user }) {
         start_time: eventToUpdate.start_time || "",
         end_time: eventToUpdate.end_time || "",
         event_id: eventToUpdate.event_id || null,
+        notesToHall: eventToUpdate.notesToHall || "",
+        noteToChef: Array.isArray(eventToUpdate.chiefs)
+        ? Object.fromEntries(
+            eventToUpdate.chiefs.map((c) => [
+              c.chief_id || c.id,
+              c.noteToChef || "",
+            ]),
+          )
+        : eventToUpdate.noteToChef || {},
+        eventLocation:
+          eventToUpdate.chiefs?.[0]?.chef_event_location || "",
       });
+
       setIsUpdating(true);
       setSelectedHallId(location.state?.hallId || null);
-      setSelectedChiefIds(location.state?.ChiefIds || []);
-    }
+      setSelectedChiefIds(location.state?.selectedChiefsId || location.state?.ChiefIds || []);    }
   }, [eventToUpdate]);
   return (
     <div>

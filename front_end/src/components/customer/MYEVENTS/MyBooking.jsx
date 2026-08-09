@@ -35,12 +35,15 @@ export default function MyBooking({ user, onStatusChange }) {
     fetchAllEvents();
   }, [user, rolePath, type]);
 
+
   function update(e) {
     navigate("/customer/find-vendor", {
       state: {
         Event: e,
-        hallId: e.hall_id,
-        ChiefIds: e.chiefs ? e.chiefs.map((c) => c.chief_id || c.id) : [],
+        hallId: e.hall_id || null,
+        selectedChiefsId: e.chiefs
+          ? e.chiefs.map((c) => c.chief_id || c.id)
+          : [],
       },
     });
   }

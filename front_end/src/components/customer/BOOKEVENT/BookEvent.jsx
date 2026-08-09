@@ -62,6 +62,7 @@ export default function BookEvent({ user }) {
         if (eventId && dataToEvent) {
           if (dataToEvent.notesToHall) setNotesToHall(dataToEvent.notesToHall);
           if (dataToEvent.noteToChef) setNoteToChef(dataToEvent.noteToChef);
+          if (dataToEvent.eventLocation) setEventLocation(dataToEvent.eventLocation);
         }
       } catch (error) {
         console.error("Error fetching providers details:", error);
@@ -142,7 +143,7 @@ export default function BookEvent({ user }) {
       state: {
         dataToEvent: dataToEvent,
         hallId: hallId,
-        ChiefIds: selectedChiefsId,
+        selectedChiefsId: selectedChiefsId,
         Event: eventId ? { ...dataToEvent, event_id: eventId } : null,
       },
     });
