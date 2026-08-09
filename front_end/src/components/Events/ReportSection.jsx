@@ -7,9 +7,11 @@ export default function ReportSection({ event, onClose }) {
     ...(event.hall_id
       ? [{ id: event.hall_id, name: event.hall_name, type: "BUSINESS" }]
       : []),
-    ...(event.chiefs
-      ? event.chiefs.map((c) => ({ id: c.id, name: c.name, type: "BUSINESS" }))
-      : []),
+    ...(event.chiefs ? event.chiefs.map((c) => ({
+      id: c.chief_id || c.id,
+      name: c.chief_name || c.name,
+      type: "BUSINESS",
+    })) : []),
   ];
 
   const [report, setReport] = useState({

@@ -116,12 +116,13 @@ const canProviderAction =
                         >
                           {chefStatus}
                         </span>
-                        {chief.reason && (
-                          <span className={classes.reasonText}>
-                            {" "}
-                            ({chief.reason})
-                          </span>
-                        )}
+                        {(chief.chiefs_reason || chief.reason) && (
+  <span className={classes.reasonText}>
+    {" "}
+    ({chief.chiefs_reason || chief.reason})
+  </span>
+)}
+                        
                       </p>
                     );
                   })}

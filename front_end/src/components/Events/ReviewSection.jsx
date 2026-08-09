@@ -6,9 +6,10 @@ import { Rating } from "@mui/material";
 export default function ReviewSection({ event, onClose }) {
   const providers = [
     ...(event.hall_id ? [{ id: event.hall_id, name: event.hall_name }] : []),
-    ...(event.chiefs
-      ? event.chiefs.map((c) => ({ id: c.id, name: c.name }))
-      : []),
+    ...(event.chiefs ? event.chiefs.map((c) => ({
+      id: c.chief_id || c.id,
+      name: c.chief_name || c.name,
+    })) : []),
   ];
 
   const [selectedProviderId, setSelectedProviderId] = useState(
@@ -19,12 +20,12 @@ export default function ReviewSection({ event, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!selectedProviderId || !event.id) return;
+    if (!selectedProviderId || !event.event_id) return;
 
     const fetchReviewsEvent = async () => {
       try {
         const response = await axios.post(
-          `http://localhost:3030/customer/EventComments/${event.id}`,
+          `http://localhost:3030/customer/EventComments/${event.event_id}`,
           { providerId: selectedProviderId },
           { withCredentials: true },
         );
@@ -43,7 +44,7 @@ export default function ReviewSection({ event, onClose }) {
     };
 
     fetchReviewsEvent();
-  }, [selectedProviderId, event.id]);
+  }, [selectedProviderId, event.event_id]);
 
   // 4. שליחת הטופס לשרת
   const handleSubmit = async (e) => {
