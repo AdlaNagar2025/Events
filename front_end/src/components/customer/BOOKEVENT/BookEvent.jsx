@@ -92,17 +92,25 @@ export default function BookEvent({ user }) {
 
     try {
       let response;
-
-      // 🎯 הבחנה בין עדכון (PUT) לבין יצירה (POST)
-      if (eventId) {
+      if (!eventId) {
+        // إنشاء فقط: فحص 3 ساعات
+        const dateStr = String(dataToEvent.requested_date).split("T")[0];
+        const timeStr = String(dataToEvent.start_time).slice(0, 5);
+        const eventStart = new Date(`${dateStr}T${timeStr}`);
+        const hoursUntilStart = (eventStart - new Date()) / (1000 * 60 * 60);
+        if (Number.isNaN(eventStart.getTime()) || hoursUntilStart < 3) {
+          alert(
+            "Events must be booked at least 3 hours before the start time.",
+          );
+          return;
+        }
+        response = await API.post("/customer/createEvent", payload);
+      } else {
         response = await API.put(
           `/customer/updateEventData/${eventId}`,
           payload,
         );
-      } else {
-        response = await API.post("/customer/createEvent", payload);
       }
-
       if (response.data.success) {
         alert(
           eventId

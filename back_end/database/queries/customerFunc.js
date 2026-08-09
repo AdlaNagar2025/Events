@@ -297,6 +297,17 @@ async function createEventData(Data, customerId) {
     };
   }
 
+  const dateStr = String(dataToEvent.requested_date).split("T")[0];
+const timeStr = String(dataToEvent.start_time).slice(0, 5);
+const eventStart = new Date(`${dateStr}T${timeStr}`);
+const hoursUntilStart = (eventStart - new Date()) / (1000 * 60 * 60);
+if (Number.isNaN(eventStart.getTime()) || hoursUntilStart < 3) {
+  return {
+    success: false,
+    message:
+      "Events must be booked at least 3 hours before the start time.",
+  };
+}
   try {
     await doQuery("START TRANSACTION");
 

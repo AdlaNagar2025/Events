@@ -89,12 +89,17 @@ router.get("/MainFoto/:id", async (req, res) => {
 
 router.post("/createEvent", async (req, res) => {
   try {
-    console.log(req.body);
     const result = await createEventData(req.body, req.session.user.id);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
     return res.json(result);
   } catch (error) {
     console.error("Error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(400).json({
+      success: false,
+      message: error.message || "Server error",
+    });
   }
 });
 
