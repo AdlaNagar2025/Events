@@ -65,25 +65,32 @@ async function getTimeAvail(eventId, date, providerId) {
     const availabilityBlocks = await doQuery(availSql, [date, providerId]);
 
     let eventSql = `
-            SELECT start_time, end_time FROM events 
-            WHERE requested_date = ? AND hall_id = ? AND status = 'APPROVED' 
-            ORDER BY start_time ASC`;
+    SELECT start_time, end_time FROM events 
+    WHERE requested_date = ? 
+      AND hall_id = ? 
+      AND status = 'APPROVED'
+      AND (? IS NULL OR event_id <> ?)
+    ORDER BY start_time ASC`;
 
     if ((await getRole(providerId)) === "Chief") {
       eventSql = `
-                SELECT start_time, end_time FROM events 
-                WHERE requested_date = ? 
-                AND event_id IN (
-                    SELECT event_id FROM event_providers 
-                    WHERE provider_id = ? AND status = 'APPROVED' 
-                ) 
-                ORDER BY start_time ASC`;
+        SELECT start_time, end_time FROM events 
+        WHERE requested_date = ? 
+          AND event_id IN (
+            SELECT event_id FROM event_providers 
+            WHERE provider_id = ? AND status = 'APPROVED'
+          )
+          AND (? IS NULL OR event_id <> ?)
+        ORDER BY start_time ASC`;
     }
+    const bookedEvents = await doQuery(eventSql, [
+      date,
+      providerId,
+      eventId, // للـ (? IS NULL
+      eventId, // للـ event_id <> ?)
+    ]);
 
-    const bookedEvents = await doQuery(eventSql, [date, providerId]);
-    console.log(providerId);
-    console.log(availabilityBlocks);
-    console.log(bookedEvents);
+
     const finalFreeTimes = [];
 
     availabilityBlocks.forEach((block) => {

@@ -308,6 +308,38 @@ if (Number.isNaN(eventStart.getTime()) || hoursUntilStart < 3) {
       "Events must be booked at least 3 hours before the start time.",
   };
 }
+if (hasHall) {
+  const hallOk = await AvailToEvent(
+    null, // إنشاء جديد — ما في eventId نستثنيه
+    dataToEvent.requested_date,
+    hallId,
+    dataToEvent.start_time,
+    dataToEvent.end_time,
+  );
+  if (!hallOk) {
+    return {
+      success: false,
+      message: "The selected hall is no longer available for this time.",
+    };
+  }
+}
+if (hasChiefs) {
+  for (const chefId of selectedChiefsId) {
+    const chefOk = await AvailToEvent(
+      null,
+      dataToEvent.requested_date,
+      chefId,
+      dataToEvent.start_time,
+      dataToEvent.end_time,
+    );
+    if (!chefOk) {
+      return {
+        success: false,
+        message: "One of the selected chefs is no longer available for this time.",
+      };
+    }
+  }
+}
   try {
     await doQuery("START TRANSACTION");
 
