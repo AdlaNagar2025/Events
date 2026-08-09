@@ -47,25 +47,29 @@ export default function Dashboard({ user, onStatusChange }) {
     if (user) fetchDataProfile();
   }, [user]);
 
-  async function handlechangeStatus(event, eventId, status) {
+  async function handlechangeStatus(event, eventId, status, reason = null) {
     try {
       const response = await axios.put(
         `http://localhost:3030/provider/changeEventStatus/${eventId}`,
-        { status: status, eventData: event },
+        {
+          status,
+          eventData: event,
+          reason,
+          cancelledBy: status === "CANCELLED" ? "PROVIDER" : null,
+        },
         { withCredentials: true },
       );
-
+  
       if (response.data.success) {
         alert("Status updated successfully!");
         fetchAllPendingEvents();
-        if (onStatusChange) {
-          onStatusChange();
-        }
+        if (onStatusChange) onStatusChange();
       } else {
         alert(response.data.message);
       }
     } catch (error) {
       console.log(error);
+      alert(error.response?.data?.message || "Failed to update status");
     }
   }
 
@@ -130,8 +134,10 @@ export default function Dashboard({ user, onStatusChange }) {
           <tbody>
             {events.map((e) => {
               const isFuture = checkIfFuture(e);
-              const showActions =
-                rolePath === "provider" && isFuture && e.status !== "CANCELLED";
+              const status = (e.finalStatus || e.status || "").toUpperCase();
+const showActions =
+  rolePath === "provider" && isFuture && status !== "CANCELLED";
+        
               const isCurrentOpen = activeEventId === e.event_id;
               const cleanDisplayDate = e.requested_date
                 ? e.requested_date.split("T")[0]
@@ -151,7 +157,7 @@ export default function Dashboard({ user, onStatusChange }) {
                     <td>
                       {showActions && (
                         <>
-                          {e.status !== "APPROVED" && (
+                          {status !== "APPROVED" && (
                             <button
                               className={classes.approveBtn}
                               onClick={() =>
@@ -161,12 +167,18 @@ export default function Dashboard({ user, onStatusChange }) {
                               Approve
                             </button>
                           )}
-                          {e.status !== "REJECTED" && (
+                          {status !== "REJECTED" && (
                             <button
                               className={classes.rejectBtn}
-                              onClick={() =>
-                                handlechangeStatus(e, e.event_id, "REJECTED")
-                              }
+                              onClick={() => {
+                                const userReason = prompt(
+                                  "Please enter the reason for rejecting this request:",
+                                );
+                                if (userReason === null) return; // Cancel على الـ prompt
+                                const cleanReason =
+                                  userReason.trim() || "No reason provided by the business owner.";
+                                handlechangeStatus(e, e.event_id, "REJECTED", cleanReason);
+                              }}
                             >
                               Reject
                             </button>

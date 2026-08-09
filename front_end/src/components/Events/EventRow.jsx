@@ -25,13 +25,15 @@ export default function EventRow({
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
 
-  const status = event.finalStatus || event.status;
   const startTime = event.start_time?.slice(0, 5) || "";
   const endTime = event.end_time?.slice(0, 5) || "";
 
-  const canProviderAction =
-    rolePath === "provider" && isFuture && event.status !== "CANCELLED";
+ 
 
+  const status = (event.finalStatus || event.status || "").toUpperCase();
+
+const canProviderAction =
+  rolePath === "provider" && isFuture && status !== "CANCELLED";
   const handleProviderActionWithReason = (actionStatus) => {
     const actionName =
       actionStatus === "CANCELLED" ? "cancelling" : "rejecting";
