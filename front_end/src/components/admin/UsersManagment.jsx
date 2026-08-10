@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import API from "../../services/api";
 import classes from "./usersmanagment.module.css";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function UsersManagment() {
   const navigate = useNavigate();
@@ -107,7 +108,7 @@ export default function UsersManagment() {
       }
     } catch (error) {
       console.error("Error updating user status:", error);
-      alert("Failed to update user status");
+      toast.error("Failed to update user status");
     }
   };
   return (

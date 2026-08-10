@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import API from "../../services/api";
 import classes from "./servicesapprovals.module.css";
+import toast from "react-hot-toast";
 
 export default function ContentModeration({ newUrl }) {
   const [reports, setReports] = useState([]);
@@ -8,7 +9,7 @@ export default function ContentModeration({ newUrl }) {
   useEffect(() => {
     const fetchAllReports = async () => {
       try {
-        let url = newUrl ? newUrl : "http://localhost:3030/admin/allReports";
+        let url = newUrl ? newUrl : "/admin/allReports";
         const response = await API.get(url);
         if (response.data.success) {
           setReports(response.data.data);
@@ -25,7 +26,7 @@ export default function ContentModeration({ newUrl }) {
   const handleUpdateStatus = async (report, newStatus) => {
     try {
       const response = await API.post(
-        "http://localhost:3030/admin/resolveReport",
+        "/admin/resolveReport",
         {
           reportId: report.id,
           newStatus: newStatus,
@@ -36,7 +37,7 @@ export default function ContentModeration({ newUrl }) {
         }      );
 
       if (response.data.success) {
-        alert(response.data.message || "Status updated successfully!");
+        toast.success(response.data.message || "Status updated successfully!");
 
         // עדכון הסטייט המקומי כדי שהטבלה תתעדכן מיידית לעיני האדמין
         setReports((prevReports) =>
@@ -47,7 +48,7 @@ export default function ContentModeration({ newUrl }) {
       }
     } catch (error) {
       console.error("Error updating report status:", error);
-      alert(error.response?.data?.devError || "Failed to update report status");
+      toast.error(error.response?.data?.devError || "Failed to update report status");
     }
   };
 

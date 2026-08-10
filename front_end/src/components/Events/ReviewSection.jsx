@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import API from "../../services/api";
 import classes from "../customer/review.module.css";
 import { Rating } from "@mui/material";
+import toast from "react-hot-toast";
 
 export default function ReviewSection({ event, onClose }) {
   const providers = [
@@ -50,11 +51,11 @@ export default function ReviewSection({ event, onClose }) {
     e.preventDefault(); // מניעת רענון עמוד
 
     if (!selectedProviderId) {
-      alert("Please select a provider to rate.");
+      toast.error("Please select a provider to rate.");
       return;
     }
     if (rating === 0) {
-      alert("Please select a rating star.");
+      toast.error("Please select a rating star.");
       return;
     }
 
@@ -73,12 +74,12 @@ export default function ReviewSection({ event, onClose }) {
       );
 
       if (response.data.success || response.data) {
-        alert("Thank you! Your review has been submitted successfully. ✨");
+        toast.success("Thank you! Your review has been submitted successfully. ✨");
         onClose(); // סגירת המודאל החלון
       }
     } catch (err) {
       console.error("Review failed", err);
-      alert("Failed to submit review. Please try again.");
+      toast.error("Failed to submit review. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

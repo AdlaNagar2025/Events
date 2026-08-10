@@ -2,6 +2,7 @@ import classes from "./myBooking.module.css";
 import { React, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../../services/api";
+import toast from "react-hot-toast";
 
 import EventRow from "../../Events/EventRow";
 
@@ -81,17 +82,17 @@ export default function MyBooking({ user, onStatusChange }) {
       });
 
       if (response.data.success) {
-        alert(`Status updated to ${status} successfully!`);
+        toast.success(`Status updated to ${status} successfully!`);
         fetchAllEvents(); // רענון הרשימה המקומית
         if (onStatusChange) {
           onStatusChange(); // רענון הלוח שנה ברכיב האב
         }
       } else {
-        alert(response.data.message);
+        toast.error(response.data.message);
       }
     } catch (error) {
       console.error("Error updating event status:", error);
-      alert("An error occurred while updating status.");
+      toast.error("An error occurred while updating status.");
     }
   }
 
@@ -106,15 +107,15 @@ export default function MyBooking({ user, onStatusChange }) {
         { withCredentials: true },
       );
       if (response.data.success) {
-        alert("Event Cancelled Successfully");
+        toast.success("Event Cancelled Successfully");
         fetchAllEvents();
         if (onStatusChange) onStatusChange();
       } else {
-        alert(response.data.message || "Failed to cancel event");
+        toast.error(response.data.message || "Failed to cancel event");
       }
     } catch (error) {
       console.error("Error cancelling event:", error);
-      alert(error.response?.data?.message || "Failed to cancel event");
+      toast.error(error.response?.data?.message || "Failed to cancel event");
     }
   }
   
@@ -134,15 +135,15 @@ export default function MyBooking({ user, onStatusChange }) {
         { withCredentials: true },
       );
       if (response.data.success) {
-        alert("Event reinstated successfully");
+        toast.success("Event reinstated successfully");
         fetchAllEvents();
         if (onStatusChange) onStatusChange();
       } else {
-        alert(response.data.message || "Failed to reinstate event");
+        toast.error(response.data.message || "Failed to reinstate event");
       }
     } catch (error) {
       console.error("Error reinstating event:", error);
-      alert(error.response?.data?.message || "Failed to reinstate event");
+      toast.error(error.response?.data?.message || "Failed to reinstate event");
     }
   }
   

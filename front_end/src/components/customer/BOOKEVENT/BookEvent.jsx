@@ -3,6 +3,7 @@ import API from "../../../services/api";
 import classes from "./bookEvent.module.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import EventData from "./EventData";
+import toast from "react-hot-toast";
 
 export default function BookEvent({ user }) {
   const location = useLocation();
@@ -76,7 +77,7 @@ export default function BookEvent({ user }) {
 
   async function saveData() {
     if (!hallId && !eventLocation.trim()) {
-      alert("Please select a location for the chefs!");
+      toast.error("Please select a location for the chefs!");
       return;
     }
 
@@ -100,7 +101,7 @@ export default function BookEvent({ user }) {
         const eventStart = new Date(`${dateStr}T${timeStr}`);
         const hoursUntilStart = (eventStart - new Date()) / (1000 * 60 * 60);
         if (Number.isNaN(eventStart.getTime()) || hoursUntilStart < 3) {
-          alert(
+          toast.error(
             "Events must be booked at least 3 hours before the start time.",
           );
           return;
@@ -113,18 +114,18 @@ export default function BookEvent({ user }) {
         );
       }
       if (response.data.success) {
-        alert(
+        toast.success(
           eventId
             ? "Event Updated Successfully!"
             : "Event Booked Successfully!",
         );
         navigate("/customer/my-booking");
       } else {
-        alert(response.data.message || "Action failed.");
+        toast.error(response.data.message || "Action failed.");
       }
     } catch (error) {
       console.error("Save/Update failed:", error);
-      alert(
+      toast.error(
         error.response?.data?.message || "Failed to save event details.",
       );
     }

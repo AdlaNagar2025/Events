@@ -2,6 +2,7 @@ import React from "react";
 import { useState } from "react";
 import API from "../../services/api";
 import classes from "./commentReportModal.module.css";
+import toast from "react-hot-toast";
 
 export default function CommentReportModal({ review, onClose }) {
   const [reason, setReason] = useState("");
@@ -11,7 +12,7 @@ export default function CommentReportModal({ review, onClose }) {
   const handleReportSubmit = async (e) => {
     e.preventDefault();
     if (!reason.trim()) {
-      alert("Please enter a reason for the report.");
+      toast.error("Please enter a reason for the report.");
       return;
     }
 
@@ -29,12 +30,12 @@ export default function CommentReportModal({ review, onClose }) {
       );
 
       if (response.data.success) {
-        alert("Comment reported successfully to the administrator. 🚩");
+        toast.success("Comment reported successfully to the administrator. 🚩");
         onClose();
       }
     } catch (error) {
       console.error("Error reporting comment:", error);
-      alert("Failed to submit report.");
+      toast.error("Failed to submit report.");
     } finally {
       setLoading(false);
     }

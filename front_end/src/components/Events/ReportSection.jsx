@@ -1,6 +1,7 @@
 import { useState } from "react";
 import API from "../../services/api";
 import classes from "../customer/review.module.css";
+import toast from "react-hot-toast";
 
 export default function ReportSection({ event, onClose }) {
   const providers = [
@@ -28,26 +29,26 @@ export default function ReportSection({ event, onClose }) {
     e.preventDefault(); // מניעת רענון של העמוד
 
     if (!report.reason.trim()) {
-      alert("Please provide a reason for the report.");
+      toast.error("Please provide a reason for the report.");
       return;
     }
 
     try {
       setLoading(false);
       const response = await API.post(
-        "http://localhost:3030/customer/writeReport",
+        "/customer/writeReport",
         report,
       );
 
       if (response.data.success) {
-        alert(
+        toast.success(
           "Thank you. Your report has been submitted to the admin for review. 🚩",
         );
         onClose(); 
       }
     } catch (error) {
       console.error("Error submitting report:", error);
-      alert(
+      toast.error(
         error.response?.data?.msg ||
           "Failed to submit report. Please try again.",
       );

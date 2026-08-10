@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import API from "../../services/api";
 import classes from "./dashboard.module.css";
+import toast from "react-hot-toast";
 
 export default function Dashboard({ user, onStatusChange }) {
   const [rating, setRating] = useState(0);
@@ -59,15 +60,15 @@ export default function Dashboard({ user, onStatusChange }) {
       );
   
       if (response.data.success) {
-        alert("Status updated successfully!");
+        toast.success("Status updated successfully!");
         fetchAllPendingEvents();
         if (onStatusChange) onStatusChange();
       } else {
-        alert(response.data.message);
+        toast.error(response.data.message);
       }
     } catch (error) {
       console.log(error);
-      alert(error.response?.data?.message || "Failed to update status");
+      toast.error(error.response?.data?.message || "Failed to update status");
     }
   }
 

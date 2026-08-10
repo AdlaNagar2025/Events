@@ -1,4 +1,6 @@
 // חילוץ תאריך מקומי YYYY-MM-DD
+import toast from "react-hot-toast";
+
 export const formatLocalDate = (dateObj) => {
   const year = dateObj.getFullYear();
   const month = String(dateObj.getMonth() + 1).padStart(2, "0");
@@ -20,22 +22,22 @@ export const validateTimes = (date, start, end) => {
   const todayStr = getTodayString();
 
   if (date < todayStr) {
-    alert("You cannot select a date in the past!");
+    toast.error("You cannot select a date in the past!");
     return false;
   }
   if (date === todayStr) {
     const currentTime = formatLocalTime(new Date());
     if (start < currentTime) {
-      alert("You cannot select a time that has already passed today!");
+      toast.error("You cannot select a time that has already passed today!");
       return false;
     }
   }
   if (start < "08:00" || end > "24:00") {
-    alert("Working hours are restricted between 08:00 and 24:00!");
+    toast.error("Working hours are restricted between 08:00 and 24:00!");
     return false;
   }
   if (start >= end) {
-    alert("End time must be strictly after the start time.");
+    toast.error("End time must be strictly after the start time.");
     return false;
   }
   return true;

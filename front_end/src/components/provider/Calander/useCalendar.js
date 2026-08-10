@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../../../services/api";
 import { formatLocalDate, validateTimes } from "../../../utils/validation";
+import toast from "react-hot-toast";
 
 export const useCalendar = (role, user) => {
   const [availableData, setAvailableData] = useState({
@@ -89,7 +90,7 @@ export const useCalendar = (role, user) => {
   const handleSave = async () => {
     const { available_date, start_time, end_time } = availableData;
     if (!available_date || !start_time || !end_time) {
-      alert("Please select a valid time slot first.");
+      toast.error("Please select a valid time slot first.");
       return;
     }
     if (!validateTimes(available_date, start_time, end_time)) return;
@@ -98,12 +99,12 @@ export const useCalendar = (role, user) => {
     try {
       const res = await API.post("/provider/fillCalendar", availableData);
       if (res.data.success) {
-        alert("Availability saved successfully! ✨");
+        toast.success("Availability saved successfully! ✨");
         resetForm();
         fetchAvailability();
       }
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to save.");
+      toast.error(error.response?.data?.message || "Failed to save.");
     } finally {
       setLoading(false);
     }
@@ -117,12 +118,12 @@ export const useCalendar = (role, user) => {
     try {
       const res = await API.post("/provider/updateCalendar", availableData);
       if (res.data.success) {
-        alert("Availability removed successfully! 🗑️");
+        toast.success("Availability removed successfully! 🗑️");
         resetForm();
         fetchAvailability();
       }
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to delete.");
+      toast.error(error.response?.data?.message || "Failed to delete.");
     } finally {
       setLoading(false);
     }

@@ -30,7 +30,6 @@ if (!ALLOWED_ROLES.includes(role)) {
     message: "Invalid role. Allowed: Customer, Chief, Hall_Owner.",
   };
 }
-  
 
   //  Check if a user with this email already exists
   const sql1 = `SELECT * FROM users WHERE email=?`;

@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 import API from "../services/api";
 import AuthLayout from "../layouts/AuthLayout";
@@ -59,6 +60,8 @@ function App() {
 
   return (
     <Router>
+    <Toaster position="top-center" reverseOrder={false} />
+
       <Routes>
         <Route path="/auth" element={<AuthLayout />}>
           <Route element={<GuestRoute user={user} loading={loading} />}>

@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import API from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import classes from "./adduser.module.css";
+import toast from "react-hot-toast";
+
 
 export default function AddUser() {
   const navigate = useNavigate();
@@ -46,14 +48,13 @@ export default function AddUser() {
     setLoading(true);
     try {
       // שליחת הנתונים לשרת שלך (תוודא שה-URL והנתיב נכונים ב-Backend)
-      const response = await axios.post(
-        "http://localhost:3030/admin/addUser",
+      const response = await API.post(
+        "/admin/addUser",
         formData,
-        { withCredentials: true },
       );
 
       if (response.data.success) {
-        alert("User added successfully!");
+        toast.success("User added successfully!");
         navigate("/admin/users");
       } else {
         setError(response.data.message || "Failed to add user.");

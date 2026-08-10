@@ -5,6 +5,7 @@ import Calendar from "../Calander/Calendar";
 import classes from "./DetailsOFbusiness.module.css";
 import { FaTimes, FaUserAlt, FaImages, FaCalendarAlt } from "react-icons/fa";
 import API from "../../../services/api";
+import toast from "react-hot-toast";
 
 function DetailsOFbusiness({ user }) {
   const [activeTab, setActiveTab] = useState(1);
@@ -63,7 +64,7 @@ function DetailsOFbusiness({ user }) {
         newStatus,
       });
 
-      alert(response.data.message);
+      toast.success(response.data.message);
       setCurrentStatus("PENDING");
       setIsDisable(true);
     } catch (error) {

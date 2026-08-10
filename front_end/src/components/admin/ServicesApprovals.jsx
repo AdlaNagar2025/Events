@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import API from "../../services/api";
 import classes from "./servicesapprovals.module.css";
 import BusinessProfile from "../shared/BusinessProfile/BusinessProfile";
+import toast from "react-hot-toast";
 
 export default function ServicesApprovals({ user, newType }) {
   // 1. אתחול הסטייט עם newType במידה וקיים (מונע בלולאה ב-useEffect)
@@ -79,16 +80,16 @@ export default function ServicesApprovals({ user, newType }) {
 
       // בדיקה האם השרת החזיר success: true/false
       if (response.data.success) {
-        alert(response.data.message || "Status updated successfully!");
+        toast.success(response.data.message || "Status updated successfully!");
         setProviders((prev) => prev.filter((p) => p.id !== id));
         closeRejectModal();
       } else {
         // כאן תיכנס ההודעה במידה ויש אירועים פעילים!
-        alert(response.data.message);
+        toast.error(response.data.message);
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
     }
   }
 

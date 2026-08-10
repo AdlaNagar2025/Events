@@ -2,6 +2,8 @@ import { useState } from "react";
 import classes from "./registerorlogin.module.css";
 import API from "../../services/api";
 import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
 
 function getDefaultRouteForRole(user) {
   if (!user) return "/";
@@ -42,7 +44,7 @@ export default function Register({ onLoginSuccess }) {
     e.preventDefault();
 
     if (!formData.role) {
-      return alert("Please select a role before registering");
+      return toast.error("Please select a role before registering");
     }
 
     try {
@@ -52,14 +54,15 @@ export default function Register({ onLoginSuccess }) {
         onLoginSuccess(response.data.user);
         navigate(getDefaultRouteForRole(response.data.user));
       } else {
-        alert(response.data.message);
+        toast.error(response.data.message);
+
       }
     } catch (error) {
       console.error("Registration error:", error);
       const errorMessage =
         error.response?.data?.message ||
         "Registration failed. Please try again later.";
-      alert(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
