@@ -55,9 +55,11 @@ node_cron.schedule("0 8 * * *", async () => {
 
     for (const mail of EventsMail) {
       await sendEmail(
-        mail,
-        "Reminder: You have an event tomorrow!",
-        "Hi, this is an automatic reminder from the events system about tomorrow's event.",
+        {to: mail, 
+        subject: "Reminder: You have an event tomorrow!",
+        text: "Hi, this is an automatic reminder from the events system about tomorrow's event."
+  
+        }
       );
     }
   } catch (error) {

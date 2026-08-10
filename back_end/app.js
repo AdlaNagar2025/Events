@@ -6,7 +6,6 @@ const port = process.env.PORT || 3030;
 require("./database/queries/cronScheduler");
 
 const { sendEmail } = require("./database/queries/mail");
-// const { sendSMS } = require("./database/queries/sms");
 
 const { fetchAllLocalities } = require("./database/queries/cities");
 
@@ -75,10 +74,9 @@ app.post("/api/send-notification", async (req, res) => {
 
   try {
     // שליחת מייל
-    if (email) await sendEmail(email, "הודעה חדשה מהאתר", message);
+    if (email) await sendEmail({to: email, subject: "הודעה חדשה מהאתר", text: message});
 
     // שליחת SMS
-    if (phone) await sendSMS(phone, message);
 
     res.status(200).json({ message: "ההודעות נשלחו בהצלחה!" });
   } catch (error) {

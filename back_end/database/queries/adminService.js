@@ -123,13 +123,13 @@ async function updateBusinessStatus(type, id, newStatus, reason = null) {
           message: `New business profile pending approval for: ${provider?.first_name || "Provider"}`,
           userId: admin.id,
         });
-
+  
         if (admin.email) {
-          await sendEmail(
-            admin.email,
-            "New Business Approval Request - EventHub",
-            `Hello Admin,\n\nA new business profile from "${provider?.first_name || "Provider"}" is pending your review.`,
-          );
+          await sendEmail({
+            to: admin.email,
+            subject: "New Business Approval Request - EventHub",
+            text: `Hello Admin,\n\nA new business profile from "${provider?.first_name || "Provider"}" is pending your review.`,
+          });
         }
       }
     } else {
@@ -137,9 +137,9 @@ async function updateBusinessStatus(type, id, newStatus, reason = null) {
         let notificationMessage = "";
         let emailSubject = "";
         let emailText = "";
-
+  
         if (statusUpper === "APPROVE" || statusUpper === "APPROVED") {
-          notificationMessage = "Your business profile has been approved! 🎉";
+          notificationMessage = "Your business profile has been approved!";
           emailSubject =
             "Congratulations! Your EventHub Business Profile is Approved";
           emailText = `Hello ${provider.first_name},\n\nWe are happy to inform you that your business profile on EventHub has been approved!\nYou now have full access to manage your business.`;
@@ -148,14 +148,18 @@ async function updateBusinessStatus(type, id, newStatus, reason = null) {
           emailSubject = "Update regarding your EventHub Business Profile";
           emailText = `Hello ${provider.first_name},\n\nYour business profile request was not approved.\nReason: ${reason || "No reason specified"}\n\nPlease update your profile details and submit again.`;
         }
-
+  
         await createNotification({
           message: notificationMessage,
           userId: provider.id,
         });
-
+  
         if (provider.email) {
-          await sendEmail(provider.email, emailSubject, emailText);
+          await sendEmail({
+            to: provider.email,
+            subject: emailSubject,
+            text: emailText,
+          });
         }
       }
     }
