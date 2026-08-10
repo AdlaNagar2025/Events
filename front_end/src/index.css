@@ -5,15 +5,74 @@
 }
 
 :root {
-  --navy: #1a2634;
-  --navy-light: #243447;
-  --gold: #d4af37;
-  --gold-dark: #c9a227;
-  --text: #475569;
-  --text-h: #1e293b;
-  --bg: #f8fafc;
+  /* White + gold elegance */
+  --navy: #2c2a26; /* soft charcoal for text contrast */
+  --navy-light: #3f3c37;
+  --navy-deep: #1a1816;
+
+  --gold: #c9a227;
+  --gold-dark: #b8921f;
+  --gold-soft: rgba(201, 162, 39, 0.12);
+  --gold-ring: rgba(201, 162, 39, 0.22);
+
+  --mint: #c9a227;
+  --mint-soft: rgba(201, 162, 39, 0.1);
+
+  --text: #5c5852;
+  --text-h: #2c2a26;
+  --text-muted: #7a756c;
+  --text-faint: #a39e94;
+
+  --bg: #ffffff;
   --surface: #ffffff;
-  --border: #e2e8f0;
+  --surface-warm: #fcfaf5;
+  --border: #ebe6da;
+  --border-soft: #f5f2ea;
+
+  --success: #15803d;
+  --success-bg: #dcfce7;
+  --success-border: #bbf7d0;
+  --warning: #a16207;
+  --warning-bg: #fef9c3;
+  --warning-border: #fde68a;
+  --danger: #b91c1c;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --info: #0369a1;
+  --info-bg: #e0f2fe;
+  --info-border: #bae6fd;
+
+  /* Soft status accents (for badges / table chips) */
+  --status-approved-bg: var(--success-bg);
+  --status-approved-text: var(--success);
+  --status-pending-bg: #fff7ed;
+  --status-pending-text: #c2410c;
+  --status-pending-border: #fed7aa;
+  --status-rejected-bg: var(--danger-bg);
+  --status-rejected-text: var(--danger);
+  --status-cancelled-bg: #f1f5f9;
+  --status-cancelled-text: var(--text-muted);
+
+  --shadow-sm: 0 2px 10px rgba(44, 42, 38, 0.04);
+  --shadow: 0 8px 28px rgba(44, 42, 38, 0.06);
+  --shadow-lg: 0 16px 48px rgba(44, 42, 38, 0.1);
+  --radius: 12px;
+  --radius-lg: 16px;
+
+  /* Layout rhythm */
+  --page-max: 1200px;
+  --space-xs: 6px;
+  --space-sm: 10px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --table-pad-y: 14px;
+  --table-pad-x: 16px;
+  --title-size: 1.5rem;
+  --subtitle-size: 0.88rem;
+
+  --wave-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 80' preserveAspectRatio='none'%3E%3Cpath fill='none' stroke='%23c9a227' stroke-width='1.5' d='M0 40 Q180 10 360 40 T720 40 T1080 40 T1440 40'/%3E%3Cpath fill='none' stroke='%23c9a227' stroke-opacity='0.35' stroke-width='1' d='M0 52 Q180 22 360 52 T720 52 T1080 52 T1440 52'/%3E%3C/svg%3E");
+  --wave-soft: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120' preserveAspectRatio='none'%3E%3Cpath fill='%23fcfaf5' d='M0 48 Q240 0 480 48 T960 48 T1440 48 V120 H0 Z'/%3E%3C/svg%3E");
 
   --sans: "Segoe UI", system-ui, Roboto, sans-serif;
   --heading: "Segoe UI", system-ui, Roboto, sans-serif;
@@ -38,6 +97,7 @@ body {
   min-height: 100%;
   width: 100%;
   overflow-x: hidden;
+  background: var(--bg);
 }
 
 #root {
@@ -97,11 +157,15 @@ textarea {
   font: inherit;
 }
 
+button {
+  cursor: pointer;
+}
+
 code {
   font-family: var(--mono);
   font-size: 0.875em;
   padding: 2px 6px;
   border-radius: 4px;
-  background: #f1f5f9;
+  background: var(--border-soft);
   color: var(--text-h);
 }

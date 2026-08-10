@@ -1,25 +1,44 @@
 .page {
   width: 100%;
-  max-width: 1200px;
+  max-width: var(--page-max, 1200px);
   margin: 0 auto;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: var(--sans);
+  color: var(--text);
 }
 
 .pageHeader {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-lg, 24px);
+  padding: 22px 26px 26px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.pageHeader::after {
+  content: "";
+  position: absolute;
+  left: 26px;
+  right: 26px;
+  bottom: 10px;
+  height: 14px;
+  background: var(--wave-gold);
+  background-size: 100% 100%;
+  opacity: 0.55;
 }
 
 .pageHeader h1 {
   margin: 0 0 6px;
-  font-size: 1.5rem;
+  font-size: var(--title-size, 1.5rem);
   font-weight: 800;
-  color: #1a2634;
+  color: var(--text-h);
 }
 
 .pageHeader p {
   margin: 0;
-  font-size: 0.9rem;
-  color: #64748b;
+  font-size: var(--subtitle-size, 0.88rem);
+  color: var(--text-muted);
 }
 
 .toolbar {
@@ -29,30 +48,30 @@
 .filterSelect {
   padding: 11px 40px 11px 16px;
   font-size: 0.9rem;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--border);
   border-radius: 12px;
   background: #fff;
-  color: #1e293b;
+  color: var(--text-h);
   cursor: pointer;
   outline: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237a756c' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   min-width: 200px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .filterSelect:focus {
-  border-color: #d4af37;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-ring);
 }
 
 .tableWrapper {
   background: #ffffff;
   border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
   overflow-x: auto;
 }
 
@@ -63,30 +82,31 @@
 }
 
 .eventList thead tr {
-  background: linear-gradient(135deg, #1a2634, #243447);
+  background: #fcfaf5;
+  border-bottom: 2px solid var(--gold);
 }
 
 .eventList th {
-  padding: 14px 16px;
+  padding: var(--table-pad-y, 14px) var(--table-pad-x, 16px);
   text-align: left;
   font-size: 0.72rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--gold-dark);
   text-transform: uppercase;
   letter-spacing: 0.6px;
   white-space: nowrap;
 }
 
 .eventList td {
-  padding: 14px 16px;
+  padding: 0;
   font-size: 0.88rem;
-  color: #334155;
-  border-bottom: 1px solid #f1f5f9;
-  vertical-align: top;
+  color: var(--text);
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
 }
 
 .eventList tbody tr:hover td {
-  background: #fffdf5;
+  background: var(--surface-warm);
 }
 
 .eventList tbody tr:last-child td {
@@ -96,9 +116,9 @@
 .emptyState {
   text-align: center;
   padding: 56px 24px;
-  color: #94a3b8;
+  color: var(--text-faint);
   font-style: italic;
   background: #fff;
   border-radius: 14px;
-  border: 1.5px dashed #e2e8f0;
+  border: 1.5px dashed var(--border);
 }

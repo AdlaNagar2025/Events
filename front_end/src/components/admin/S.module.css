@@ -8,9 +8,9 @@
 .pageHeader {
   margin-bottom: 24px;
   padding: 24px 28px;
-  background: linear-gradient(135deg, #1a2634, #243447);
+  background: #fcfaf5; border-bottom: 2px solid var(--gold);
   border-radius: 16px;
-  box-shadow: 0 12px 40px rgba(26, 38, 52, 0.2);
+  box-shadow: 0 12px 40px rgba(44, 42, 38, 0.2);
 }
 
 .pageHeader h2 {
@@ -57,8 +57,8 @@
 }
 
 .filterSelect:focus {
-  border-color: #d4af37;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.18);
 }
 
 .tableContainer {
@@ -76,7 +76,7 @@
 }
 
 .customtable thead tr {
-  background: linear-gradient(135deg, #1a2634, #243447);
+  background: #fcfaf5; border-bottom: 2px solid var(--gold);
 }
 
 .customtable th {
@@ -84,7 +84,7 @@
   text-align: left;
   font-size: 0.74rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--gold-dark);
   text-transform: uppercase;
   letter-spacing: 0.6px;
   white-space: nowrap;
@@ -141,8 +141,8 @@
 
 .showBtn {
   background: transparent;
-  color: #1a2634;
-  border: 1.5px solid #d4af37;
+  color: var(--navy);
+  border: 1.5px solid var(--gold);
   padding: 8px 16px;
   border-radius: 9px;
   cursor: pointer;
@@ -153,8 +153,8 @@
 }
 
 .showBtn:hover {
-  background: linear-gradient(135deg, #d4af37, #c9a227);
-  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  box-shadow: 0 4px 14px rgba(201, 162, 39, 0.35);
 }
 
 .actionBtns {
@@ -164,8 +164,8 @@
 }
 
 .approveBtn {
-  background: linear-gradient(135deg, #d4af37, #c9a227);
-  color: #1a2634;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #ffffff;
   border: none;
   padding: 8px 18px;
   border-radius: 9px;
@@ -173,12 +173,12 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 3px 10px rgba(201, 162, 39, 0.3);
 }
 
 .approveBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.4);
+  box-shadow: 0 6px 18px rgba(201, 162, 39, 0.4);
 }
 
 .denyBtn {
@@ -221,7 +221,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #1a2634;
+  background: var(--navy);
   color: #fff;
   padding: 10px 20px;
   border: none;
@@ -231,11 +231,11 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 14px rgba(26, 38, 52, 0.25);
+  box-shadow: 0 4px 14px rgba(44, 42, 38, 0.25);
 }
 
 .backBtn:hover {
-  background: #243447;
+  background: var(--navy-light);
   transform: translateY(-1px);
 }
 

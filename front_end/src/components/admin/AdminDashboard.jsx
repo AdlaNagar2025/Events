@@ -1,12 +1,11 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import API from "../../services/api";
-import classes from "./usersmanagment.module.css";
+import classes from "./servicesapprovals.module.css";
+import umClasses from "./usersmanagment.module.css";
 import ContentModeration from "./ContentModeration";
 import ServicesApprovals from "./ServicesApprovals";
 
 export default function AdminDashboard({ user }) {
-  const [loading, setLoading] = useState(false);
   const [userStats, setUserStatas] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -16,50 +15,53 @@ export default function AdminDashboard({ user }) {
 
   useEffect(() => {
     const fetchUserStats = async () => {
-      setLoading(true);
       try {
-        const response = await API.get(
-          "/admin/userStats",
-      
-        );
-
+        const response = await API.get("/admin/userStats");
         if (response.data && response.data.data) {
           setUserStatas(response.data.data);
         }
       } catch (error) {
         console.log("Error fetching stats:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchUserStats();
   }, []);
-  return (
-    <div>
-      <ServicesApprovals user={user} newType="pending" />
-      <div className={classes.statsGrid}>
-        <div className={classes.statCard}>
-          <span className={classes.statLabel}>Total Users</span>
-          <span className={classes.statValue}>{userStats.totalUsers}</span>
-        </div>
-        <div className={classes.statCard}>
-          <span className={classes.statLabel}>Active Users</span>
-          <span className={classes.statValue}>{userStats.activeUsers}</span>
-        </div>
-        <div className={classes.statCard}>
-          <span className={classes.statLabel}>Inactive Users</span>
-          <span className={classes.statValue}>{userStats.inactiveUsers}</span>
-        </div>
-        <div className={classes.statCard}>
-          <span className={classes.statLabel}>New Registrations</span>
-          <span className={classes.statValue}>
-            {userStats.newRegistrations}
-          </span>
-        </div>
-      </div>
 
-      <ContentModeration newUrl="/admin/allPendingReports" />
+  return (
+    <div className={classes.dashboardPage}>
+      <section className={classes.dashboardSection}>
+        <ServicesApprovals user={user} newType="pending" />
+      </section>
+
+      <section className={classes.dashboardSection}>
+        <div className={umClasses.statsGrid}>
+          <div className={umClasses.statCard}>
+            <span className={umClasses.statLabel}>Total Users</span>
+            <span className={umClasses.statValue}>{userStats.totalUsers}</span>
+          </div>
+          <div className={umClasses.statCard}>
+            <span className={umClasses.statLabel}>Active Users</span>
+            <span className={umClasses.statValue}>{userStats.activeUsers}</span>
+          </div>
+          <div className={umClasses.statCard}>
+            <span className={umClasses.statLabel}>Inactive Users</span>
+            <span className={umClasses.statValue}>
+              {userStats.inactiveUsers}
+            </span>
+          </div>
+          <div className={umClasses.statCard}>
+            <span className={umClasses.statLabel}>New Registrations</span>
+            <span className={umClasses.statValue}>
+              {userStats.newRegistrations}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section className={classes.dashboardSection}>
+        <ContentModeration newUrl="/admin/allPendingReports" />
+      </section>
     </div>
   );
 }

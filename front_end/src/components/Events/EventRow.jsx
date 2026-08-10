@@ -4,6 +4,7 @@ import ReviewSection from "./ReviewSection";
 import ReportSection from "./ReportSection";
 import { useState } from "react";
 import AppDialog from "../shared/AppDialog";
+import AppModal from "../shared/AppModal";
 
 function getStatusClass(status) {
   const s = (status || "").toUpperCase();
@@ -11,6 +12,17 @@ function getStatusClass(status) {
   if (s === "REJECTED" || s === "DENY") return "statusRejected";
   if (s === "CANCELLED") return "statusCancelled";
   return "statusPending";
+}
+
+function providerSummary(event) {
+  const parts = [];
+  if (event.hall_name) parts.push(event.hall_name);
+  if (event.chiefs?.length) {
+    parts.push(
+      `${event.chiefs.length} chef${event.chiefs.length > 1 ? "s" : ""}`,
+    );
+  }
+  return parts.join(" · ") || "No providers";
 }
 
 export default function EventRow({
@@ -25,17 +37,17 @@ export default function EventRow({
 }) {
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [reasonDialog, setReasonDialog] = useState(null); // { actionStatus }
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [reasonDialog, setReasonDialog] = useState(null);
+  const [approveConfirm, setApproveConfirm] = useState(false);
 
   const startTime = event.start_time?.slice(0, 5) || "";
   const endTime = event.end_time?.slice(0, 5) || "";
-
- 
-
   const status = (event.finalStatus || event.status || "").toUpperCase();
 
-const canProviderAction =
-  rolePath === "provider" && isFuture && status !== "CANCELLED";
+  const canProviderAction =
+    rolePath === "provider" && isFuture && status !== "CANCELLED";
+
   const openReasonDialog = (actionStatus) => {
     setReasonDialog({ actionStatus });
   };
@@ -48,6 +60,7 @@ const canProviderAction =
       (userReason || "").trim() || "No reason provided by the business owner.";
     onChangeStatus(event, event.event_id, actionStatus, cleanReason);
   };
+
   const canModifyByPolicy = (() => {
     if (!event.requested_date || !event.start_time) return false;
     const dateStr = String(event.requested_date).split("T")[0];
@@ -57,9 +70,58 @@ const canProviderAction =
     return hoursLeft >= 48;
   })();
 
+  const providersPanel = (
+    <div className={classes.detailsSection}>
+      {event.hall_name && (
+        <div className={classes.detailRow}>
+          <strong>Hall:</strong> {event.hall_name}{" "}
+          <span
+            className={`${classes.statusBadge} ${classes[getStatusClass(event.hall_status)]}`}
+          >
+            {event.hall_status}
+          </span>
+          {event.hall_reason && (
+            <span className={classes.reasonText}> ({event.hall_reason})</span>
+          )}
+        </div>
+      )}
+
+      {event.chiefs && event.chiefs.length > 0 && (
+        <div className={classes.detailRow}>
+          <strong>Chefs:</strong>
+          {event.chiefs.map((chief) => {
+            const chefName = chief.chief_name || chief.name;
+            const chefStatus = chief.chief_status || chief.status;
+            return (
+              <p key={chief.chief_id || chief.id} className={classes.smallText}>
+                {chefName}{" "}
+                <span
+                  className={`${classes.statusBadge} ${classes[getStatusClass(chefStatus)]}`}
+                >
+                  {chefStatus}
+                </span>
+                {(chief.chiefs_reason || chief.reason) && (
+                  <span className={classes.reasonText}>
+                    {" "}
+                    ({chief.chiefs_reason || chief.reason})
+                  </span>
+                )}
+              </p>
+            );
+          })}
+        </div>
+      )}
+
+      {event.rejection_reason && (
+        <div className={classes.reasonBox}>
+          <strong>Note:</strong> "{event.rejection_reason}"
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
-      {/* תצוגה עבור לקוח */}
       {rolePath === "customer" && (
         <tr className={classes.eventCard}>
           <td>{event.requested_date}</td>
@@ -74,149 +136,93 @@ const canProviderAction =
             </span>
           </td>
           <td>{event.guest_number}</td>
-
           <td>
-            <div className={classes.detailsSection}>
-              {/* פרטי אולם */}
-              {event.hall_name && (
-                <div>
-                  <strong>Hall:</strong> {event.hall_name} |{" "}
-                  <span
-                    className={classes[(event.hall_status || "").toLowerCase()]}
-                  >
-                    {event.hall_status}
-                  </span>
-                  {event.hall_reason && (
-                    <span className={classes.reasonText}>
-                      {" "}
-                      ({event.hall_reason})
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* פרטי שפים */}
-              {/* פרטי שפים */}
-              {event.chiefs && event.chiefs.length > 0 && (
-                <div>
-                  <strong>Chefs:</strong>
-                  {event.chiefs.map((chief) => {
-                    // חילוץ בטוח של השם והסטטוס
-                    const chefName = chief.chief_name || chief.name;
-                    const chefStatus = chief.chief_status || chief.status;
-
-                    return (
-                      <p
-                        key={chief.chief_id || chief.id}
-                        className={classes.smallText}
-                      >
-                        {chefName} |{" "}
-                        <span
-                          className={classes[(chefStatus || "").toLowerCase()]}
-                        >
-                          {chefStatus}
-                        </span>
-                        {(chief.chiefs_reason || chief.reason) && (
-  <span className={classes.reasonText}>
-    {" "}
-    ({chief.chiefs_reason || chief.reason})
-  </span>
-)}
-                        
-                      </p>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* סיבת דחייה גלובלית במידה וקיימת */}
-              {event.rejection_reason && (
-                <div
-                  className={classes.reasonBox}
-                  style={{
-                    marginTop: "8px",
-                    color: "#dc3545",
-                    fontSize: "0.9em",
-                  }}
-                >
-                  <strong>⚠️ Note:</strong> "{event.rejection_reason}"
-                </div>
-              )}
+            <div className={classes.providersCell}>
+              <span className={classes.providersSummary}>
+                {providerSummary(event)}
+              </span>
+              <button
+                type="button"
+                className={classes.detailsBtn}
+                onClick={() => setDetailsOpen(true)}
+              >
+                Details
+              </button>
             </div>
           </td>
-
           <td>
             <div className={classes.actions}>
-            {isFuture ? (
-  <>
-    <button
-      className={classes.updateBtn}
-      disabled={!canModifyByPolicy}
-      title={
-        !canModifyByPolicy
-          ? "Locked within 48 hours of the event. Contact your providers."
-          : ""
-      }
-      onClick={() => onUpdate(event)}
-    >
-      Update
-    </button>
+              {isFuture ? (
+                <>
+                  <button
+                    className={classes.updateBtn}
+                    disabled={!canModifyByPolicy}
+                    title={
+                      !canModifyByPolicy
+                        ? "Locked within 48 hours of the event."
+                        : ""
+                    }
+                    onClick={() => onUpdate(event)}
+                  >
+                    Update
+                  </button>
 
-    {event.finalStatus !== "CANCELLED" ? (
-      <button
-        className={classes.rejectBtn}
-        disabled={!canModifyByPolicy}
-        title={
-          !canModifyByPolicy
-            ? "Locked within 48 hours of the event. Contact your providers."
-            : ""
-        }
-        onClick={() => onCancel(event)}
-      >
-        Cancel
-      </button>
-    ) : (
-      <button
-        className={classes.rejectBtn}
-        disabled={!canModifyByPolicy}
-        onClick={() => onDisCancel(event)}
-      >
-        DisCancel
-      </button>
-    )}
+                  {event.finalStatus !== "CANCELLED" ? (
+                    <button
+                      className={classes.rejectBtn}
+                      disabled={!canModifyByPolicy}
+                      title={
+                        !canModifyByPolicy
+                          ? "Locked within 48 hours of the event."
+                          : ""
+                      }
+                      onClick={() => onCancel(event)}
+                    >
+                      Cancel
+                    </button>
+                  ) : (
+                    <button
+                      className={classes.rejectBtn}
+                      disabled={!canModifyByPolicy}
+                      onClick={() => onDisCancel(event)}
+                    >
+                      DisCancel
+                    </button>
+                  )}
 
-    {!canModifyByPolicy && (
-      <p className={classes.policyNote}>
-        Changes and cancellation are locked within 48 hours of the event.
-        Please contact your providers for last-minute arrangements.
-      </p>
-    )}
-  </>
-) :  (
+                  {!canModifyByPolicy && (
+                    <span className={classes.policyNote} title="Changes are locked within 48 hours of the event. Contact your providers.">
+                      Locked (48h)
+                    </span>
+                  )}
+                </>
+              ) : (
                 <>
                   {event.finalStatus === "APPROVED" && (
-                    <div>
+                    <>
                       <button
                         className={classes.reviewBtn}
                         onClick={() => setIsReviewOpen(true)}
                       >
-                        Write a Review
+                        Review
                       </button>
                       <button
                         className={classes.reviewBtn}
                         onClick={() => setIsReportOpen(true)}
                       >
-                        🚩 Report
+                        Report
                       </button>
-                    </div>
+                    </>
                   )}
 
                   {event.rating && (
-                    <div className={classes.reviewReceived}>
-                      <h4>Client Review</h4>
-                      <Rating value={event.rating} readOnly size="small" />
-                      <p>"{event.comment}"</p>
-                    </div>
+                    <button
+                      type="button"
+                      className={classes.detailsBtn}
+                      onClick={() => setDetailsOpen(true)}
+                    >
+                      View review
+                    </button>
                   )}
                 </>
               )}
@@ -239,7 +245,6 @@ const canProviderAction =
         </tr>
       )}
 
-      {/* תצוגה עבור ספק (Provider) */}
       {rolePath === "provider" && (
         <tr className={classes.eventCard}>
           <td>{event.first_name}</td>
@@ -247,40 +252,43 @@ const canProviderAction =
           <td>
             {startTime} - {endTime}
           </td>
-          <td>{event.finalStatus || event.status}</td>
+          <td>
+            <span
+              className={`${classes.statusBadge} ${classes[getStatusClass(status)]}`}
+            >
+              {event.finalStatus || event.status}
+            </span>
+          </td>
           <td>{event.guest_number}</td>
           {role === "Chief" && <td>{event.location}</td>}
           <td>
-            {event.notes}
-            {event.rejection_reason && (
-              <div
-                style={{
-                  fontStyle: "italic",
-                  color: "#6c757d",
-                  marginTop: "4px",
-                }}
-              >
-                Reason sent: "{event.rejection_reason}"
-              </div>
-            )}
+            <div className={classes.notesCell}>
+              <span>{event.notes || "—"}</span>
+              {event.rejection_reason && (
+                <button
+                  type="button"
+                  className={classes.detailsBtn}
+                  onClick={() => setDetailsOpen(true)}
+                >
+                  View note
+                </button>
+              )}
+            </div>
           </td>
-
           <td>
             {canProviderAction && (
-              <>
+              <div className={classes.actions}>
                 <button
                   className={classes.rejectBtn}
                   onClick={() => openReasonDialog("CANCELLED")}
                 >
-                  Cancel Event
+                  Cancel
                 </button>
 
                 {status !== "APPROVED" && (
                   <button
                     className={classes.approveBtn}
-                    onClick={() =>
-                      onChangeStatus(event, event.event_id, "APPROVED", null)
-                    }
+                    onClick={() => setApproveConfirm(true)}
                   >
                     Approve
                   </button>
@@ -294,11 +302,41 @@ const canProviderAction =
                     Reject
                   </button>
                 )}
-              </>
+              </div>
             )}
           </td>
         </tr>
       )}
+
+      <AppModal
+        open={detailsOpen}
+        title={
+          rolePath === "customer"
+            ? "Event providers"
+            : event.rejection_reason
+              ? "Rejection note"
+              : "Event details"
+        }
+        subtitle={`${event.requested_date || ""} · ${startTime}-${endTime}`}
+        onClose={() => setDetailsOpen(false)}
+      >
+        {rolePath === "customer" ? (
+          <>
+            {providersPanel}
+            {event.rating && (
+              <div className={classes.reviewReceived}>
+                <h4>Client Review</h4>
+                <Rating value={event.rating} readOnly size="small" />
+                <p>"{event.comment}"</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className={classes.reasonBox}>
+            <strong>Reason sent:</strong> "{event.rejection_reason}"
+          </div>
+        )}
+      </AppModal>
 
       <AppDialog
         open={!!reasonDialog}
@@ -308,7 +346,9 @@ const canProviderAction =
             : "Reject request"
         }
         message={`Please enter the reason for ${
-          reasonDialog?.actionStatus === "CANCELLED" ? "cancelling" : "rejecting"
+          reasonDialog?.actionStatus === "CANCELLED"
+            ? "cancelling"
+            : "rejecting"
         } this request:`}
         confirmLabel="Submit"
         danger
@@ -316,6 +356,18 @@ const canProviderAction =
         inputPlaceholder="Reason..."
         onCancel={() => setReasonDialog(null)}
         onConfirm={submitReasonDialog}
+      />
+
+      <AppDialog
+        open={approveConfirm}
+        title="Approve request"
+        message="Approve this event request?"
+        confirmLabel="Approve"
+        onCancel={() => setApproveConfirm(false)}
+        onConfirm={() => {
+          setApproveConfirm(false);
+          onChangeStatus(event, event.event_id, "APPROVED", null);
+        }}
       />
     </>
   );

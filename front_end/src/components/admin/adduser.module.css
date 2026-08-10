@@ -2,7 +2,8 @@
   width: 100%;
   max-width: 520px;
   margin: 0 auto;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: var(--sans);
+  color: var(--text);
 }
 
 .pageHeader {
@@ -13,31 +14,31 @@
   margin: 0 0 6px;
   font-size: 1.5rem;
   font-weight: 800;
-  color: #1a2634;
+  color: var(--text-h);
 }
 
 .pageHeader p {
   margin: 0;
   font-size: 0.88rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .formCard {
   background: #fff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 28px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow);
 }
 
 .error {
   margin-bottom: 16px;
   padding: 12px 16px;
-  background: #fef2f2;
-  border: 1.5px solid #fecaca;
-  border-left: 4px solid #dc2626;
+  background: var(--danger-bg);
+  border: 1.5px solid var(--danger-border);
+  border-left: 4px solid var(--danger);
   border-radius: 10px;
-  color: #b91c1c;
+  color: var(--danger);
   font-size: 0.88rem;
   font-weight: 500;
 }
@@ -51,7 +52,7 @@
   margin-bottom: 6px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--text);
 }
 
 .input,
@@ -59,9 +60,10 @@
   width: 100%;
   padding: 11px 14px;
   font-size: 0.92rem;
-  color: #1e293b;
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
+  font-family: var(--sans);
+  color: var(--text-h);
+  background: var(--surface-warm);
+  border: 1.5px solid var(--border);
   border-radius: 10px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -70,9 +72,9 @@
 
 .input:focus,
 .select:focus {
-  border-color: #d4af37;
+  border-color: var(--gold);
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+  box-shadow: 0 0 0 3px var(--gold-ring);
 }
 
 .btnContainer {
@@ -86,17 +88,18 @@
   padding: 12px 20px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #64748b;
-  background: #f1f5f9;
-  border: 1.5px solid #e2e8f0;
+  font-family: var(--sans);
+  color: var(--text-muted);
+  background: var(--surface-warm);
+  border: 1.5px solid var(--border);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .cancelBtn:hover {
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--border-soft);
+  color: var(--text-h);
 }
 
 .submitBtn {
@@ -104,18 +107,19 @@
   padding: 12px 20px;
   font-size: 0.9rem;
   font-weight: 700;
-  color: #1a2634;
-  background: linear-gradient(135deg, #d4af37, #c9a227);
+  font-family: var(--sans);
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
+  box-shadow: 0 4px 14px rgba(201, 162, 39, 0.35);
   transition: all 0.2s;
 }
 
 .submitBtn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.45);
+  box-shadow: 0 6px 20px rgba(201, 162, 39, 0.45);
 }
 
 .submitBtn:disabled {

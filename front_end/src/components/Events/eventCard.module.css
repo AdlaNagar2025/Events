@@ -1,121 +1,258 @@
 .eventCard td {
   background: #ffffff;
+  color: var(--text);
+  font-family: var(--sans);
+  padding: var(--table-pad-y, 14px) var(--table-pad-x, 16px);
+  vertical-align: middle;
+  font-size: 0.88rem;
+}
+
+.providersCell,
+.notesCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.providersSummary {
+  font-size: 0.86rem;
+  color: var(--text-h);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.detailsBtn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--gold);
+  background: #ffffff;
+  color: var(--gold-dark);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--sans);
+  transition: all 0.2s;
+}
+
+.detailsBtn:hover {
+  background: var(--gold);
+  color: #ffffff;
 }
 
 .detailsSection {
-  background: #f8fafc;
-  padding: 12px 14px;
+  background: var(--surface-warm);
+  padding: 14px 16px;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  font-size: 0.82rem;
-  line-height: 1.5;
+  border: 1px solid var(--border);
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.detailsSection strong {
-  color: #1a2634;
+.detailRow strong {
+  color: var(--text-h);
+  margin-right: 6px;
 }
 
 .smallText {
-  margin: 4px 0 0;
-  font-size: 0.8rem;
-  color: #64748b;
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
-.approved { color: #15803d; font-weight: 700; }
-.pending { color: #c2410c; font-weight: 700; }
-.rejected { color: #dc2626; font-weight: 700; }
-.cancelled { color: #94a3b8; font-weight: 700; text-decoration: line-through; }
-.deny { color: #dc2626; font-weight: 700; }
+.approved {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.pending {
+  color: var(--status-pending-text);
+  font-weight: 700;
+}
+
+.rejected,
+.deny {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.cancelled {
+  color: var(--status-cancelled-text);
+  font-weight: 700;
+  text-decoration: line-through;
+}
 
 .statusBadge {
   display: inline-block;
   padding: 4px 10px;
   border-radius: 20px;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border: 1px solid transparent;
+  vertical-align: middle;
 }
 
-.statusApproved { background: #dcfce7; color: #15803d; }
-.statusPending { background: #fff7ed; color: #c2410c; }
-.statusRejected { background: #fef2f2; color: #dc2626; }
-.statusCancelled { background: #f1f5f9; color: #64748b; }
+.statusApproved {
+  background: var(--status-approved-bg);
+  color: var(--status-approved-text);
+  border-color: var(--success-border);
+}
+
+.statusPending {
+  background: var(--status-pending-bg);
+  color: var(--status-pending-text);
+  border-color: var(--status-pending-border);
+}
+
+.statusRejected {
+  background: var(--status-rejected-bg);
+  color: var(--status-rejected-text);
+  border-color: var(--danger-border);
+}
+
+.statusCancelled {
+  background: var(--status-cancelled-bg);
+  color: var(--status-cancelled-text);
+}
 
 .actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
 .actions button,
 .updateBtn,
-.reviewBtn {
+.reviewBtn,
+.approveBtn,
+.rejectBtn {
   padding: 7px 14px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
   font-size: 0.78rem;
   font-weight: 700;
+  font-family: var(--sans);
   transition: all 0.2s;
   white-space: nowrap;
 }
 
-.updateBtn {
-  background: #f8fafc;
-  color: #1a2634;
-  border: 1.5px solid #d4af37;
+.actions button:disabled,
+.updateBtn:disabled,
+.rejectBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
-.updateBtn:hover {
-  background: #d4af37;
+.updateBtn {
+  background: #ffffff;
+  color: var(--gold-dark);
+  border: 1.5px solid var(--gold);
+}
+
+.updateBtn:hover:not(:disabled) {
+  background: var(--gold);
+  color: #ffffff;
 }
 
 .approveBtn {
-  background: linear-gradient(135deg, #d4af37, #c9a227);
-  color: #1a2634;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(201, 162, 39, 0.28);
 }
 
 .approveBtn:hover {
   transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(201, 162, 39, 0.38);
 }
 
 .rejectBtn {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1.5px solid #fecaca;
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1.5px solid var(--danger-border);
 }
 
-.rejectBtn:hover {
-  background: #dc2626;
+.rejectBtn:hover:not(:disabled) {
+  background: var(--danger);
   color: #fff;
-  border-color: #dc2626;
+  border-color: var(--danger);
 }
 
 .reviewBtn {
-  background: #1a2634;
+  background: var(--text-h);
   color: #fff;
 }
 
 .reviewBtn:hover {
-  background: #243447;
+  background: var(--navy-light);
+}
+
+.policyNote {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--status-pending-text);
+  background: var(--status-pending-bg);
+  border: 1px solid var(--status-pending-border);
+  border-radius: 20px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+.reasonText {
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.reasonBox {
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-left: 3px solid var(--danger);
+  border-radius: 8px;
+  color: var(--danger);
+  font-size: 0.86rem;
+  line-height: 1.5;
 }
 
 .reviewReceived {
-  margin-top: 8px;
-  padding: 10px;
-  background: #f8fafc;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--surface-warm);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  font-size: 0.82rem;
+  font-size: 0.86rem;
 }
 
 .reviewReceived h4 {
   margin: 0 0 6px;
   font-size: 0.78rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .reviewReceived p {
   margin: 6px 0 0;
-  color: #475569;
+  color: var(--text);
   font-style: italic;
+}
+
+.eventDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text);
+  font-size: 0.88rem;
 }

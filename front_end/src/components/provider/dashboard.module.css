@@ -1,0 +1,40 @@
+/* Provider dashboard — buttons aligned with white/gold theme */
+
+.approveBtn {
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--sans);
+  cursor: pointer;
+  margin-right: 8px;
+  box-shadow: 0 3px 10px rgba(201, 162, 39, 0.3);
+  transition: all 0.2s;
+}
+
+.approveBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(201, 162, 39, 0.4);
+}
+
+.rejectBtn {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1.5px solid var(--danger-border);
+  padding: 8px 16px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rejectBtn:hover {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}

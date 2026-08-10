@@ -4,48 +4,69 @@
   justify-content: space-between;
   width: 100%;
   padding: 14px clamp(20px, 4vw, 50px);
-  background-color: #1a2634;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.15);
-  font-family: "Segoe UI", Tahoma, sans-serif;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--sans);
   flex-shrink: 0;
+  position: relative;
+}
+
+.nav::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gold) 20%,
+    #e8d48b 50%,
+    var(--gold) 80%,
+    transparent 100%
+  );
+  opacity: 0.85;
 }
 
 .logo {
   font-size: 24px;
-  color: #d4af37 !important; /* הזהב */
+  color: var(--gold) !important;
   text-decoration: none;
-  font-weight: bold;
-  letter-spacing: 1px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
 }
 
 .navLinks {
   display: flex;
-  gap: 20px;
+  gap: 18px;
   align-items: center;
 }
 
 .nav a {
-  color: #ffffff;
+  color: var(--text-h);
   text-decoration: none;
-  font-size: 16px;
-  font-weight: 500;
-  transition: color 0.3s ease;
+  font-size: 15px;
+  font-weight: 600;
+  transition: color 0.2s ease;
 }
 
 .nav a:hover {
-  color: #d4af37; /* הופך לזהב במעבר עכבר */
+  color: var(--gold);
 }
 
 .logoutBtn {
-  background-color: transparent;
-  border: 1px solid #d4af37;
-  color: #d4af37 !important;
-  padding: 5px 15px;
-  border-radius: 20px;
-  transition: all 0.3s ease;
+  background: transparent;
+  border: 1.5px solid var(--gold);
+  color: var(--gold) !important;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  transition: all 0.2s ease;
 }
 
 .logoutBtn:hover {
-  background-color: #d4af37;
-  color: #2c3e50 !important;
+  background: var(--gold);
+  color: #ffffff !important;
 }

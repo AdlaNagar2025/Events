@@ -1,0 +1,111 @@
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 42, 38, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+}
+
+.reviewModal {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  padding: 28px;
+  color: var(--text);
+}
+
+.reviewModal h3 {
+  margin: 0 0 8px;
+  color: var(--text-h);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.closeModalBtn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.closeModalBtn:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.reviewModal label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+  color: var(--text-h);
+  font-size: 0.88rem;
+}
+
+.reviewModal input,
+.reviewModal textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.reviewModal input:focus,
+.reviewModal textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-ring);
+  background: var(--surface);
+}
+
+.reviewModal button[type="submit"] {
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--danger);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reviewModal button[type="submit"]:hover {
+  background: #b91c1c;
+}
+
+.reviewModal button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reviewModal blockquote {
+  background: var(--bg);
+  border-left: 3px solid var(--gold);
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-style: italic;
+  color: var(--text-muted);
+  margin: 12px 0 16px;
+}

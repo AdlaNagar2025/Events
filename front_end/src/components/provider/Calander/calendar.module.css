@@ -1,163 +1,219 @@
-/* מיכל היומן הראשי */
 .calendarContainer {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  margin: 20px auto;
+  background: var(--surface);
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  margin: 0 auto;
   max-width: 1100px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--sans);
+  border: 1px solid var(--border);
+}
+
+.calendarContainer h2 {
+  margin: 0 0 18px;
+  color: var(--text-h);
+  font-weight: 800;
 }
 
 .calendarWrapper {
-  margin-bottom: 30px;
-  border: 1px solid #edf2f7;
-  border-radius: 8px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
 }
 
-/* עיצוב כותרת היומן והכפתורים */
 :global(.fc-header-toolbar) {
-  padding: 15px;
-  background-color: #f8fafc;
+  padding: 14px 16px;
+  background: #fcfaf5;
   margin-bottom: 0 !important;
-  border-bottom: 1px solid #edf2f7;
+  border-bottom: 2px solid var(--gold);
 }
 
 :global(.fc-toolbar-title) {
-  font-size: 1.25rem !important;
+  font-size: 1.15rem !important;
   font-weight: 700 !important;
-  color: #2d3748;
+  color: var(--text-h) !important;
 }
 
-/* כפתורים */
 :global(.fc-button) {
-  background-color: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #4a5568 !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-h) !important;
   font-weight: 600 !important;
   text-transform: capitalize !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+  box-shadow: none !important;
   transition: all 0.2s ease !important;
 }
 
 :global(.fc-button-primary:not(:disabled):active),
 :global(.fc-button-primary:not(:disabled).fc-button-active) {
-  background-color: #4a90e2 !important;
-  color: white !important;
-  border-color: #4a90e2 !important;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
+  color: #ffffff !important;
+  border-color: var(--gold) !important;
 }
 
 :global(.fc-button:hover) {
-  background-color: #f7fafc !important;
-  border-color: #cbd5e0 !important;
+  background: rgba(201, 162, 39, 0.2) !important;
+  border-color: var(--gold) !important;
 }
 
-/* עיצוב רשת הזמן (TimeGrid) */
 :global(.fc-timegrid-slot) {
   height: 3em !important;
-  border-bottom: 1px solid #f1f5f9 !important;
+  border-bottom: 1px solid var(--border-soft) !important;
 }
 
-:global(.fc-timegrid-axis-cushion), :global(.fc-timegrid-slot-label-cushion) {
-  color: #718096 !important;
+:global(.fc-timegrid-axis-cushion),
+:global(.fc-timegrid-slot-label-cushion) {
+  color: var(--text-muted) !important;
   font-size: 0.85rem;
 }
 
-/* עיצוב האירועים */
+:global(.fc-col-header-cell) {
+  background: var(--bg) !important;
+}
+
 :global(.fc-event) {
   border-radius: 6px !important;
   padding: 2px 4px !important;
   font-size: 0.85rem !important;
   border: none !important;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   cursor: pointer;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
+  color: #ffffff !important;
 }
 
 :global(.fc-event-main) {
   padding: 2px;
+  color: var(--navy) !important;
 }
 
-/* עיצוב אזור האינפוטים והאישור למטה */
 .inputGroup {
   display: flex;
-  gap: 15px;
+  gap: 14px;
   align-items: center;
   justify-content: center;
-  margin-top: 25px;
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 8px;
+  margin-top: 20px;
+  padding: 18px;
+  background: var(--bg);
+  border-radius: 12px;
+  border: 1px solid var(--border);
   flex-wrap: wrap;
 }
 
 .inputGroup label {
-  font-weight: 600;
-  color: #4a5568;
+  font-weight: 700;
+  color: var(--text-h);
+  font-size: 0.85rem;
 }
 
 .inputGroup input {
-  padding: 8px 12px;
-  border: 1px solid #cbd5e0;
-  border-radius: 6px;
+  padding: 9px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
   outline: none;
-  transition: border-color 0.2s;
+  background: var(--surface);
+  color: var(--text-h);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .inputGroup input:focus {
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-ring);
 }
 
-/* תיבת אישור חלון חדש */
 .confirmBox {
-  margin-top: 20px;
+  margin-top: 18px;
   padding: 20px;
-  border: 2px dashed #4a90e2;
-  border-radius: 12px;
+  border: 1.5px dashed rgba(201, 162, 39, 0.55);
+  border-radius: 14px;
   text-align: center;
-  background-color: #ebf8ff;
+  background: var(--gold-soft);
   animation: fadeIn 0.3s ease-in-out;
 }
 
 .confirmBox h4 {
-  margin-top: 0;
-  color: #2b6cb0;
+  margin: 0 0 10px;
+  color: var(--text-h);
+  font-weight: 800;
+}
+
+.confirmBox p {
+  color: var(--text-muted);
+  margin: 4px 0;
 }
 
 .saveBtn {
-  background-color: #48bb78;
-  color: white;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #ffffff;
   border: none;
-  padding: 10px 25px;
-  border-radius: 6px;
+  padding: 10px 22px;
+  border-radius: 9px;
   font-weight: 700;
   cursor: pointer;
-  margin-right: 10px;
-  transition: background 0.2s;
+  box-shadow: 0 3px 12px rgba(201, 162, 39, 0.35);
+  transition: all 0.2s;
 }
 
 .saveBtn:hover {
-  background-color: #38a169;
+  transform: translateY(-1px);
+}
+
+.saveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.deleteBtn {
+  background: var(--surface);
+  color: var(--danger);
+  border: 1.5px solid var(--danger-border);
+  padding: 10px 22px;
+  border-radius: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteBtn:hover {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+
+.deleteBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .cancelBtn {
-  background-color: #e53e3e;
-  color: white;
+  background: var(--navy);
+  color: #fff;
   border: none;
-  padding: 10px 25px;
-  border-radius: 6px;
+  padding: 10px 22px;
+  border-radius: 9px;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .cancelBtn:hover {
-  background-color: #c53030;
+  background: var(--navy-light);
+}
+
+.cancelBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

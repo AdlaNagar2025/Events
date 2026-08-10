@@ -1,15 +1,25 @@
 import React, { useEffect, useState } from "react";
 import API from "../../services/api";
 import classes from "./servicesapprovals.module.css";
+import AppDialog from "../shared/AppDialog";
+import AppModal from "../shared/AppModal";
 import toast from "react-hot-toast";
+
+function getStatusClass(status, classes) {
+  if (status === "PENDING") return classes.statusPending;
+  if (status === "RESOLVED") return classes.statusApproved;
+  return classes.statusDeny;
+}
 
 export default function ContentModeration({ newUrl }) {
   const [reports, setReports] = useState([]);
+  const [detailReport, setDetailReport] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null); // { report, newStatus }
 
   useEffect(() => {
     const fetchAllReports = async () => {
       try {
-        let url = newUrl ? newUrl : "/admin/allReports";
+        const url = newUrl ? newUrl : "/admin/allReports";
         const response = await API.get(url);
         if (response.data.success) {
           setReports(response.data.data);
@@ -22,49 +32,51 @@ export default function ContentModeration({ newUrl }) {
     fetchAllReports();
   }, [newUrl]);
 
-  // ✨ הפונקציה המעודכנת שמחברת את הכל לבקאנד
   const handleUpdateStatus = async (report, newStatus) => {
     try {
-      const response = await API.post(
-        "/admin/resolveReport",
-        {
-          reportId: report.id,
-          newStatus: newStatus,
-          targetType: report.target_type,
-          targetId: report.target_id, // ה-ID של התגובה/אלמנט
-          offenderId: report.offender_id, // ה-ID של המשתמש הפוגע (וודאי שזה השם מה-SQL שלך)
-          reason: report.reason,
-        }      );
+      const response = await API.post("/admin/resolveReport", {
+        reportId: report.id,
+        newStatus,
+        targetType: report.target_type,
+        targetId: report.target_id,
+        offenderId: report.offender_id,
+        reason: report.reason,
+      });
 
       if (response.data.success) {
         toast.success(response.data.message || "Status updated successfully!");
-
-        // עדכון הסטייט המקומי כדי שהטבלה תתעדכן מיידית לעיני האדמין
         setReports((prevReports) =>
           prevReports.map((r) =>
             r.id === report.id ? { ...r, status: newStatus } : r,
           ),
         );
+        setConfirmAction(null);
+        setDetailReport(null);
       }
     } catch (error) {
       console.error("Error updating report status:", error);
-      toast.error(error.response?.data?.devError || "Failed to update report status");
+      toast.error(
+        error.response?.data?.devError || "Failed to update report status",
+      );
     }
   };
 
   return (
-    <div className={classes.container}>
-      <h2>Content Moderation & Complaints</h2>
+    <div className={classes.page}>
+      <div className={classes.pageHeader}>
+        <h2>Content Moderation</h2>
+        <p>Review complaints and resolve or dismiss reports</p>
+      </div>
 
       {reports.length !== 0 ? (
         <div className={classes.tableContainer}>
           <table className={classes.customtable}>
             <thead>
               <tr>
-                <th>Reporter Name</th>
-                <th>Reported Target</th>
+                <th>Reporter</th>
+                <th>Reported</th>
                 <th>Type</th>
-                <th>Reason & Description</th>
+                <th>Reason</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -72,100 +84,79 @@ export default function ContentModeration({ newUrl }) {
             <tbody>
               {reports.map((report) => (
                 <tr key={report.id}>
-                  {/* מי שהתלונן */}
                   <td>
-                    <div style={{ fontWeight: "bold" }}>
-                      {report.reporter_name}
-                    </div>
-                    <div style={{ fontSize: "12px", color: "#7f8c8d" }}>
-                      {report.reporter_email}
+                    <div className={classes.providerCell}>
+                      <strong>{report.reporter_name}</strong>
+                      <span className={classes.subText}>
+                        {report.reporter_email}
+                      </span>
                     </div>
                   </td>
-
-                  {/* על מי התלוננו */}
                   <td>
-                    <div style={{ fontWeight: "bold", color: "#c0392b" }}>
-                      {report.reported_name}
-                    </div>
-                    <div style={{ fontSize: "12px", color: "#7f8c8d" }}>
-                      {report.reported_email}
+                    <div className={classes.providerCell}>
+                      <strong className={classes.reportedName}>
+                        {report.reported_name}
+                      </strong>
+                      <span className={classes.subText}>
+                        {report.reported_email}
+                      </span>
                     </div>
                   </td>
-
-                  {/* סוג התלונה */}
+                  <td>
+                    <span className={classes.typeChip}>{report.target_type}</span>
+                  </td>
+                  <td>
+                    <div className={classes.reasonPreview}>
+                      <strong>{report.reason}</strong>
+                      <span className={classes.subText}>
+                        {report.description
+                          ? report.description.length > 60
+                            ? `${report.description.slice(0, 60)}…`
+                            : report.description
+                          : "No description"}
+                      </span>
+                    </div>
+                  </td>
                   <td>
                     <span
-                      style={{
-                        backgroundColor: "#e2e8f0",
-                        padding: "4px 8px",
-                        borderRadius: "4px",
-                        fontSize: "12px",
-                        fontWeight: "500",
-                      }}
-                    >
-                      {report.target_type}
-                    </span>
-                  </td>
-
-                  {/* סיבה ופירוט */}
-                  <td>
-                    <div style={{ fontWeight: "600" }}>{report.reason}</div>
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        color: "#555",
-                        marginTop: "3px",
-                        maxWidth: "250px",
-                      }}
-                    >
-                      {report.description || "No description provided."}
-                    </div>
-                  </td>
-
-                  {/* סטטוס הטיפול */}
-                  <td>
-                    <span
-                      style={{
-                        color:
-                          report.status === "PENDING"
-                            ? "#f39c12"
-                            : report.status === "RESOLVED"
-                              ? "#27ae60"
-                              : "#7f8c8d",
-                        fontWeight: "bold",
-                      }}
+                      className={`${classes.statusBadge} ${getStatusClass(report.status, classes)}`}
                     >
                       {report.status}
                     </span>
                   </td>
-
-                  {/* כפתורי פעולה לאדמין */}
                   <td>
                     <div className={classes.actionBtns}>
+                      <button
+                        className={classes.showBtn}
+                        onClick={() => setDetailReport(report)}
+                      >
+                        Details
+                      </button>
                       {report.status === "PENDING" && (
                         <>
                           <button
                             className={classes.approveBtn}
                             onClick={() =>
-                              handleUpdateStatus(report, "RESOLVED")
-                            } // ✨ מעביר את כל ה-object
+                              setConfirmAction({
+                                report,
+                                newStatus: "RESOLVED",
+                              })
+                            }
                           >
                             Resolve
                           </button>
                           <button
                             className={classes.denyBtn}
                             onClick={() =>
-                              handleUpdateStatus(report, "DISMISSED")
-                            } // ✨ מעביר את כל ה-object
+                              setConfirmAction({
+                                report,
+                                newStatus: "DISMISSED",
+                              })
+                            }
                           >
                             Dismiss
                           </button>
                         </>
-                      )}
-                      {report.status !== "PENDING" && (
-                        <span style={{ color: "#95a5a6", fontSize: "13px" }}>
-                          Processed
-                        </span>
                       )}
                     </div>
                   </td>
@@ -175,10 +166,107 @@ export default function ContentModeration({ newUrl }) {
           </table>
         </div>
       ) : (
-        <p style={{ textAlign: "center", color: "#777", marginTop: "20px" }}>
-          No reports found. Everything is clean! ✨
-        </p>
+        <div className={classes.emptyState}>
+          <p>No reports found. Everything is clean.</p>
+        </div>
       )}
+
+      <AppModal
+        open={!!detailReport}
+        title="Report details"
+        subtitle={detailReport ? `Status: ${detailReport.status}` : ""}
+        size="md"
+        onClose={() => setDetailReport(null)}
+      >
+        {detailReport && (
+          <div className={classes.detailGrid}>
+            <div>
+              <span className={classes.detailLabel}>Reporter</span>
+              <p>
+                {detailReport.reporter_name}
+                <br />
+                <span className={classes.subText}>
+                  {detailReport.reporter_email}
+                </span>
+              </p>
+            </div>
+            <div>
+              <span className={classes.detailLabel}>Reported</span>
+              <p className={classes.reportedName}>
+                {detailReport.reported_name}
+                <br />
+                <span className={classes.subText}>
+                  {detailReport.reported_email}
+                </span>
+              </p>
+            </div>
+            <div>
+              <span className={classes.detailLabel}>Type</span>
+              <p>
+                <span className={classes.typeChip}>
+                  {detailReport.target_type}
+                </span>
+              </p>
+            </div>
+            <div>
+              <span className={classes.detailLabel}>Reason</span>
+              <p>{detailReport.reason}</p>
+            </div>
+            <div className={classes.detailFull}>
+              <span className={classes.detailLabel}>Description</span>
+              <p>{detailReport.description || "No description provided."}</p>
+            </div>
+            {detailReport.status === "PENDING" && (
+              <div className={`${classes.actionBtns} ${classes.detailFull}`}>
+                <button
+                  className={classes.approveBtn}
+                  onClick={() =>
+                    setConfirmAction({
+                      report: detailReport,
+                      newStatus: "RESOLVED",
+                    })
+                  }
+                >
+                  Resolve
+                </button>
+                <button
+                  className={classes.denyBtn}
+                  onClick={() =>
+                    setConfirmAction({
+                      report: detailReport,
+                      newStatus: "DISMISSED",
+                    })
+                  }
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </AppModal>
+
+      <AppDialog
+        open={!!confirmAction}
+        title={
+          confirmAction?.newStatus === "RESOLVED"
+            ? "Resolve report"
+            : "Dismiss report"
+        }
+        message={
+          confirmAction?.newStatus === "RESOLVED"
+            ? "Mark this report as resolved?"
+            : "Dismiss this report without further action?"
+        }
+        confirmLabel={
+          confirmAction?.newStatus === "RESOLVED" ? "Resolve" : "Dismiss"
+        }
+        danger={confirmAction?.newStatus === "DISMISSED"}
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={() =>
+          handleUpdateStatus(confirmAction.report, confirmAction.newStatus)
+        }
+      />
     </div>
   );
 }

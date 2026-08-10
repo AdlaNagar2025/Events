@@ -1,22 +1,23 @@
 .form {
   width: 100%;
   max-width: 380px;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: var(--sans);
   text-align: left;
+  color: var(--text);
 }
 
 .form h2 {
   margin: 0 0 6px;
   font-size: 1.65rem;
   font-weight: 800;
-  color: #1a2634;
+  color: var(--text-h);
   letter-spacing: -0.3px;
 }
 
 .subtitle {
   margin: 0 0 28px;
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--text-muted);
   line-height: 1.5;
 }
 
@@ -26,9 +27,9 @@
   gap: 12px;
   margin-bottom: 20px;
   padding: 14px 16px;
-  background: linear-gradient(135deg, #fef2f2 0%, #fff5f5 100%);
-  border: 1.5px solid #fecaca;
-  border-left: 4px solid #dc2626;
+  background: var(--danger-bg);
+  border: 1.5px solid var(--danger-border);
+  border-left: 4px solid var(--danger);
   border-radius: 12px;
   animation: errorSlideIn 0.35s ease;
 }
@@ -52,7 +53,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #dc2626;
+  background: var(--danger);
   color: #ffffff;
   font-size: 0.95rem;
   font-weight: 800;
@@ -67,7 +68,7 @@
   display: block;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #991b1b;
+  color: var(--danger);
   margin-bottom: 2px;
 }
 
@@ -75,7 +76,7 @@
   margin: 0;
   font-size: 0.88rem;
   line-height: 1.45;
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 .errorDismiss {
@@ -89,7 +90,7 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #b91c1c;
+  color: var(--danger);
   font-size: 1.4rem;
   line-height: 1;
   cursor: pointer;
@@ -97,8 +98,8 @@
 }
 
 .errorDismiss:hover {
-  background: rgba(220, 38, 38, 0.1);
-  color: #991b1b;
+  background: rgba(185, 28, 28, 0.1);
+  color: var(--danger);
 }
 
 .form input.inputError {
@@ -107,15 +108,15 @@
 }
 
 .form input.inputError:focus {
-  border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.15);
 }
 
 .sectionTitle {
   margin: 0 0 16px;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--text-faint);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -135,7 +136,7 @@
   margin-bottom: 6px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--text);
 }
 
 .form input[type="text"],
@@ -144,36 +145,37 @@
 .form input[type="password"] {
   width: 100%;
   padding: 12px 16px;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--border);
   border-radius: 11px;
   font-size: 0.92rem;
-  color: #1e293b;
-  background: #f8fafc;
+  font-family: var(--sans);
+  color: var(--text-h);
+  background: var(--surface-warm);
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .form input::placeholder {
-  color: #94a3b8;
+  color: var(--text-faint);
 }
 
 .form input:hover {
-  border-color: #cbd5e1;
+  border-color: var(--gold);
   background: #ffffff;
 }
 
 .form input:focus {
-  border-color: #d4af37;
+  border-color: var(--gold);
   background: #ffffff;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+  box-shadow: 0 0 0 3px var(--gold-ring);
 }
 
 .roleSelection {
   margin: 20px 0 8px;
   padding: 18px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1.5px solid #e2e8f0;
+  background: var(--surface-warm);
+  border: 1.5px solid var(--border);
   border-radius: 14px;
 }
 
@@ -182,7 +184,7 @@
   margin-bottom: 14px;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #475569;
+  color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.6px;
 }
@@ -200,18 +202,18 @@
   gap: 8px;
   padding: 14px 10px;
   background: #ffffff;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--border);
   border-radius: 12px;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--text);
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
 }
 
 .radioGroup label:hover {
-  border-color: #d4af37;
+  border-color: var(--gold);
   background: #fffdf5;
 }
 
@@ -219,15 +221,15 @@
   width: 18px;
   height: 18px;
   margin: 0;
-  accent-color: #d4af37;
+  accent-color: var(--gold);
   cursor: pointer;
 }
 
 .radioGroup label:has(input:checked) {
-  border-color: #d4af37;
-  background: linear-gradient(135deg, #fffdf5 0%, #fef9e7 100%);
-  color: #1a2634;
-  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.2);
+  border-color: var(--gold);
+  background: var(--gold-soft);
+  color: var(--gold-dark);
+  box-shadow: 0 4px 14px rgba(201, 162, 39, 0.2);
 }
 
 .loginBtn,
@@ -237,20 +239,21 @@
   margin-top: 20px;
   font-size: 0.95rem;
   font-weight: 700;
-  color: #1a2634;
-  background: linear-gradient(135deg, #d4af37 0%, #c9a227 100%);
+  font-family: var(--sans);
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
   border: none;
   border-radius: 12px;
   cursor: pointer;
   letter-spacing: 0.2px;
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+  box-shadow: 0 6px 20px rgba(201, 162, 39, 0.35);
   transition: all 0.2s ease;
 }
 
 .loginBtn:hover,
 .submitBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(212, 175, 55, 0.45);
+  box-shadow: 0 10px 28px rgba(201, 162, 39, 0.45);
 }
 
 .loginBtn:active,
@@ -270,19 +273,19 @@
   margin: 22px 0 0;
   text-align: center;
   font-size: 0.88rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .form a {
-  color: #1a2634;
+  color: var(--text-h);
   font-weight: 700;
   text-decoration: none;
-  border-bottom: 2px solid #d4af37;
+  border-bottom: 2px solid var(--gold);
   transition: color 0.2s ease;
 }
 
 .form a:hover {
-  color: #d4af37;
+  color: var(--gold);
 }
 
 @media (max-width: 768px) {

@@ -1,0 +1,80 @@
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 24px;
+  font-family: var(--sans);
+}
+
+.container h2 {
+  margin: 0 0 16px;
+  color: var(--navy);
+  font-weight: 800;
+  font-size: 1.45rem;
+}
+
+.search {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inputGroup label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.inputGroup input,
+.inputGroup select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text-h);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inputGroup input:focus,
+.inputGroup select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-ring);
+  background: var(--surface);
+}
+
+.inputGroup button {
+  margin-top: auto;
+  padding: 11px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.inputGroup button:hover {
+  background: var(--navy-light);
+}
+
+@media (max-width: 640px) {
+  .search {
+    grid-template-columns: 1fr;
+  }
+}

@@ -2,7 +2,8 @@
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: var(--sans);
+  color: var(--text);
 }
 
 .pageHeader {
@@ -13,38 +14,38 @@
   margin: 0 0 6px;
   font-size: 1.5rem;
   font-weight: 800;
-  color: #1a2634;
+  color: var(--text-h);
 }
 
 .pageHeader p {
   margin: 0;
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .EventDetails {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 28px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  color: #334155;
+  box-shadow: var(--shadow);
+  color: var(--text);
 }
 
 .EventDetails h2 {
   margin: 0 0 20px;
   font-size: 1.2rem;
   font-weight: 700;
-  color: #1a2634;
+  color: var(--text-h);
   padding-bottom: 16px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .EventDetails h3 {
   margin: 24px 0 16px;
   font-size: 1rem;
   font-weight: 700;
-  color: #1a2634;
+  color: var(--text-h);
 }
 
 .infoSection {
@@ -56,8 +57,8 @@
 
 .infoItem {
   padding: 14px 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--surface-warm);
+  border: 1px solid var(--border);
   border-radius: 12px;
 }
 
@@ -65,7 +66,7 @@
   display: block;
   font-size: 0.68rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--text-faint);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
@@ -74,12 +75,12 @@
 .infoItem span {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-h);
 }
 
 .divider {
   border: none;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--border-soft);
   margin: 24px 0;
 }
 
@@ -92,8 +93,8 @@
 .venueBlock,
 .chefsBlock {
   padding: 18px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--surface-warm);
+  border: 1px solid var(--border);
   border-radius: 12px;
 }
 
@@ -102,7 +103,7 @@
   margin: 0 0 12px;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1a2634;
+  color: var(--text-h);
 }
 
 .locationBlock {
@@ -114,14 +115,14 @@
   margin-bottom: 8px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--text);
 }
 
 .chefCard {
   margin-bottom: 14px;
   padding: 16px;
   background: #fff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 12px;
 }
 
@@ -133,7 +134,7 @@
   margin: 0 0 10px;
   font-size: 0.9rem;
   font-weight: 700;
-  color: #1a2634;
+  color: var(--text-h);
 }
 
 .inputGroup {
@@ -145,7 +146,7 @@
 .inputGroup label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .inputGroup textarea {
@@ -153,10 +154,10 @@
   min-height: 80px;
   padding: 12px 14px;
   font-size: 0.9rem;
-  font-family: inherit;
-  color: #1e293b;
+  font-family: var(--sans);
+  color: var(--text-h);
   background: #fff;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--border);
   border-radius: 10px;
   resize: vertical;
   outline: none;
@@ -165,12 +166,12 @@
 }
 
 .inputGroup textarea:focus {
-  border-color: #d4af37;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-ring);
 }
 
 .noChefs {
-  color: #94a3b8;
+  color: var(--text-faint);
   font-style: italic;
   font-size: 0.9rem;
 }
@@ -185,18 +186,19 @@
   font-weight: 800;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: #1a2634;
-  background: linear-gradient(135deg, #d4af37, #c9a227);
+  font-family: var(--sans);
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
   border: none;
   border-radius: 50px;
   cursor: pointer;
-  box-shadow: 0 8px 28px rgba(212, 175, 55, 0.4);
+  box-shadow: 0 8px 28px rgba(201, 162, 39, 0.4);
   transition: all 0.25s ease;
 }
 
 .confirmBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 36px rgba(212, 175, 55, 0.5);
+  box-shadow: 0 12px 36px rgba(201, 162, 39, 0.5);
 }
 
 .loader {
@@ -206,7 +208,7 @@
   justify-content: center;
   gap: 16px;
   padding: 80px 20px;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.95rem;
 }
 
@@ -214,8 +216,8 @@
   content: "";
   width: 40px;
   height: 40px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #d4af37;
+  border: 3px solid var(--border);
+  border-top-color: var(--gold);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
