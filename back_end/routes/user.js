@@ -4,6 +4,7 @@ const register = require("../database/queries/register");
 const login = require("../database/queries/login");
 const updateProfile = require("../database/queries/update");
 const { isConnected, isActive } = require("../Middleware/auth");
+const doQuery = require("../database/query");
 
 /**
  * @route   POST /user/login
@@ -99,11 +100,34 @@ router.get("/logout", (req, res) => {
       .json({ success: true, message: "Logged out successfully" });
   });
 });
+router.get("/checkSession", async (req, res) => {
+  try {
+    if (!req.session || !req.session.user) {
+      return res.status(200).json({ success: false, user: null });
+    }
 
-router.get("/checkSession", (req, res) => {
-  if (req.session && req.session.user) {
+    const user = req.session.user;
+
+    if (user.role === "Hall_Owner" || user.role === "Chief") {
+      const tableName = user.role === "Hall_Owner" ? "halls" : "chiefs";
+      const idColumn = user.role === "Hall_Owner" ? "hall_id" : "chief_id";
+
+      const businessSql = `SELECT status FROM ${tableName} WHERE ${idColumn} = ?`;
+      const businessResult = await doQuery(businessSql, [user.id]);
+
+      user.status =
+        businessResult.length > 0 ? businessResult[0].status : "DRAFT";
+
+      req.session.user = user;
+    }
+
     return res.status(200).json({ success: true, user: req.session.user });
+  } catch (error) {
+    console.error("Error in /checkSession:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error during checkSession.",
+    });
   }
-  return res.status(200).json({ success: false, user: null });
 });
 module.exports = router;
