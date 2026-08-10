@@ -3,6 +3,7 @@ import { React, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../../services/api";
 import toast from "react-hot-toast";
+import AppDialog from "../../shared/AppDialog";
 
 import EventRow from "../../Events/EventRow";
 
@@ -10,6 +11,7 @@ export default function MyBooking({ user, onStatusChange }) {
   const navigate = useNavigate();
   const [type, setType] = useState("All");
   const [events, setEvents] = useState([]);
+  const [confirmAction, setConfirmAction] = useState(null); // { type, event }
 
   let rolePath = user?.role.toLowerCase();
   if (rolePath === "chief" || rolePath === "hall_owner") rolePath = "provider";
@@ -98,7 +100,6 @@ export default function MyBooking({ user, onStatusChange }) {
 
 
   async function handleCancel(event) {
-    if (!window.confirm("Are you sure you want to cancel this event?")) return;
     try {
       const eventId = event.event_id;
       const response = await API.put(
@@ -120,13 +121,6 @@ export default function MyBooking({ user, onStatusChange }) {
   }
   
   async function handleDisCancel(event) {
-    if (
-      !window.confirm(
-        "Are you sure you want to reinstate this cancelled event?",
-      )
-    )
-      return;
-  
     try {
       const eventId = event.event_id;
       const response = await API.put(
@@ -211,8 +205,12 @@ export default function MyBooking({ user, onStatusChange }) {
                   rolePath={rolePath}
                   role={user.role}
                   isFuture={checkIfFuture(e)}
-                  onCancel={handleCancel}
-                  onDisCancel={handleDisCancel}
+                  onCancel={(event) =>
+                    setConfirmAction({ type: "cancel", event })
+                  }
+                  onDisCancel={(event) =>
+                    setConfirmAction({ type: "discancel", event })
+                  }
                   onUpdate={update}
                   onChangeStatus={handlechangeStatus}
                 />
@@ -221,6 +219,31 @@ export default function MyBooking({ user, onStatusChange }) {
           </table>
         </div>
       )}
+
+      <AppDialog
+        open={!!confirmAction}
+        title={
+          confirmAction?.type === "cancel"
+            ? "Cancel event"
+            : "Reinstate event"
+        }
+        message={
+          confirmAction?.type === "cancel"
+            ? "Are you sure you want to cancel this event?"
+            : "Are you sure you want to reinstate this cancelled event?"
+        }
+        confirmLabel={
+          confirmAction?.type === "cancel" ? "Cancel event" : "Reinstate"
+        }
+        danger={confirmAction?.type === "cancel"}
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={() => {
+          const action = confirmAction;
+          setConfirmAction(null);
+          if (action?.type === "cancel") handleCancel(action.event);
+          else if (action?.type === "discancel") handleDisCancel(action.event);
+        }}
+      />
     </div>
   );
 }

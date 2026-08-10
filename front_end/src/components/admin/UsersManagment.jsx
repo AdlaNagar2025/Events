@@ -3,6 +3,7 @@ import API from "../../services/api";
 import classes from "./usersmanagment.module.css";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import AppDialog from "../shared/AppDialog";
 
 export default function UsersManagment() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function UsersManagment() {
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const [loading, setLoading] = useState(true);
+  const [confirmToggle, setConfirmToggle] = useState(null); // { userId, userActive }
 
   const [searchTerm, setSearchTerm] = useState("");
   const [userStats, setUserStatas] = useState({
@@ -85,13 +87,6 @@ export default function UsersManagment() {
   }, [searchTerm, role, status]);
 
   const handleToggleActive = async (userId, userActive) => {
-    const action = userActive ? "deactivate" : "activate";
-
-    const confirmed = window.confirm(
-      `Are you sure you want to ${action} this user?`,
-    );
-
-    if (!confirmed) return;
     const newStatus = userActive === 1 ? 0 : 1;
     try {
       const response = await API.put(
@@ -110,6 +105,10 @@ export default function UsersManagment() {
       console.error("Error updating user status:", error);
       toast.error("Failed to update user status");
     }
+  };
+
+  const requestToggleActive = (userId, userActive) => {
+    setConfirmToggle({ userId, userActive });
   };
   return (
     <div className={classes.page}>
@@ -254,7 +253,7 @@ export default function UsersManagment() {
                     <td>
                       <button
                         onClick={() =>
-                          handleToggleActive(user?.id, user?.is_active)
+                          requestToggleActive(user?.id, user?.is_active)
                         }
                         className={
                           user?.is_active
@@ -288,6 +287,26 @@ export default function UsersManagment() {
           Next
         </button>
       </div>
+
+      <AppDialog
+        open={!!confirmToggle}
+        title={
+          confirmToggle?.userActive
+            ? "Deactivate user"
+            : "Activate user"
+        }
+        message={`Are you sure you want to ${
+          confirmToggle?.userActive ? "deactivate" : "activate"
+        } this user?`}
+        confirmLabel={confirmToggle?.userActive ? "Deactivate" : "Activate"}
+        danger={!!confirmToggle?.userActive}
+        onCancel={() => setConfirmToggle(null)}
+        onConfirm={() => {
+          const { userId, userActive } = confirmToggle;
+          setConfirmToggle(null);
+          handleToggleActive(userId, userActive);
+        }}
+      />
     </div>
   );
 }

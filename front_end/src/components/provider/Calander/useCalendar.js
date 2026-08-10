@@ -111,9 +111,6 @@ export const useCalendar = (role, user) => {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to remove this availability?"))
-      return;
-
     setLoading(true);
     try {
       const res = await API.post("/provider/updateCalendar", availableData);

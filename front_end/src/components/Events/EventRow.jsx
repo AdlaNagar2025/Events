@@ -3,6 +3,7 @@ import { Rating } from "@mui/material";
 import ReviewSection from "./ReviewSection";
 import ReportSection from "./ReportSection";
 import { useState } from "react";
+import AppDialog from "../shared/AppDialog";
 
 function getStatusClass(status) {
   const s = (status || "").toUpperCase();
@@ -24,6 +25,7 @@ export default function EventRow({
 }) {
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reasonDialog, setReasonDialog] = useState(null); // { actionStatus }
 
   const startTime = event.start_time?.slice(0, 5) || "";
   const endTime = event.end_time?.slice(0, 5) || "";
@@ -34,18 +36,16 @@ export default function EventRow({
 
 const canProviderAction =
   rolePath === "provider" && isFuture && status !== "CANCELLED";
-  const handleProviderActionWithReason = (actionStatus) => {
-    const actionName =
-      actionStatus === "CANCELLED" ? "cancelling" : "rejecting";
-    const userReason = prompt(
-      `Please enter the reason for ${actionName} this request:`,
-    );
+  const openReasonDialog = (actionStatus) => {
+    setReasonDialog({ actionStatus });
+  };
 
-    if (userReason === null) return; // הביטול בוטל על ידי המשתמש
-
+  const submitReasonDialog = (userReason) => {
+    if (!reasonDialog) return;
+    const actionStatus = reasonDialog.actionStatus;
+    setReasonDialog(null);
     const cleanReason =
-      userReason.trim() || "No reason provided by the business owner.";
-
+      (userReason || "").trim() || "No reason provided by the business owner.";
     onChangeStatus(event, event.event_id, actionStatus, cleanReason);
   };
   const canModifyByPolicy = (() => {
@@ -270,7 +270,7 @@ const canProviderAction =
               <>
                 <button
                   className={classes.rejectBtn}
-                  onClick={() => handleProviderActionWithReason("CANCELLED")}
+                  onClick={() => openReasonDialog("CANCELLED")}
                 >
                   Cancel Event
                 </button>
@@ -289,7 +289,7 @@ const canProviderAction =
                 {status !== "REJECTED" && (
                   <button
                     className={classes.rejectBtn}
-                    onClick={() => handleProviderActionWithReason("REJECTED")}
+                    onClick={() => openReasonDialog("REJECTED")}
                   >
                     Reject
                   </button>
@@ -299,6 +299,24 @@ const canProviderAction =
           </td>
         </tr>
       )}
+
+      <AppDialog
+        open={!!reasonDialog}
+        title={
+          reasonDialog?.actionStatus === "CANCELLED"
+            ? "Cancel request"
+            : "Reject request"
+        }
+        message={`Please enter the reason for ${
+          reasonDialog?.actionStatus === "CANCELLED" ? "cancelling" : "rejecting"
+        } this request:`}
+        confirmLabel="Submit"
+        danger
+        withInput
+        inputPlaceholder="Reason..."
+        onCancel={() => setReasonDialog(null)}
+        onConfirm={submitReasonDialog}
+      />
     </>
   );
 }

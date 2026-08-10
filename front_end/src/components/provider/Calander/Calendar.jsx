@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import classes from "./calendar.module.css";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -12,6 +12,7 @@ import {
   validateTimes,
   getTodayString,
 } from "../../../utils/validation";
+import AppDialog from "../../shared/AppDialog";
 
 export default function Calendar({ role, user }) {
   const {
@@ -25,6 +26,7 @@ export default function Calendar({ role, user }) {
     resetForm,
   } = useCalendar(role, user);
 
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const isProvider = role === "Chief" || role === "Hall_Owner";
 
   const handleSelect = (info) => {
@@ -136,7 +138,7 @@ export default function Calendar({ role, user }) {
 
                   {isSlotExisting && (
                     <button
-                      onClick={handleDelete}
+                      onClick={() => setDeleteConfirmOpen(true)}
                       className={classes.deleteBtn}
                       disabled={loading}
                     >
@@ -156,6 +158,19 @@ export default function Calendar({ role, user }) {
             )}
         </>
       )}
+
+      <AppDialog
+        open={deleteConfirmOpen}
+        title="Remove availability"
+        message="Are you sure you want to remove this availability?"
+        confirmLabel="Remove"
+        danger
+        onCancel={() => setDeleteConfirmOpen(false)}
+        onConfirm={() => {
+          setDeleteConfirmOpen(false);
+          handleDelete();
+        }}
+      />
     </div>
   );
 }

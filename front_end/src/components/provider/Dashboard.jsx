@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import API from "../../services/api";
 import classes from "./dashboard.module.css";
 import toast from "react-hot-toast";
+import AppDialog from "../shared/AppDialog";
 
 export default function Dashboard({ user, onStatusChange }) {
   const [rating, setRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
   const [events, setEvents] = useState([]);
+  const [rejectDialogEvent, setRejectDialogEvent] = useState(null);
 
   // ✨ תיקון: מחזיק את ה-ID של האירוע הפתוח כרגע (או null אם הכל סגור)
   const [activeEventId, setActiveEventId] = useState(null);
@@ -168,15 +170,7 @@ const showActions =
                           {status !== "REJECTED" && (
                             <button
                               className={classes.rejectBtn}
-                              onClick={() => {
-                                const userReason = prompt(
-                                  "Please enter the reason for rejecting this request:",
-                                );
-                                if (userReason === null) return; // Cancel على الـ prompt
-                                const cleanReason =
-                                  userReason.trim() || "No reason provided by the business owner.";
-                                handlechangeStatus(e, e.event_id, "REJECTED", cleanReason);
-                              }}
+                              onClick={() => setRejectDialogEvent(e)}
                             >
                               Reject
                             </button>
@@ -228,6 +222,25 @@ const showActions =
           </tbody>
         </table>
       </div>
+
+      <AppDialog
+        open={!!rejectDialogEvent}
+        title="Reject request"
+        message="Please enter the reason for rejecting this request:"
+        confirmLabel="Reject"
+        danger
+        withInput
+        inputPlaceholder="Reason..."
+        onCancel={() => setRejectDialogEvent(null)}
+        onConfirm={(userReason) => {
+          const event = rejectDialogEvent;
+          setRejectDialogEvent(null);
+          const cleanReason =
+            (userReason || "").trim() ||
+            "No reason provided by the business owner.";
+          handlechangeStatus(event, event.event_id, "REJECTED", cleanReason);
+        }}
+      />
     </div>
   );
 }

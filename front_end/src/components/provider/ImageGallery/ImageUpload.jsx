@@ -4,6 +4,7 @@ import classes from "./ImageUpload.module.css";
 import API from "../../../services/api";
 import ImageItem from "./ImageItem";
 import { FaTimes } from "react-icons/fa";
+import AppDialog from "../../shared/AppDialog";
 
 /**
  * ImageUpload Component
@@ -20,6 +21,7 @@ export default function ImageUpload({ role, provider, ok }) {
   const [uploading, setUploading] = useState(false);
   const [existingImages, setExistingImages] = useState([]);
   const [error, setError] = useState("");
+  const [imageToDelete, setImageToDelete] = useState(null);
   const MAX_IMAGES = 5;
   const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
@@ -130,8 +132,6 @@ export default function ImageUpload({ role, provider, ok }) {
     }
   };
   const removeExistingImage = async (path) => {
-    if (!window.confirm("Are you sure you want to delete this image?")) return;
-
     const loadingToast = toast.loading("Deleting image...");
     try {
       const response = await API.delete(`/provider/deleteImage/${path}`);
@@ -181,7 +181,7 @@ export default function ImageUpload({ role, provider, ok }) {
             img={img}
             isExisting={true}
             isMain={img.is_main === 1}
-            onRemove={() => removeExistingImage(img.image_path)}
+            onRemove={() => setImageToDelete(img.image_path)}
             onSetMain={handleSetMain}
             role={role}
           />
@@ -217,6 +217,20 @@ export default function ImageUpload({ role, provider, ok }) {
           </button>
         </div>
       )}
+
+      <AppDialog
+        open={!!imageToDelete}
+        title="Delete image"
+        message="Are you sure you want to delete this image?"
+        confirmLabel="Delete"
+        danger
+        onCancel={() => setImageToDelete(null)}
+        onConfirm={() => {
+          const path = imageToDelete;
+          setImageToDelete(null);
+          removeExistingImage(path);
+        }}
+      />
     </div>
   );
 }
