@@ -20,7 +20,17 @@ async function register(NewUser) {
   // Set default values for optional fields if they are missing
   last_name = NewUser.last_name || "";
   phone = NewUser.phone || "";
-  role = NewUser.role || "Customer";
+  const ALLOWED_ROLES = ["Customer", "Chief", "Hall_Owner"];
+role = NewUser.role || "Customer";
+
+if (!ALLOWED_ROLES.includes(role)) {
+  return {
+    success: false,
+    statusCode: 400,
+    message: "Invalid role. Allowed: Customer, Chief, Hall_Owner.",
+  };
+}
+  
 
   //  Check if a user with this email already exists
   const sql1 = `SELECT * FROM users WHERE email=?`;
