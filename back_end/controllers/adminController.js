@@ -21,12 +21,22 @@ const handleApproveBusiness = async (req, res) => {
           "Missing required fields: type, id, and newStatus are required.",
       });
     }
-
-    await updateBusinessStatus(type, id, newStatus, reason);
-
+    const result = await updateBusinessStatus(
+      req.session.user,
+      type,
+      id,
+      newStatus,
+      reason,
+    );
+    
+    if (!result.success) {
+      const statusCode = result.code === "HAS_ACTIVE_BOOKINGS" ? 400 : 403;
+      return res.status(statusCode).json(result);
+    }
+    
     return res.status(200).json({
       success: true,
-      message: `Business status successfully updated to ${newStatus}`,
+      message: result.message || `Business status successfully updated to ${newStatus}`,
     });
   } catch (error) {
     console.error("Error in handleApproveBusiness:", error);

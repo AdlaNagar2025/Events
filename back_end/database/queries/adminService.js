@@ -67,7 +67,7 @@ async function getProviderDetails(type, id) {
  * @returns {Promise<Object>} תוצאת השאילתה מול מסד הנתונים
  * @throws  {Error} זורקת שגיאה במידה וסוג הטבלה/העסק אינו חוקי
  */
-async function updateBusinessStatus(type, id, newStatus, reason = null) {
+async function updateBusinessStatus(user,type, id, newStatus, reason = null) {
   const normalizedType = type.toLowerCase().includes("chief")
     ? "chiefs"
     : type.toLowerCase().includes("hall")
@@ -87,30 +87,45 @@ async function updateBusinessStatus(type, id, newStatus, reason = null) {
   let sql = "";
   let queryParams = [];
 
-  if (statusUpper === "PENDING") {
-    sql = `UPDATE ${normalizedType} SET status = ? WHERE ${idColumn} = ?`;
-    queryParams = [newStatus, id];
-  } else if (statusUpper === "DENY" || statusUpper === "DENIED") {
-    // 🛑 בדיקת אירועים עתידיים לפני דחייה
-    const hasBookings = await hasActiveUpcomingBookings(normalizedType, id);
-    if (hasBookings) {
+  if (user.role === "Admin") {
+    if (statusUpper === "DENY" || statusUpper === "DENIED") {
+      const hasBookings = await hasActiveUpcomingBookings(normalizedType, id);
+      if (hasBookings) {
+        return {
+          success: false,
+          code: "HAS_ACTIVE_BOOKINGS",
+          message:
+            "Cannot reject this business profile because it has active upcoming bookings.",
+        };
+      }
+  
+      sql = `UPDATE ${normalizedType} SET status = ?, rejection_reason = ? WHERE ${idColumn} = ?`;
+      queryParams = [newStatus, reason || "No reason provided", id];
+    } else {
+      sql = `UPDATE ${normalizedType} SET status = ?, rejection_reason = NULL WHERE ${idColumn} = ?`;
+      queryParams = [newStatus, id];
+    }
+  } else if (user.role === "Chief" || user.role === "Hall_Owner") {
+    if (statusUpper === "PENDING" && Number(user.id) === Number(id)) {
+      sql = `UPDATE ${normalizedType} SET status = ? WHERE ${idColumn} = ?`;
+      queryParams = [newStatus, id];
+    } else {
       return {
         success: false,
-        code: "HAS_ACTIVE_BOOKINGS",
-        message:
-          "Cannot reject this business profile because it has active upcoming bookings.",
+        message: "You are not authorized to update this business profile.",
       };
     }
-
-    sql = `UPDATE ${normalizedType} SET status = ?, rejection_reason = ? WHERE ${idColumn} = ?`;
-    queryParams = [newStatus, reason || "No reason provided", id];
   } else {
-    // APPROVED
-    sql = `UPDATE ${normalizedType} SET status = ?, rejection_reason = NULL WHERE ${idColumn} = ?`;
-    queryParams = [newStatus, id];
+    return {
+      success: false,
+      message: "You are not authorized to update this business profile.",
+    };
   }
-
+  
   const result = await doQuery(sql, queryParams);
+
+ 
+
 
   // 📧 🔔 טיפול בהתראות ומיילים ברקע
   const provider = await getProviderDetails(normalizedType, id);
