@@ -5,8 +5,7 @@ import BusinessProfile from "../BusinessProfile/BusinessProfile";
 import { MdOutlineFavoriteBorder } from "react-icons/md";
 import { MdFavorite } from "react-icons/md";
 
-const UPLOADS_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/uploads/`;
-
+const UPLOADS_BASE_URL = `${import.meta.env.VITE_API_URL || "http://localhost:3030"}/uploads/`;
 export default function ServiceCard({
   user,
   provider,

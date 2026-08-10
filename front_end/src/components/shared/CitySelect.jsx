@@ -1,4 +1,4 @@
-import axios from "axios";
+import API from "../../services/api";
 import React, { useEffect, useState } from "react";
 import Select from "react-select"; // ייבוא של הרכיב החדש
 
@@ -9,8 +9,8 @@ export default function CitySelect({ onCityChange, selectedCity }) {
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3030/api/localities",
+        const response = await API.get(
+          "/api/localities",
         );
         if (response.data.success) {
           setCities(response.data.data);

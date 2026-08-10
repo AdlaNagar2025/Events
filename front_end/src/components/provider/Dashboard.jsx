@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import classes from "./dashboard.module.css";
 
 export default function Dashboard({ user, onStatusChange }) {
@@ -31,9 +31,8 @@ export default function Dashboard({ user, onStatusChange }) {
 
   const fetchDataProfile = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:3030/provider/MyBusinessStatusAndRating`,
-        { withCredentials: true },
+      const response = await API.get(
+        `/provider/MyBusinessStatusAndRating`,
       );
       const rawData = response.data;
       setRating(rawData.avgRating || rawData.averageRating || 0);
@@ -49,15 +48,14 @@ export default function Dashboard({ user, onStatusChange }) {
 
   async function handlechangeStatus(event, eventId, status, reason = null) {
     try {
-      const response = await axios.put(
-        `http://localhost:3030/provider/changeEventStatus/${eventId}`,
+      const response = await API.put(
+        `/provider/changeEventStatus/${eventId}`,
         {
           status,
           eventData: event,
           reason,
           cancelledBy: status === "CANCELLED" ? "PROVIDER" : null,
         },
-        { withCredentials: true },
       );
   
       if (response.data.success) {
@@ -75,9 +73,8 @@ export default function Dashboard({ user, onStatusChange }) {
 
   const fetchAllPendingEvents = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:3030/provider/AllEventsAccordingToStatus/PENDING`,
-        { withCredentials: true },
+      const response = await API.get(
+        `/provider/AllEventsAccordingToStatus/PENDING`,
       );
 
       // ✨ תיקון ה-Reduce: התאמה לשדות האמיתיים של ה-SQL שלך (בלי השדות הפיקטיביים של chiefs)

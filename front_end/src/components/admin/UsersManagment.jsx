@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import classes from "./usersmanagment.module.css";
 import { useNavigate } from "react-router-dom";
 
@@ -44,11 +44,9 @@ export default function UsersManagment() {
     const fetchUserStats = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
-          "http://localhost:3030/admin/userStats",
-          {
-            withCredentials: true,
-          },
+        const response = await API.get(
+          "/admin/userStats",
+          
         );
 
         if (response.data && response.data.data) {
@@ -68,9 +66,9 @@ export default function UsersManagment() {
     const fetchUsers = async () => {
       setUsers([]);
       try {
-        const response = await axios.get(
-          "http://localhost:3030/admin/allUsers",
-          { withCredentials: true },
+        const response = await API.get(
+          "/admin/allUsers",
+
         );
         if (response.data.success) {
           setUsers(response.data.data);
@@ -95,10 +93,9 @@ export default function UsersManagment() {
     if (!confirmed) return;
     const newStatus = userActive === 1 ? 0 : 1;
     try {
-      const response = await axios.put(
-        "http://localhost:3030/admin/deactivate",
+      const response = await API.put(
+        "/admin/deactivate",
         { userId, status: newStatus },
-        { withCredentials: true },
       );
 
       if (response.data.success) {

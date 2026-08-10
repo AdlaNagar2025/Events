@@ -1,6 +1,6 @@
 import React from "react";
 import { useState } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import classes from "./commentReportModal.module.css";
 
 export default function CommentReportModal({ review, onClose }) {
@@ -17,8 +17,8 @@ export default function CommentReportModal({ review, onClose }) {
 
     try {
       setLoading(true);
-      const response = await axios.post(
-        "http://localhost:3030/provider/writeReport",
+      const response = await API.post(
+        "/provider/writeReport",
         {
           reported_id: review.userId, // ה-ID של המשתמש שכתב את התגובה הפוגענית
           target_type: "COMMENT", // סוג יעד קבוע
@@ -26,7 +26,6 @@ export default function CommentReportModal({ review, onClose }) {
           reason: reason,
           description: description,
         },
-        { withCredentials: true },
       );
 
       if (response.data.success) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import classes from "../customer/review.module.css";
 import { Rating } from "@mui/material";
 
@@ -24,10 +24,9 @@ export default function ReviewSection({ event, onClose }) {
 
     const fetchReviewsEvent = async () => {
       try {
-        const response = await axios.post(
-          `http://localhost:3030/customer/EventComments/${event.event_id}`,
+        const response = await API.post(
+          `/customer/EventComments/${event.event_id}`,
           { providerId: selectedProviderId },
-          { withCredentials: true },
         );
 
         if (response.data && response.data.length > 0) {
@@ -68,10 +67,9 @@ export default function ReviewSection({ event, onClose }) {
         providerId: selectedProviderId,
       };
 
-      const response = await axios.post(
-        "http://localhost:3030/customer/ReviewProvider",
+      const response = await API.post(
+        "/customer/ReviewProvider",
         finalReviewData,
-        { withCredentials: true },
       );
 
       if (response.data.success || response.data) {

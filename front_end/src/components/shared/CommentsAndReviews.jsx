@@ -1,5 +1,5 @@
 import React from "react";
-import axios from "axios";
+import API from "../../services/api";
 import { useState, useEffect } from "react";
 import CommentReportModal from "./CommentReportModal";
 
@@ -12,12 +12,12 @@ export default function CommentsAndReviews({ role, user }) {
 
   const fetchAllComments = async () => {
     try {
-      let url = "http://localhost:3030/provider/allCommentsAndReviews";
+      let url = "/provider/allCommentsAndReviews";
       if (role === "Customer")
-        url = `http://localhost:3030/customer/allCommentsAndReviews/${user?.id}`;
+        url = `/customer/allCommentsAndReviews/${user?.id}`;
       if (role === "Admin")
-        url = `http://localhost:3030/admin/allCommentsAndReviews/${user?.id}`;
-      const response = await axios.get(url, { withCredentials: true });
+        url = `/admin/allCommentsAndReviews/${user?.id}`;
+      const response = await API.get(url);
 
       const rawReviews = response.data.data;
 

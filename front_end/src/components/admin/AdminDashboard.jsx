@@ -1,6 +1,6 @@
 import React from "react";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import classes from "./usersmanagment.module.css";
 import ContentModeration from "./ContentModeration";
 import ServicesApprovals from "./ServicesApprovals";
@@ -18,11 +18,9 @@ export default function AdminDashboard({ user }) {
     const fetchUserStats = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
-          "http://localhost:3030/admin/userStats",
-          {
-            withCredentials: true,
-          },
+        const response = await API.get(
+          "/admin/userStats",
+      
         );
 
         if (response.data && response.data.data) {
@@ -61,7 +59,7 @@ export default function AdminDashboard({ user }) {
         </div>
       </div>
 
-      <ContentModeration newUrl="http://localhost:3030/admin/allPendingReports" />
+      <ContentModeration newUrl="/admin/allPendingReports" />
     </div>
   );
 }

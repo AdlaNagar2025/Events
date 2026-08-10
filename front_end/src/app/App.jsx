@@ -5,7 +5,6 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import axios from "axios";
 
 import API from "../services/api";
 import AuthLayout from "../layouts/AuthLayout";

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import classes from "./servicesapprovals.module.css";
 
 export default function ContentModeration({ newUrl }) {
@@ -9,7 +9,7 @@ export default function ContentModeration({ newUrl }) {
     const fetchAllReports = async () => {
       try {
         let url = newUrl ? newUrl : "http://localhost:3030/admin/allReports";
-        const response = await axios.get(url, { withCredentials: true });
+        const response = await API.get(url);
         if (response.data.success) {
           setReports(response.data.data);
         }
@@ -24,7 +24,7 @@ export default function ContentModeration({ newUrl }) {
   // ✨ הפונקציה המעודכנת שמחברת את הכל לבקאנד
   const handleUpdateStatus = async (report, newStatus) => {
     try {
-      const response = await axios.post(
+      const response = await API.post(
         "http://localhost:3030/admin/resolveReport",
         {
           reportId: report.id,
@@ -33,9 +33,7 @@ export default function ContentModeration({ newUrl }) {
           targetId: report.target_id, // ה-ID של התגובה/אלמנט
           offenderId: report.offender_id, // ה-ID של המשתמש הפוגע (וודאי שזה השם מה-SQL שלך)
           reason: report.reason,
-        },
-        { withCredentials: true },
-      );
+        }      );
 
       if (response.data.success) {
         alert(response.data.message || "Status updated successfully!");

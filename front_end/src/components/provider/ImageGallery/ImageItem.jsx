@@ -14,11 +14,13 @@ import { FaStar, FaRegStar, FaTimes } from "react-icons/fa";
  * @param {boolean} props.isMain - האם התמונה מוגדרת כראשית
  * @param {string} props.role - תפקיד המשתמש המחובר
  */
+const UPLOADS_BASE_URL = `${import.meta.env.VITE_API_URL || "http://localhost:3030"}/uploads/`;
+
 const ImageItem = ({ img, isExisting, onRemove, onSetMain, isMain, role }) => {
   console.log("I AM IN IMAGE ITEM I ", role, img);
   const isProvider = role === "Chief" || role === "Hall_Owner";
   const imageSrc = isExisting
-    ? `http://localhost:3030/uploads/${img.image_path}`
+    ? `${UPLOADS_BASE_URL}${img.image_path}`
     : URL.createObjectURL(img);
   return (
     <div

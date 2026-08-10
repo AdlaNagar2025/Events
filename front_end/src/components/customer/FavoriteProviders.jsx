@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import ServiceCard from "../shared/ServiceCard/ServiceCard";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import classes from "./favorites.module.css";
 
 export default function FavoriteProviders({ user }) {
@@ -12,9 +12,8 @@ export default function FavoriteProviders({ user }) {
   async function fetchAllFavoriteProviders() {
     setLoading(true);
     try {
-      const response = await axios.get(
-        "http://localhost:3030/customer/AllFavoritesProviders",
-        { withCredentials: true },
+      const response = await API.get(
+        "/customer/AllFavoritesProviders",
       );
 
       const data = response.data.data;
@@ -31,15 +30,14 @@ export default function FavoriteProviders({ user }) {
     const providerId = provider.id;
     try {
       if (providersFavorite.includes(provider.id)) {
-        await axios.delete(
-          `http://localhost:3030/customer/removeFavoriteProvider/${providerId}`,
+        await API.delete(
+          `/customer/removeFavoriteProvider/${providerId}`,
           { withCredentials: true },
         );
       } else {
-        await axios.post(
-          "http://localhost:3030/customer/addFavoriteProvider",
+        await API.post(
+          "/customer/addFavoriteProvider",
           { providerId: providerId },
-          { withCredentials: true },
         );
       }
       fetchAllFavoriteProviders();

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import classes from "../customer/review.module.css";
 
 export default function ReportSection({ event, onClose }) {
@@ -34,10 +34,9 @@ export default function ReportSection({ event, onClose }) {
 
     try {
       setLoading(false);
-      const response = await axios.post(
+      const response = await API.post(
         "http://localhost:3030/customer/writeReport",
         report,
-        { withCredentials: true }, 
       );
 
       if (response.data.success) {

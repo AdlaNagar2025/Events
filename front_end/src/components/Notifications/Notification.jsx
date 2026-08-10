@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import API from "../../services/api";
 
 export default function Notification({ user }) {
   const [messages, setMessages] = useState([]);
@@ -19,9 +19,8 @@ export default function Notification({ user }) {
     if (!endpointRole) return; 
 
     try {
-      const response = await axios.get(
-        `http://localhost:3030/${endpointRole}/MyNotifications`,
-        { withCredentials: true },
+      const response = await API.get(
+        `/${endpointRole}/MyNotifications`,
       );
       setMessages(response.data.data);
     } catch (error) {
@@ -33,10 +32,9 @@ export default function Notification({ user }) {
     if (!endpointRole) return;
 
     try {
-      await axios.put(
-        `http://localhost:3030/${endpointRole}/updateNotification/${notificationId}`,
+      await API.put(
+        `/${endpointRole}/updateNotification/${notificationId}`,
         {},
-        { withCredentials: true },
       );
       fetchAllNotifications(); 
     } catch (error) {
