@@ -11,9 +11,8 @@ const {
 
 const {
   writeReport,
-  getAllReports,
+  getAllReportsAccordingToStatus,
   updateStatusReport,
-  getAllPendingReports,
   resolveReport,
 } = require("../database/queries/report");
 const register = require("../database/queries/register");
@@ -22,9 +21,6 @@ const { isConnected, isAdmin, isActive } = require("../Middleware/auth");
 const {
   getAllUsers,
   getUsersByRole,
-  getAllChiefsProfile,
-  getAllHallsOwnerProfile,
-  getAllServices,
   deactivateUser,
   getAllUserStats,
 } = require("../database/queries/adminFunc");
@@ -56,8 +52,8 @@ router.get("/ProviderCalendar/:id", handleGetCalendar);
 router.get("/ProviderImages/:id", handleGetImages);
 
 router.post("/approve-business", handleApproveBusiness);
+router.get("/allServices/:status/:limit", handleGetServicesByStatus);
 router.get("/allServices/:status", handleGetServicesByStatus);
-
 /**
  * שליפת כל המשתמשים במערכת
  */
@@ -104,51 +100,9 @@ router.put("/deactivate", async (req, res) => {
   }
 });
 
-/**
- * שליפת כל הפרופילים העסקיים של השפים
- */
-router.get("/allChiefsProfile", async (req, res) => {
-  try {
-    const profiles = await getAllChiefsProfile();
-    res.json({ success: true, data: profiles });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to fetch chief profiles" });
-  }
-});
 
-/**
- * שליפת כל הפרופילים העסקיים של האולמות
- */
-router.get("/allHallsOwnerProfile", async (req, res) => {
-  try {
-    const profiles = await getAllHallsOwnerProfile();
-    res.json({ success: true, data: profiles });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to fetch hall profiles" });
-  }
-});
 
-/**
- * שליפת כל העסקים שממתינים לאישור
- */
-router.get("/pending-businesses", async (req, res) => {
-  try {
-    const chiefs = await getPendingChiefs();
-    const halls = await getPendingHalls();
-    res.json({
-      success: true,
-      data: { chiefs, halls },
-    });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to fetch pending requests" });
-  }
-});
+
 
 
 
@@ -229,9 +183,24 @@ router.post("/addUser", async (req, res) => {
   }
 });
 
+router.get("/allReports/:status/:limit", async (req, res) => {
+  try {
+    const { status=null , limit=null } = req.params;
+    const result = await getAllReportsAccordingToStatus(status,limit);
+    return res.json({ success: true, data: result });
+  } catch (error) {
+    console.error("DEBUG ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      msg: "Server Error",
+      devError: error.message,
+    });
+  }
+});
 router.get("/allReports", async (req, res) => {
   try {
-    const result = await getAllReports();
+    const { status=null , limit=null } = req.params;
+    const result = await getAllReportsAccordingToStatus(status,limit);
     return res.json({ success: true, data: result });
   } catch (error) {
     console.error("DEBUG ERROR:", error);
@@ -243,42 +212,7 @@ router.get("/allReports", async (req, res) => {
   }
 });
 
-// router.put("/updateReport", async (req, res) => {
-//   try {
-//     const { newStatus, reportId } = req.body;
 
-//     if (!newStatus || !reportId) {
-//       return res.status(400).json({ success: false, msg: "Missing fields" });
-//     }
-
-//     await updateStatusReport(newStatus, reportId);
-//     return res.json({
-//       success: true,
-//       msg: `Report status updated to ${newStatus}`,
-//     });
-//   } catch (error) {
-//     console.error("DEBUG ERROR:", error);
-//     return res.status(500).json({
-//       success: false,
-//       msg: "Server Error",
-//       devError: error.message,
-//     });
-//   }
-// });
-
-router.get("/allPendingReports", async (req, res) => {
-  try {
-    const result = await getAllPendingReports();
-    return res.json({ success: true, data: result });
-  } catch (error) {
-    console.error("DEBUG ERROR:", error);
-    return res.status(500).json({
-      success: false,
-      msg: "Server Error",
-      devError: error.message,
-    });
-  }
-});
 
 // POST /admin/resolveReport
 router.post("/resolveReport", async (req, res) => {

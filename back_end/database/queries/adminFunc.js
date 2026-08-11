@@ -21,35 +21,7 @@ async function getUsersByRole(role) {
   return await doQuery(sql, [role]);
 }
 
-/**
- * שליפת כל רשימת הפרופילים מטבלת השפים (Chiefs).
- */
-async function getAllChiefsProfile() {
-  const sql = `SELECT * FROM chiefs`;
-  return await doQuery(sql, []);
-}
-/**
- * שליפת כל רשימת הפרופילים מטבלת בעלי האולמות (Halls).
- */
-async function getAllHallsOwnerProfile() {
-  const sql = `SELECT * FROM halls`;
-  return await doQuery(sql, []);
-}
-/**
- * שליפת רשימה מאוחדת של כל נותני השירות (שפים ואולמות) כולל הסטטוס העסקי שלהם.
- * משתמש ב-UNION ALL לביצועים אופטימליים.
- */
-async function getAllServices() {
-  const sql = `
-SELECT users.id,users.first_name, users.email, 'Chief' AS provider_type  , chiefs.status ,users.first_name AS ServiceName
-FROM users
-INNER JOIN chiefs ON users.id = chiefs.chief_id
-UNION ALL
-SELECT users.id,users.first_name,  users.email, 'Hall_Owner' AS provider_type , halls.status , halls.hall_name AS ServiceName
-FROM users
-INNER JOIN halls ON users.id = halls.hall_id; `;
-  return await doQuery(sql, []);
-}
+
 
 /**
  * השבתה או הפעלה של משתמש במערכת (Soft Delete).
@@ -75,9 +47,6 @@ FROM users;`;
 module.exports = {
   getAllUsers,
   getUsersByRole,
-  getAllChiefsProfile,
-  getAllHallsOwnerProfile,
-  getAllServices,
   deactivateUser,
   getAllUserStats,
 };

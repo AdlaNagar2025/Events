@@ -197,8 +197,8 @@ async function updateBusinessStatus(user,type, id, newStatus, reason = null) {
  * @param   {string} status - הסטטוס המבוקש לסינון (כגון 'PENDING', 'APPROVED')
  * @returns {Promise<Array<Object>>} מערך נתונים מעובד של כל נותני השירות המתאימים
  */
-async function getAllServicesAccordingToStatus(status) {
-  const sql = `
+async function getAllServicesAccordingToStatus(status,limit=null) {
+  let sql = `
     SELECT 
         u.id, 
         u.first_name, 
@@ -233,8 +233,14 @@ async function getAllServicesAccordingToStatus(status) {
     
     ORDER BY submitted_at ASC
   `;
+  
+const params = [status, status];
+if (limit != null) {
+  sql += ` LIMIT ?`;
+  params.push(Number(limit));
+}
 
-  const result = await doQuery(sql, [status, status]);
+  const result = await doQuery(sql, params);
   const rows = Array.isArray(result) ? result : [];
 
   return rows.map((provider) => ({
@@ -248,6 +254,10 @@ async function getAllServicesAccordingToStatus(status) {
       : "Not submitted",
   }));
 }
+
+
+
+
 
 module.exports = {
   updateBusinessStatus,

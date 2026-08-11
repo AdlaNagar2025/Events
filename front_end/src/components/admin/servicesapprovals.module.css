@@ -344,12 +344,151 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-xl, 32px);
+  font-family: var(--sans);
+  color: var(--text);
+}
+
+.dashboardPage::before {
+  content: "Admin Dashboard";
+  display: block;
+  margin: 0;
+  padding: 22px 26px 28px;
+  font-size: var(--title-size, 1.5rem);
+  font-weight: 800;
+  color: var(--text-h);
+  letter-spacing: -0.3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  background-color: #ffffff;
+  background-image: var(--wave-gold), linear-gradient(180deg, #ffffff 0%, var(--surface-warm) 100%);
+  background-size: calc(100% - 52px) 14px, 100% 100%;
+  background-position: center bottom 10px, center;
+  background-repeat: no-repeat;
 }
 
 .dashboardSection {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  padding: 22px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.dashboardSection:empty {
+  display: none;
+}
+
+.dashboardSection::before {
+  grid-column: 1 / -1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--gold-dark);
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+  border-bottom: 2px solid var(--gold);
+}
+
+.dashboardSection:nth-child(1)::before {
+  content: "Pending services";
+}
+
+.dashboardSection:nth-child(2)::before {
+  content: "Pending reports";
+  color: var(--status-pending-text);
+  border-bottom-color: var(--status-pending-border);
+}
+
+.dashboardSection > div {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md, 16px);
+  gap: 6px;
+  padding: 16px 18px;
+  background: var(--surface-warm);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  border-left: 4px solid var(--gold);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.dashboardSection:nth-child(2) > div {
+  border-left-color: var(--status-pending-text);
+}
+
+.dashboardSection > div:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+  border-color: rgba(201, 162, 39, 0.45);
+}
+
+.dashboardSection:nth-child(2) > div:hover {
+  border-color: var(--status-pending-border);
+}
+
+.dashboardSection > div h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 750;
+  color: var(--text-h);
+  line-height: 1.35;
+}
+
+.dashboardSection > div p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.dashboardSection > div p:first-of-type {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 2px;
+  padding: 3px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--gold-dark);
+  background: var(--gold-soft);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: 20px;
+}
+
+.dashboardSection:nth-child(2) > div p:first-of-type {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  text-transform: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  border-radius: 8px;
+}
+
+.dashboardSection > div p:last-child {
+  color: var(--text-faint);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 700px) {
+  .dashboardSection {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .dashboardPage::before {
+    padding: 18px 18px 26px;
+    background-size: calc(100% - 36px) 12px, 100% 100%;
+  }
 }
 
 /* Modal (legacy – prefer AppDialog / AppModal) */

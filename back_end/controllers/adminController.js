@@ -64,7 +64,7 @@ const handleApproveBusiness = async (req, res) => {
  */
 const handleGetServicesByStatus = async (req, res) => {
   try {
-    const { status } = req.params;
+    const { status, limit=null } = req.params;
 
     if (!status) {
       return res.status(400).json({
@@ -73,7 +73,7 @@ const handleGetServicesByStatus = async (req, res) => {
       });
     }
 
-    const services = await getAllServicesAccordingToStatus(status);
+    const services = await getAllServicesAccordingToStatus(status , limit);
 
     return res.status(200).json({
       success: true,
@@ -88,6 +88,9 @@ const handleGetServicesByStatus = async (req, res) => {
     });
   }
 };
+
+
+
 
 module.exports = {
   handleApproveBusiness,

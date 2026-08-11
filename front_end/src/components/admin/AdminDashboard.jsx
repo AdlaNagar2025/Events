@@ -1,66 +1,64 @@
 import React, { useState, useEffect } from "react";
 import API from "../../services/api";
 import classes from "./servicesapprovals.module.css";
-import umClasses from "./usersmanagment.module.css";
-import ContentModeration from "./ContentModeration";
-import ServicesApprovals from "./ServicesApprovals";
 
 export default function AdminDashboard({ user }) {
-  const [userStats, setUserStatas] = useState({
-    totalUsers: 0,
-    activeUsers: 0,
-    inactiveUsers: 0,
-    newRegistrations: 0,
-  });
+  const [pendingServices, setPendingServices] = useState([]);
+  const [pendingReports, setPendingReports] = useState([]);
 
   useEffect(() => {
-    const fetchUserStats = async () => {
+    const fetchPendingServices = async () => {
       try {
-        const response = await API.get("/admin/userStats");
-        if (response.data && response.data.data) {
-          setUserStatas(response.data.data);
-        }
+        const response = await API.get("/admin/allServices/PENDING/5");
+        setPendingServices(response.data.data || []);
       } catch (error) {
-        console.log("Error fetching stats:", error);
+        console.error("Error fetching pending services:", error);
       }
     };
 
-    fetchUserStats();
+    const fetchPendingReports = async () => {
+      try {
+        const response = await API.get("/admin/allReports/PENDING/5");
+        setPendingReports(response.data.data || []);
+      } catch (error) {
+        console.error("Error fetching pending services:", error);
+      }
+    };
+    fetchPendingServices();
+    fetchPendingReports();
   }, []);
+  console.log(pendingReports)
 
   return (
     <div className={classes.dashboardPage}>
       <section className={classes.dashboardSection}>
-        <ServicesApprovals user={user} newType="pending" />
+      {pendingServices.map((pendingService)=>{
+        return (
+          <div key={pendingService.id}>
+          <h3>{pendingService.first_name} </h3>
+          <p>{pendingService.provider_type}</p>
+          <p>{pendingService.ServiceName}</p>
+          <p>{pendingService.submitted_at}</p>
+          </div>
+        )
+      })}
       </section>
 
       <section className={classes.dashboardSection}>
-        <div className={umClasses.statsGrid}>
-          <div className={umClasses.statCard}>
-            <span className={umClasses.statLabel}>Total Users</span>
-            <span className={umClasses.statValue}>{userStats.totalUsers}</span>
+      {pendingReports.map((pendingReport)=>{
+        return (
+          <div key={pendingReport.id}>
+          <h3>{pendingReport.reporter_name} </h3>
+          <p>{pendingReport.reported_name}</p>
+          <p>{pendingReport.reason}</p>
+          <p>{pendingReport.description}</p>
           </div>
-          <div className={umClasses.statCard}>
-            <span className={umClasses.statLabel}>Active Users</span>
-            <span className={umClasses.statValue}>{userStats.activeUsers}</span>
-          </div>
-          <div className={umClasses.statCard}>
-            <span className={umClasses.statLabel}>Inactive Users</span>
-            <span className={umClasses.statValue}>
-              {userStats.inactiveUsers}
-            </span>
-          </div>
-          <div className={umClasses.statCard}>
-            <span className={umClasses.statLabel}>New Registrations</span>
-            <span className={umClasses.statValue}>
-              {userStats.newRegistrations}
-            </span>
-          </div>
-        </div>
+        )
+      })}
       </section>
 
+ 
       <section className={classes.dashboardSection}>
-        <ContentModeration newUrl="/admin/allPendingReports" />
       </section>
     </div>
   );

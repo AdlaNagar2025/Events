@@ -15,9 +15,8 @@ async function writeReport(reporterId, data) {
     description,
   ]);
 }
-
-async function getAllReports() {
-  const sql = `
+async function getAllReportsAccordingToStatus(status = null, limit = null) {
+  let sql = `
     SELECT 
         r.*,
         u1.first_name AS reporter_name,
@@ -27,26 +26,24 @@ async function getAllReports() {
     FROM reports r
     INNER JOIN users u1 ON r.reporter_id = u1.id
     INNER JOIN users u2 ON r.reported_id = u2.id
-    ORDER BY r.created_at ASC;
+    WHERE 1=1
   `;
-  return await doQuery(sql, []);
-}
 
-async function getAllPendingReports() {
-  const sql = `
-    SELECT 
-        r.*,
-        u1.first_name AS reporter_name,
-        u1.email AS reporter_email,
-        u2.first_name AS reported_name,
-        u2.email AS reported_email
-    FROM reports r
-    INNER JOIN users u1 ON r.reporter_id = u1.id
-    INNER JOIN users u2 ON r.reported_id = u2.id
-    WHERE r.status="PENDING"
-    ORDER BY r.created_at DESC;
-  `;
-  return await doQuery(sql, []);
+  const params = [];
+
+  if (status != null) {
+    sql += ` AND r.status = ?`;
+    params.push(status);
+  }
+
+  sql += ` ORDER BY r.created_at ASC`;
+
+  if (limit != null) {
+    sql += ` LIMIT ?`;
+    params.push(Number(limit));
+  }
+
+  return await doQuery(sql, params);
 }
 
 async function updateStatusReport(newStatus, reportId) {
@@ -96,8 +93,7 @@ async function resolveReport(dataToResolved) {
 }
 module.exports = {
   writeReport,
-  getAllReports,
+  getAllReportsAccordingToStatus,
   updateStatusReport,
-  getAllPendingReports,
   resolveReport,
 };
