@@ -16,7 +16,7 @@ const { handleGetServicesByStatus } = require("../controllers/adminController");
 
 const {
   writeReport,
-  getAllReports,
+  getAllReportsAccordingToStatus,
   updateStatusReport,
 } = require("../database/queries/report");
 
