@@ -2,6 +2,7 @@
  * קובץ שאילתות עבור פאנל הניהול (Admin)
  * כאן מרוכזות כל הפעולות שרק אדמין מורשה לבצע על מסד הנתונים.
  */
+const { getStatusEvent } = require("./helpingFunc");
 const doQuery = require("../query");
 /**
  * שליפת רשימת כל המשתמשים במערכת.
@@ -44,9 +45,50 @@ FROM users;`;
   return await doQuery(sql, []);
 }
 
+
+
+
+async function getSummaryStats() {
+  let approvedEvents=0;
+  let rejectedEvents=0;
+  let pendingEvents=0;
+  let cancelledEvents=0;
+  const sql=`SELECT event_id 
+FROM events 
+WHERE MONTH(events.requested_date) = MONTH(CURDATE()) 
+  AND YEAR(events.requested_date) = YEAR(CURDATE());`
+  const eventsId= await doQuery(sql, []);
+  const allEvents=eventsId.length;
+  for (const row of eventsId) {
+    const finalStatus = await getStatusEvent(row.event_id);
+    if(finalStatus==="APPROVED"){
+      approvedEvents++;
+    }
+    if(finalStatus==="REJECTED"){
+      rejectedEvents++;
+    }
+    if(finalStatus==="PENDING"){
+      pendingEvents++;
+    }
+    if(finalStatus==="CANCELLED"){
+      cancelledEvents++;
+    }
+  }
+  return {
+    approvedEvents,
+    rejectedEvents,
+    pendingEvents,
+    cancelledEvents,
+    allEvents,
+  };
+
+
+}
+
 module.exports = {
   getAllUsers,
   getUsersByRole,
   deactivateUser,
   getAllUserStats,
+  getSummaryStats,
 };

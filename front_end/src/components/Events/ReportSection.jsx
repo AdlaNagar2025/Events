@@ -34,7 +34,7 @@ export default function ReportSection({ event, onClose }) {
     }
 
     try {
-      setLoading(false);
+      setLoading(true);
       const response = await API.post(
         "/customer/writeReport",
         report,

@@ -1,6 +1,6 @@
 const doQuery = require("../query");
+const { createNotification } = require("./notifications");
 
-// 1. פונקציות ה-Database
 async function writeReport(reporterId, data) {
   const { reported_id, target_type, target_id, reason, description } = data;
 
@@ -15,6 +15,7 @@ async function writeReport(reporterId, data) {
     description,
   ]);
 }
+
 async function getAllReportsAccordingToStatus(status = null, limit = null) {
   let sql = `
     SELECT 
@@ -36,7 +37,7 @@ async function getAllReportsAccordingToStatus(status = null, limit = null) {
     params.push(status);
   }
 
-  sql += ` ORDER BY r.created_at ASC`;
+  sql += ` ORDER BY FIELD(r.status, 'PENDING', 'RESOLVED', 'DISMISSED'), r.created_at ASC `;
 
   if (limit != null) {
     sql += ` LIMIT ?`;
@@ -51,39 +52,90 @@ async function updateStatusReport(newStatus, reportId) {
   return await doQuery(sql, [newStatus, reportId]);
 }
 
+async function getReportParties(reportId) {
+  const rows = await doQuery(
+    `SELECT reporter_id, reported_id FROM reports WHERE id = ?`,
+    [reportId],
+  );
+  return rows[0] || null;
+}
+
+async function dismissReport(reportId) {
+  const parties = await getReportParties(reportId);
+  await updateStatusReport("DISMISSED", reportId);
+
+  if (parties?.reporter_id) {
+    await createNotification({
+      userId: parties.reporter_id,
+      message:
+        "Your report was reviewed and dismissed. No action was taken.",
+    });
+  }
+
+  return { message: "Report was dismissed successfully." };
+}
+
 async function resolveReport(dataToResolved) {
   const { reportId, targetType, targetId, offenderId, reason } = dataToResolved;
-  // 1. עדכון סטטוס הדיווח ל-RESOLVED
+  const parties = await getReportParties(reportId);
+
   await doQuery(`UPDATE reports SET status = 'RESOLVED' WHERE id = ?`, [
     reportId,
   ]);
 
-  // 2. ביצוע פעולה בהתאם לסוג היעד
   if (targetType === "COMMENT") {
-    await doQuery(`UPDATE reviews SET is_deleted = 1 WHERE id = ?`, [targetId]);
+    await doQuery(`UPDATE reviews SET is_deleted = 1 WHERE review_id = ?`, [
+      targetId,
+    ]);
   }
 
-  // 3. הוספת אזהרה למשתמש הפוגע
   await doQuery(
     `INSERT INTO user_warnings (user_id, report_id, reason) VALUES (?, ?, ?)`,
     [offenderId, reportId, reason || "Violation of community guidelines"],
   );
 
-  // 4. בדיקה אוטומטית: כמה אזהרות יש לו עכשיו?
-  const [warnCountResult] = await doQuery(
+  const warnRows = await doQuery(
     `SELECT COUNT(*) AS total_warnings FROM user_warnings WHERE user_id = ?`,
     [offenderId],
   );
+  const totalWarnings = warnRows[0].total_warnings;
 
-  const totalWarnings = warnCountResult[0].total_warnings;
-
-  // 5. אם הוא הגיע ל-5 אזהרות ומעלה - חוסמים אותו!
   if (totalWarnings >= 5) {
-    await db.query(`UPDATE users SET is_active = 0 WHERE id = ?`, [offenderId]);
+    await doQuery(`UPDATE users SET is_active = 0 WHERE id = ?`, [offenderId]);
+
+    await createNotification({
+      userId: offenderId,
+      message: `Your account has been suspended after reaching ${totalWarnings} warnings for community guidelines violations.`,
+    });
+
+    if (parties?.reporter_id) {
+      await createNotification({
+        userId: parties.reporter_id,
+        message: "Your report was reviewed and action was taken by the admin.",
+      });
+    }
+
     return {
       message: `Report resolved. User reached ${totalWarnings} warnings and has been banned! 🚫`,
       totalWarnings,
     };
+  }
+
+  const offenderMessage =
+    targetType === "COMMENT"
+      ? `A reported comment was removed and you received a warning (${totalWarnings}/5).`
+      : `You received a warning for violating community guidelines (${totalWarnings}/5).`;
+
+  await createNotification({
+    userId: offenderId,
+    message: offenderMessage,
+  });
+
+  if (parties?.reporter_id) {
+    await createNotification({
+      userId: parties.reporter_id,
+      message: "Your report was reviewed and action was taken by the admin.",
+    });
   }
 
   return {
@@ -91,9 +143,11 @@ async function resolveReport(dataToResolved) {
     totalWarnings,
   };
 }
+
 module.exports = {
   writeReport,
   getAllReportsAccordingToStatus,
   updateStatusReport,
+  dismissReport,
   resolveReport,
 };

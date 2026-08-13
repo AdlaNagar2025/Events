@@ -367,9 +367,84 @@
   background-repeat: no-repeat;
 }
 
+.dashboardBlockTitle {
+  margin: 0 0 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--gold-dark);
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--gold);
+}
+
+.dashboardStats {
+  padding: 22px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.dashboardStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+}
+
+.dashboardStatCard {
+  padding: 18px 20px;
+  background: var(--surface-warm);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  border-left: 4px solid var(--gold);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboardStatCard:nth-child(2) {
+  border-left-color: var(--success);
+}
+
+.dashboardStatCard:nth-child(3) {
+  border-left-color: var(--danger);
+}
+
+.dashboardStatCard:nth-child(4) {
+  border-left-color: var(--status-pending-text, #c9a227);
+}
+
+.dashboardStatCard:nth-child(5) {
+  border-left-color: var(--text-faint);
+}
+
+.dashboardStatLabel {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 8px;
+}
+
+.dashboardStatValue {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-h);
+  line-height: 1;
+}
+
+.dashboardAttention {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xl, 32px);
+  align-items: start;
+}
+
 .dashboardSection {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: 1fr;
   gap: 14px;
   padding: 22px;
   background: #ffffff;
@@ -379,28 +454,12 @@
   position: relative;
 }
 
-.dashboardSection:empty {
-  display: none;
-}
-
-.dashboardSection::before {
+.dashboardSection .dashboardBlockTitle {
   grid-column: 1 / -1;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: var(--gold-dark);
-  padding-bottom: 10px;
-  margin-bottom: 4px;
-  border-bottom: 2px solid var(--gold);
+  margin-bottom: 0;
 }
 
-.dashboardSection:nth-child(1)::before {
-  content: "Pending services";
-}
-
-.dashboardSection:nth-child(2)::before {
-  content: "Pending reports";
+.dashboardSectionReports .dashboardBlockTitle {
   color: var(--status-pending-text);
   border-bottom-color: var(--status-pending-border);
 }
@@ -418,7 +477,7 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.dashboardSection:nth-child(2) > div {
+.dashboardSectionReports > div {
   border-left-color: var(--status-pending-text);
 }
 
@@ -428,7 +487,7 @@
   border-color: rgba(201, 162, 39, 0.45);
 }
 
-.dashboardSection:nth-child(2) > div:hover {
+.dashboardSectionReports > div:hover {
   border-color: var(--status-pending-border);
 }
 
@@ -463,7 +522,7 @@
   border-radius: 20px;
 }
 
-.dashboardSection:nth-child(2) > div p:first-of-type {
+.dashboardSectionReports > div p:first-of-type {
   color: var(--danger);
   background: var(--danger-bg);
   border-color: var(--danger-border);
@@ -479,9 +538,43 @@
   font-size: 0.78rem;
 }
 
+.dashboardEmpty {
+  margin: 0;
+  padding: 12px 4px;
+  font-size: 0.9rem;
+  color: var(--text-faint);
+}
+
+.dashboardViewAll {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gold-dark);
+  text-decoration: none;
+}
+
+.dashboardViewAll:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 1000px) {
+  .dashboardStatsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 700px) {
-  .dashboardSection {
+  .dashboardStatsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboardAttention {
     grid-template-columns: 1fr;
+  }
+
+  .dashboardSection,
+  .dashboardStats {
     padding: 16px;
   }
 

@@ -16,7 +16,7 @@ function formatDate(value) {
   if (Number.isNaN(d.getTime())) return String(value).split("T")[0];
   return d.toLocaleDateString("en-US", {
     year: "numeric",
-    month: "long",
+    month: "numeric",
     day: "numeric",
   });
 }
@@ -56,7 +56,6 @@ function buildApprovedEmail(details) {
     `- Guests: ${guests}`,
     `- ${place.label}: ${place.value}`,
     `- Customer: ${customer}`,
-    `- Event ID: ${details.event_id}`,
     "",
     "Please make sure everything is ready for the event.",
     "",
@@ -75,7 +74,6 @@ function buildApprovedEmail(details) {
         <li><strong>Guests:</strong> ${guests}</li>
         <li><strong>${place.label}:</strong> ${place.value}</li>
         <li><strong>Customer:</strong> ${customer}</li>
-        <li><strong>Event ID:</strong> ${details.event_id}</li>
       </ul>
       <p>Please make sure everything is ready for the event.</p>
       <p style="margin-top: 20px;">Best regards,<br/>EventHub Team</p>
@@ -106,7 +104,6 @@ function buildPendingEmail(details) {
     `- Guests: ${guests}`,
     `- ${place.label}: ${place.value}`,
     `- Customer: ${customer}`,
-    `- Event ID: ${details.event_id}`,
     `- Current status: PENDING`,
     "",
     "Best regards,",
@@ -125,7 +122,6 @@ function buildPendingEmail(details) {
         <li><strong>Guests:</strong> ${guests}</li>
         <li><strong>${place.label}:</strong> ${place.value}</li>
         <li><strong>Customer:</strong> ${customer}</li>
-        <li><strong>Event ID:</strong> ${details.event_id}</li>
         <li><strong>Current status:</strong> PENDING</li>
       </ul>
       <p style="margin-top: 20px;">Best regards,<br/>EventHub Team</p>

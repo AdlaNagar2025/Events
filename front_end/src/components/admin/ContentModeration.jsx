@@ -11,24 +11,59 @@ function getStatusClass(status, classes) {
   return classes.statusDeny;
 }
 
+function formatDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
+  return date.toLocaleDateString();
+}
+
+function formatDateTime(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString();
+}
+
 export default function ContentModeration({ newUrl }) {
   const [reports, setReports] = useState([]);
   const [detailReport, setDetailReport] = useState(null);
-  const [confirmAction, setConfirmAction] = useState(null); // { report, newStatus }
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [searchName, setSearchName] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+
+  // Client-side filters: keep full list in `reports`, show only matches.
+  const filteredReports = reports.filter((report) => {
+    const matchStatus = !statusFilter || report.status === statusFilter;
+
+    const name =
+      `${report.reporter_name || ""} ${report.reported_name || ""}`.toLowerCase();
+    const matchName =
+      !searchName.trim() ||
+      name.includes(searchName.trim().toLowerCase());
+
+    const reportDay = report.created_at
+      ? String(report.created_at).slice(0, 10)
+      : "";
+    const matchDate = !dateFilter || reportDay === dateFilter;
+
+    return matchStatus && matchName && matchDate;
+  });
+
+  const fetchAllReports = async () => {
+    try {
+      const url = newUrl ? newUrl : "/admin/allReports";
+      const response = await API.get(url);
+      if (response.data.success) {
+        setReports(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchAllReports = async () => {
-      try {
-        const url = newUrl ? newUrl : "/admin/allReports";
-        const response = await API.get(url);
-        if (response.data.success) {
-          setReports(response.data.data);
-        }
-      } catch (error) {
-        console.error("Error fetching reports:", error);
-      }
-    };
-
     fetchAllReports();
   }, [newUrl]);
 
@@ -39,17 +74,13 @@ export default function ContentModeration({ newUrl }) {
         newStatus,
         targetType: report.target_type,
         targetId: report.target_id,
-        offenderId: report.offender_id,
+        offenderId: report.reported_id,
         reason: report.reason,
       });
 
       if (response.data.success) {
         toast.success(response.data.message || "Status updated successfully!");
-        setReports((prevReports) =>
-          prevReports.map((r) =>
-            r.id === report.id ? { ...r, status: newStatus } : r,
-          ),
-        );
+        await fetchAllReports();
         setConfirmAction(null);
         setDetailReport(null);
       }
@@ -61,6 +92,12 @@ export default function ContentModeration({ newUrl }) {
     }
   };
 
+  const resetFilters = () => {
+    setStatusFilter("");
+    setSearchName("");
+    setDateFilter("");
+  };
+
   return (
     <div className={classes.page}>
       <div className={classes.pageHeader}>
@@ -68,7 +105,56 @@ export default function ContentModeration({ newUrl }) {
         <p>Review complaints and resolve or dismiss reports</p>
       </div>
 
-      {reports.length !== 0 ? (
+      <div className={classes.toolbar}>
+        <div className={classes.searchGroup}>
+          <label>Search by name</label>
+          <input
+            type="text"
+            className={classes.searchInput}
+            placeholder="Reporter or reported name..."
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+          />
+        </div>
+
+        <div className={classes.filterGroup}>
+          <label>Status</label>
+          <select
+            className={classes.filterSelect}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="RESOLVED">Resolved</option>
+            <option value="DISMISSED">Dismissed</option>
+          </select>
+        </div>
+
+        <div className={classes.filterGroup}>
+          <label>Date</label>
+          <input
+            type="date"
+            className={classes.searchInput}
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+          />
+        </div>
+
+        <button type="button" className={classes.showBtn} onClick={resetFilters}>
+          Reset filters
+        </button>
+      </div>
+
+      {reports.length === 0 ? (
+        <div className={classes.emptyState}>
+          <p>No reports found. Everything is clean.</p>
+        </div>
+      ) : filteredReports.length === 0 ? (
+        <div className={classes.emptyState}>
+          <p>No reports match your filters.</p>
+        </div>
+      ) : (
         <div className={classes.tableContainer}>
           <table className={classes.customtable}>
             <thead>
@@ -78,50 +164,37 @@ export default function ContentModeration({ newUrl }) {
                 <th>Type</th>
                 <th>Reason</th>
                 <th>Status</th>
+                <th>Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {reports.map((report) => (
+              {filteredReports.map((report) => (
                 <tr key={report.id}>
                   <td>
-                    <div className={classes.providerCell}>
-                      <strong>{report.reporter_name}</strong>
-                      <span className={classes.subText}>
-                        {report.reporter_email}
-                      </span>
-                    </div>
+                    <strong>{report.reporter_name}</strong>
                   </td>
                   <td>
-                    <div className={classes.providerCell}>
-                      <strong className={classes.reportedName}>
-                        {report.reported_name}
-                      </strong>
-                      <span className={classes.subText}>
-                        {report.reported_email}
-                      </span>
-                    </div>
+                    <strong className={classes.reportedName}>
+                      {report.reported_name}
+                    </strong>
                   </td>
                   <td>
                     <span className={classes.typeChip}>{report.target_type}</span>
                   </td>
                   <td>
-                    <div className={classes.reasonPreview}>
-                      <strong>{report.reason}</strong>
-                      <span className={classes.subText}>
-                        {report.description
-                          ? report.description.length > 60
-                            ? `${report.description.slice(0, 60)}…`
-                            : report.description
-                          : "No description"}
-                      </span>
-                    </div>
+                    <strong>{report.reason}</strong>
                   </td>
                   <td>
                     <span
                       className={`${classes.statusBadge} ${getStatusClass(report.status, classes)}`}
                     >
                       {report.status}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={classes.subText}>
+                      {formatDate(report.created_at)}
                     </span>
                   </td>
                   <td>
@@ -132,42 +205,12 @@ export default function ContentModeration({ newUrl }) {
                       >
                         Details
                       </button>
-                      {report.status === "PENDING" && (
-                        <>
-                          <button
-                            className={classes.approveBtn}
-                            onClick={() =>
-                              setConfirmAction({
-                                report,
-                                newStatus: "RESOLVED",
-                              })
-                            }
-                          >
-                            Resolve
-                          </button>
-                          <button
-                            className={classes.denyBtn}
-                            onClick={() =>
-                              setConfirmAction({
-                                report,
-                                newStatus: "DISMISSED",
-                              })
-                            }
-                          >
-                            Dismiss
-                          </button>
-                        </>
-                      )}
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      ) : (
-        <div className={classes.emptyState}>
-          <p>No reports found. Everything is clean.</p>
         </div>
       )}
 
@@ -209,6 +252,10 @@ export default function ContentModeration({ newUrl }) {
               </p>
             </div>
             <div>
+              <span className={classes.detailLabel}>Date</span>
+              <p>{formatDateTime(detailReport.created_at)}</p>
+            </div>
+            <div>
               <span className={classes.detailLabel}>Reason</span>
               <p>{detailReport.reason}</p>
             </div>
@@ -239,6 +286,21 @@ export default function ContentModeration({ newUrl }) {
                   }
                 >
                   Dismiss
+                </button>
+              </div>
+            )}
+            {detailReport.status === "DISMISSED" && (
+              <div className={`${classes.actionBtns} ${classes.detailFull}`}>
+                <button
+                  className={classes.approveBtn}
+                  onClick={() =>
+                    setConfirmAction({
+                      report: detailReport,
+                      newStatus: "RESOLVED",
+                    })
+                  }
+                >
+                  Resolve
                 </button>
               </div>
             )}

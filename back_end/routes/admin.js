@@ -12,7 +12,7 @@ const {
 const {
   writeReport,
   getAllReportsAccordingToStatus,
-  updateStatusReport,
+  dismissReport,
   resolveReport,
 } = require("../database/queries/report");
 const register = require("../database/queries/register");
@@ -23,6 +23,7 @@ const {
   getUsersByRole,
   deactivateUser,
   getAllUserStats,
+  getSummaryStats
 } = require("../database/queries/adminFunc");
 const {
   updateBusinessStatus,
@@ -35,6 +36,7 @@ const {
   updateReadToNotification,
   createNotification,
 } = require("../database/queries/notifications");
+
 
 const router = express.Router();
 
@@ -64,6 +66,17 @@ router.get("/allUsers", async (req, res) => {
   } catch (error) {
     console.error("Admin Error (allUsers):", error);
     res.status(500).json({ success: false, message: "Failed to fetch users" });
+  }
+});
+
+
+router.get("/summaryStats", async (req, res) => {
+  try {
+    const stats = await getSummaryStats();
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    console.error("Admin Error (summaryStats):", error);
+    res.status(500).json({ success: false, message: "Failed to fetch summary stats" });
   }
 });
 
@@ -221,12 +234,10 @@ router.post("/resolveReport", async (req, res) => {
 
     // א) מקרה של דחיית התלונה - רק מעדכנים סטטוס ל-DISMISSED
     if (newStatus === "DISMISSED") {
-      await db.query(`UPDATE reports SET status = 'DISMISSED' WHERE id = ?`, [
-        reportId,
-      ]);
+      const result = await dismissReport(reportId);
       return res.json({
         success: true,
-        message: "Report was dismissed successfully.",
+        message: result.message,
       });
     }
 

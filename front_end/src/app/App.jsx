@@ -31,7 +31,6 @@ import CommentsAndReviews from "../components/shared/CommentsAndReviews";
 import Dashboard from "../components/provider/Dashboard";
 import AddUser from "../components/admin/AddUser";
 import ContentModeration from "../components/admin/ContentModeration";
-import ReportSection from "../components/Events/ReportSection";
 import AdminDashboard from "../components/admin/AdminDashboard";
 import FindAVendors from "../components/customer/vendorsAndEvent/FindAVendors";
 
@@ -104,11 +103,8 @@ function App() {
               path="favorites"
               element={<FavoriteProviders user={user} />}
             />
-            <Route
-              path="reports"
-              element={<ReportSection role={user?.role} user={user?.id} />}
-            />
-          </Route>
+            </Route>
+         
 
           <Route
             path="/admin"
@@ -157,12 +153,9 @@ function App() {
                   <CommentsAndReviews role={user?.role} user={user?.id} />
                 }
               />
-              <Route
-                path="reports"
-                element={<ReportSection role={user?.role} user={user?.id} />}
-              />
-            </Route>
+              
           </Route>
+        </Route>
         </Route>
 
         <Route path="/not-found" element={<NotFound />} />
