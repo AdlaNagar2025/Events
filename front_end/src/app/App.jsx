@@ -49,7 +49,6 @@ function App() {
         }
       } catch (error) {
         setUser(null);
-        console.log("Auth check failed:", error);
       } finally {
         setLoading(false);
       }

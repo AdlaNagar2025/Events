@@ -12,7 +12,6 @@ export default function BusinessProfile({
 }) {
   const [profile, setProfile] = useState(initialProfile || null);
   const [loading, setLoading] = useState(!initialProfile);
-  console.log("I AM IN BUSINESS", user, provider, profile);
 
   const providerId = provider?.id || provider?.chief_id || provider?.hall_id;
 

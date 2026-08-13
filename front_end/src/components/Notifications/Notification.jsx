@@ -24,7 +24,7 @@ export default function Notification({ user }) {
       );
       setMessages(response.data.data);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching notifications:", error);
     }
   };
 
@@ -38,7 +38,7 @@ export default function Notification({ user }) {
       );
       fetchAllNotifications(); 
     } catch (error) {
-      console.log(error);
+      console.error("Error updating notification:", error);
     }
   };
 

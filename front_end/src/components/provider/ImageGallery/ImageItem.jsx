@@ -17,7 +17,6 @@ import { FaStar, FaRegStar, FaTimes } from "react-icons/fa";
 const UPLOADS_BASE_URL = `${import.meta.env.VITE_API_URL || "http://localhost:3030"}/uploads/`;
 
 const ImageItem = ({ img, isExisting, onRemove, onSetMain, isMain, role }) => {
-  console.log("I AM IN IMAGE ITEM I ", role, img);
   const isProvider = role === "Chief" || role === "Hall_Owner";
   const imageSrc = isExisting
     ? `${UPLOADS_BASE_URL}${img.image_path}`

@@ -140,7 +140,6 @@ export default function BusinessAccount({
         }
         setIsProfileFilled(checkIsProfileComplete(profileData));
       } else {
-        console.log("No existing profile found, starting fresh.");
         setIsProfileFilled(false);
       }
     } catch (error) {

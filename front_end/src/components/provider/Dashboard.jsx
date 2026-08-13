@@ -41,7 +41,7 @@ export default function Dashboard({ user, onStatusChange }) {
       setRating(rawData.avgRating || rawData.averageRating || 0);
       setReviewCount(rawData.reviewCount || 0);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching profile rating:", error);
     }
   };
 
@@ -69,7 +69,7 @@ export default function Dashboard({ user, onStatusChange }) {
         toast.error(response.data.message);
       }
     } catch (error) {
-      console.log(error);
+      console.error("Error updating event status:", error);
       toast.error(error.response?.data?.message || "Failed to update status");
     }
   }
@@ -96,7 +96,7 @@ export default function Dashboard({ user, onStatusChange }) {
 
       setEvents(grouped);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching pending events:", error);
     }
   };
 

@@ -28,7 +28,6 @@ export default function MyBooking({ user, onStatusChange }) {
 
       // השרת כבר מחזיר נתונים מקובצים ונקיים! אין צורך ב-reduce כפול ב-Frontend
       setEvents(rawData || []);
-      console.log("Fetched events:", rawData);
     } catch (error) {
       console.error("Error fetching events:", error);
     }

@@ -56,14 +56,13 @@ export default function UsersManagment() {
           setUserStatas(response.data.data);
         }
       } catch (error) {
-        console.log("Error fetching stats:", error);
+        console.error("Error fetching stats:", error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserStats();
-    console.log(userStats);
   }, []);
   useEffect(() => {
     const fetchUsers = async () => {

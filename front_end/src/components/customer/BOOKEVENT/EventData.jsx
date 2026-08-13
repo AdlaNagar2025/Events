@@ -13,7 +13,6 @@ export default function EventData({
   hallId,
   handleChefNoteChange,
 }) {
-  console.log("I am in EVENTDATA", dataToEvent, "hhhhh");
   return (
     <div className={classes.EventDetails}>
       <h2>Review Your Booking</h2>

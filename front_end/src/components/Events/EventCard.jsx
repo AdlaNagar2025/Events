@@ -13,7 +13,6 @@ export default function EventCard({
 }) {
   const startTime = event.start_time.slice(0, 5);
   const endTime = event.end_time.slice(0, 5);
-  console.log(" {event.status}", event);
 
   const canProviderAction =
     rolePath === "provider" && isFuture && event.status !== "CANCELLED";

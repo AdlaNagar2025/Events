@@ -62,14 +62,12 @@ export default function ImageUpload({ role, provider, ok }) {
   }, [provider?.id, role]);
 
   const submitGallery = async () => {
-    console.log(images);
     if (images.length === 0) return;
     setUploading(true);
     const loadingToast = toast.loading("Uploading images...");
     try {
       const formData = new FormData();
       images.forEach((img) => formData.append("images", img));
-      console.log(formData);
       const response = await API.post("/provider/upload-gallery", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
