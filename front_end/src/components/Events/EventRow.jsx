@@ -5,6 +5,7 @@ import ReportSection from "./ReportSection";
 import { useState } from "react";
 import AppDialog from "../shared/AppDialog";
 import AppModal from "../shared/AppModal";
+import toast from "react-hot-toast";
 
 function getStatusClass(status) {
   const s = (status || "").toUpperCase();
@@ -43,10 +44,15 @@ export default function EventRow({
 
   const startTime = event.start_time?.slice(0, 5) || "";
   const endTime = event.end_time?.slice(0, 5) || "";
-  const status = (event.finalStatus || event.status || "").toUpperCase();
+  // Customer sees overall final status; provider actions use their own row status.
+  const customerStatus = (event.finalStatus || event.status || "").toUpperCase();
+  const providerStatus = (event.status || "").toUpperCase();
+  const status = rolePath === "provider" ? providerStatus : customerStatus;
 
   const canProviderAction =
-    rolePath === "provider" && isFuture && status !== "CANCELLED";
+    rolePath === "provider" &&
+    isFuture &&
+    (providerStatus === "PENDING" || providerStatus === "APPROVED");
 
   const openReasonDialog = (actionStatus) => {
     setReasonDialog({ actionStatus });
@@ -54,10 +60,13 @@ export default function EventRow({
 
   const submitReasonDialog = (userReason) => {
     if (!reasonDialog) return;
+    const cleanReason = (userReason || "").trim();
+    if (!cleanReason) {
+      toast.error("A reason is required.");
+      return;
+    }
     const actionStatus = reasonDialog.actionStatus;
     setReasonDialog(null);
-    const cleanReason =
-      (userReason || "").trim() || "No reason provided by the business owner.";
     onChangeStatus(event, event.event_id, actionStatus, cleanReason);
   };
 
@@ -69,6 +78,11 @@ export default function EventRow({
     const hoursLeft = (eventDate - new Date()) / (1000 * 60 * 60);
     return hoursLeft >= 48;
   })();
+
+  // Hall cancelled → customer must pick a new hall OR keep chefs with a city/location
+  const hallNeedsPlace =
+    rolePath === "customer" &&
+    String(event.hall_status || "").toUpperCase() === "CANCELLED";
 
   const providersPanel = (
     <div className={classes.detailsSection}>
@@ -83,6 +97,13 @@ export default function EventRow({
           {event.hall_reason && (
             <span className={classes.reasonText}> ({event.hall_reason})</span>
           )}
+        </div>
+      )}
+
+      {hallNeedsPlace && (
+        <div className={classes.venueAlert}>
+          The venue cancelled this booking. Choose a new hall, or continue with
+          chefs only and set a city/location for the event.
         </div>
       )}
 
@@ -154,17 +175,25 @@ export default function EventRow({
             <div className={classes.actions}>
               {isFuture ? (
                 <>
+                  {hallNeedsPlace && (
+                    <span className={classes.venueAlertInline}>
+                      Venue cancelled — set a new hall or a location
+                    </span>
+                  )}
+
                   <button
                     className={classes.updateBtn}
                     disabled={!canModifyByPolicy}
                     title={
                       !canModifyByPolicy
                         ? "Locked within 48 hours of the event."
-                        : ""
+                        : hallNeedsPlace
+                          ? "Pick a new hall, or chefs with a city/location"
+                          : ""
                     }
                     onClick={() => onUpdate(event)}
                   >
-                    Update
+                    {hallNeedsPlace ? "Fix place" : "Update"}
                   </button>
 
                   {event.finalStatus !== "CANCELLED" ? (
@@ -191,7 +220,10 @@ export default function EventRow({
                   )}
 
                   {!canModifyByPolicy && (
-                    <span className={classes.policyNote} title="Changes are locked within 48 hours of the event. Contact your providers.">
+                    <span
+                      className={classes.policyNote}
+                      title="Changes are locked within 48 hours of the event. Contact your providers."
+                    >
                       Locked (48h)
                     </span>
                   )}
@@ -254,9 +286,9 @@ export default function EventRow({
           </td>
           <td>
             <span
-              className={`${classes.statusBadge} ${classes[getStatusClass(status)]}`}
+              className={`${classes.statusBadge} ${classes[getStatusClass(providerStatus)]}`}
             >
-              {event.finalStatus || event.status}
+              {providerStatus || "—"}
             </span>
           </td>
           <td>{event.guest_number}</td>
@@ -278,29 +310,45 @@ export default function EventRow({
           <td>
             {canProviderAction && (
               <div className={classes.actions}>
-                <button
-                  className={classes.rejectBtn}
-                  onClick={() => openReasonDialog("CANCELLED")}
-                >
-                  Cancel
-                </button>
+                {providerStatus === "PENDING" && (
+                  <>
+                    <button
+                      className={classes.approveBtn}
+                      onClick={() => setApproveConfirm(true)}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      className={classes.rejectBtn}
+                      onClick={() => openReasonDialog("REJECTED")}
+                    >
+                      Reject
+                    </button>
+                  </>
+                )}
 
-                {status !== "APPROVED" && (
+                {providerStatus === "APPROVED" && (
                   <button
-                    className={classes.approveBtn}
-                    onClick={() => setApproveConfirm(true)}
+                    className={classes.rejectBtn}
+                    disabled={!canModifyByPolicy}
+                    title={
+                      !canModifyByPolicy
+                        ? "Cannot cancel less than 48 hours before the event."
+                        : ""
+                    }
+                    onClick={() => openReasonDialog("CANCELLED")}
                   >
-                    Approve
+                    Cancel
                   </button>
                 )}
 
-                {status !== "REJECTED" && (
-                  <button
-                    className={classes.rejectBtn}
-                    onClick={() => openReasonDialog("REJECTED")}
+                {providerStatus === "APPROVED" && !canModifyByPolicy && (
+                  <span
+                    className={classes.policyNote}
+                    title="Cannot cancel less than 48 hours before the event."
                   >
-                    Reject
-                  </button>
+                    Locked (48h)
+                  </span>
                 )}
               </div>
             )}
@@ -342,18 +390,18 @@ export default function EventRow({
         open={!!reasonDialog}
         title={
           reasonDialog?.actionStatus === "CANCELLED"
-            ? "Cancel request"
+            ? "Cancel booking"
             : "Reject request"
         }
         message={`Please enter the reason for ${
           reasonDialog?.actionStatus === "CANCELLED"
             ? "cancelling"
             : "rejecting"
-        } this request:`}
+        } this booking:`}
         confirmLabel="Submit"
         danger
         withInput
-        inputPlaceholder="Reason..."
+        inputPlaceholder="Reason (required)..."
         onCancel={() => setReasonDialog(null)}
         onConfirm={submitReasonDialog}
       />

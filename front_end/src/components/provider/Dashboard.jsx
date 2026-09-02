@@ -134,10 +134,10 @@ export default function Dashboard({ user, onStatusChange }) {
           <tbody>
             {events.map((e) => {
               const isFuture = checkIfFuture(e);
-              const status = (e.finalStatus || e.status || "").toUpperCase();
-const showActions =
-  rolePath === "provider" && isFuture && status !== "CANCELLED";
-        
+              const status = (e.status || "").toUpperCase();
+              const showActions =
+                rolePath === "provider" && isFuture && status === "PENDING";
+
               const isCurrentOpen = activeEventId === e.event_id;
               const cleanDisplayDate = e.requested_date
                 ? e.requested_date.split("T")[0]
@@ -145,7 +145,6 @@ const showActions =
 
               return (
                 <React.Fragment key={e.event_id}>
-                  {/* השורה הראשית של האירוע */}
                   <tr>
                     <td>{e.first_name}</td>
                     <td>{cleanDisplayDate}</td>
@@ -157,30 +156,25 @@ const showActions =
                     <td>
                       {showActions && (
                         <>
-                          {status !== "APPROVED" && (
-                            <button
-                              className={classes.approveBtn}
-                              onClick={() =>
-                                handlechangeStatus(e, e.event_id, "APPROVED")
-                              }
-                            >
-                              Approve
-                            </button>
-                          )}
-                          {status !== "REJECTED" && (
-                            <button
-                              className={classes.rejectBtn}
-                              onClick={() => setRejectDialogEvent(e)}
-                            >
-                              Reject
-                            </button>
-                          )}
+                          <button
+                            className={classes.approveBtn}
+                            onClick={() =>
+                              handlechangeStatus(e, e.event_id, "APPROVED")
+                            }
+                          >
+                            Approve
+                          </button>
+                          <button
+                            className={classes.rejectBtn}
+                            onClick={() => setRejectDialogEvent(e)}
+                          >
+                            Reject
+                          </button>
                         </>
                       )}
                     </td>
                   </tr>
 
-                  {/* ✨ תיקון ה-JSX: הצגת הפירוט בתוך שורת טבלה תקנית (tr) שנפתחת רק לאירוע הנכון */}
                   {isCurrentOpen && (
                     <tr>
                       <td colSpan="4">
@@ -234,10 +228,12 @@ const showActions =
         onCancel={() => setRejectDialogEvent(null)}
         onConfirm={(userReason) => {
           const event = rejectDialogEvent;
+          const cleanReason = (userReason || "").trim();
+          if (!cleanReason) {
+            toast.error("A reason is required.");
+            return;
+          }
           setRejectDialogEvent(null);
-          const cleanReason =
-            (userReason || "").trim() ||
-            "No reason provided by the business owner.";
           handlechangeStatus(event, event.event_id, "REJECTED", cleanReason);
         }}
       />

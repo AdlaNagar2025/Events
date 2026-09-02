@@ -178,12 +178,98 @@ async function changeStatusEvent(
   eventData,
   options = {},
 ) {
-  const { reason = null, cancelledBy = null } = options;
+  const { reason = null } = options;
   const role = await getRole(providerId);
   let providersName = "";
-  const statusUpper = newStatus.toUpperCase();
+  const statusUpper = String(newStatus || "").toUpperCase();
+  const trimmedReason = reason != null ? String(reason).trim() : "";
 
-  // === 1. בדיקת זמינות וחפיפות במקרה של APPROVED ===
+  // Read this provider's current status only
+  let statusRows;
+  if (role === "Chief") {
+    statusRows = await doQuery(
+      `SELECT status FROM event_providers WHERE event_id = ? AND provider_id = ?`,
+      [eventId, providerId],
+    );
+  } else {
+    statusRows = await doQuery(
+      `SELECT status FROM events WHERE event_id = ? AND hall_id = ?`,
+      [eventId, providerId],
+    );
+  }
+
+  if (!statusRows.length) {
+    return { success: false, message: "Event not found for this provider." };
+  }
+
+  const currentStatus = String(statusRows[0].status || "").toUpperCase();
+
+  // Policy: PENDING → Approve/Reject | APPROVED → Cancel only
+  if (statusUpper === "APPROVED" && currentStatus !== "PENDING") {
+    return {
+      success: false,
+      message: "Only PENDING requests can be approved.",
+    };
+  }
+  if (statusUpper === "REJECTED" && currentStatus !== "PENDING") {
+    return {
+      success: false,
+      message: "Only PENDING requests can be rejected.",
+    };
+  }
+  if (statusUpper === "CANCELLED" && currentStatus !== "APPROVED") {
+    return {
+      success: false,
+      message: "Only APPROVED bookings can be cancelled.",
+    };
+  }
+
+  // Reason required for reject / cancel
+  if (
+    (statusUpper === "REJECTED" || statusUpper === "CANCELLED") &&
+    !trimmedReason
+  ) {
+    return {
+      success: false,
+      message: "A reason is required.",
+    };
+  }
+
+  // 48h rule for provider cancel only
+  if (statusUpper === "CANCELLED") {
+    const dateStr = eventData?.requested_date
+      ? String(eventData.requested_date).split("T")[0]
+      : null;
+    const timeStr = eventData?.start_time
+      ? String(eventData.start_time).slice(0, 8)
+      : null;
+
+    if (!dateStr || !timeStr) {
+      return {
+        success: false,
+        message: "Missing event date/time for cancel policy check.",
+      };
+    }
+
+    const eventDateTime = new Date(`${dateStr}T${timeStr}`);
+    const hoursDifference =
+      (eventDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+
+    if (Number.isNaN(hoursDifference) || hoursDifference < 48) {
+      return {
+        success: false,
+        message:
+          "Cannot cancel less than 48 hours before the event.",
+      };
+    }
+  }
+
+  let finalCancelledBy = null;
+  if (statusUpper === "CANCELLED") {
+    finalCancelledBy = "PROVIDER";
+  }
+
+  // === 1. Availability + overlaps when APPROVED ===
   if (statusUpper === "APPROVED") {
     const availabilitySql = `
       SELECT * FROM availability 
@@ -224,7 +310,7 @@ async function changeStatusEvent(
     }
   }
 
-  // === 2. שליפת שם הספק ===
+  // === 2. Provider display name ===
   if (role === "Chief") {
     const eventChief = await doQuery(
       `SELECT first_name FROM users WHERE id = ?`,
@@ -239,7 +325,7 @@ async function changeStatusEvent(
     providersName = eventhall[0]?.hall_name || "The Venue";
   }
 
-  // === 3. עדכון הסטטוס והסיבות בבסיס הנתונים ===
+  // === 3. Update only this provider's row ===
   let updateSql = "";
   if (role === "Chief") {
     updateSql = `
@@ -253,18 +339,18 @@ async function changeStatusEvent(
       WHERE hall_id = ? AND event_id = ?`;
   }
   await doQuery(updateSql, [
-    newStatus,
-    reason,
-    cancelledBy,
+    statusUpper,
+    statusUpper === "APPROVED" ? null : trimmedReason || null,
+    finalCancelledBy,
     providerId,
     eventId,
   ]);
 
-  // === ✨ 3.1 דחייה אוטומטית של כל האירועים החופפים שב-PENDING ===
+  // === 3.1 Auto-reject overlapping PENDING after approve ===
   if (statusUpper === "APPROVED") {
     const pendingEvents = await getAllPendingEventsAccording(
       providerId,
-      eventId, // מעבירים את ה-eventId הנוכחי כדי לנטרל אותו
+      eventId,
       eventData.requested_date,
       eventData.start_time,
       eventData.end_time,
@@ -293,7 +379,6 @@ async function changeStatusEvent(
         pendingEv.event_id,
       ]);
 
-      // שליחת התראה ללקוח שהאירוע שלו נדחה
       try {
         const ownerQuery = await doQuery(
           `SELECT user_id FROM events WHERE event_id = ?`,
@@ -303,7 +388,7 @@ async function changeStatusEvent(
 
         if (rejectedCustomerId) {
           const cleanDate = eventData.requested_date
-            ? eventData.requested_date.split("T")[0]
+            ? String(eventData.requested_date).split("T")[0]
             : "the requested date";
 
           await createNotification({
@@ -317,7 +402,7 @@ async function changeStatusEvent(
     }
   }
 
-  // === 4. שליפת מזהה הלקוח ושליחת התראה ללקוח שאושר/נסגר ===
+  // === 4. Notify the booking customer ===
   const eventOwner = await doQuery(
     `SELECT user_id FROM events WHERE event_id = ?`,
     [eventId],
@@ -327,17 +412,17 @@ async function changeStatusEvent(
   if (customerId) {
     let notificationMessage = "";
     const cleanDate = eventData.requested_date
-      ? eventData.requested_date.split("T")[0]
+      ? String(eventData.requested_date).split("T")[0]
       : "the requested date";
 
     if (statusUpper === "APPROVED") {
       notificationMessage = `Great news! Your booking for ${cleanDate} has been APPROVED by ${providersName}.`;
     } else if (statusUpper === "REJECTED") {
-      notificationMessage = `Notice: ${providersName} has DECLINED your request for ${cleanDate}.${reason ? ` Reason: "${reason}".` : ""}`;
+      notificationMessage = `Notice: ${providersName} has DECLINED your request for ${cleanDate}. Reason: "${trimmedReason}".`;
     } else if (statusUpper === "CANCELLED") {
-      notificationMessage = `Important Notice: ${providersName} had to CANCEL the event on ${cleanDate}.${reason ? ` Reason: "${reason}".` : ""}`;
+      notificationMessage = `Important Notice: ${providersName} had to CANCEL the event on ${cleanDate}. Reason: "${trimmedReason}".`;
     } else {
-      notificationMessage = `The status of your event on ${cleanDate} was updated to ${newStatus} by ${providersName}.`;
+      notificationMessage = `The status of your event on ${cleanDate} was updated to ${statusUpper} by ${providersName}.`;
     }
 
     try {
@@ -352,7 +437,7 @@ async function changeStatusEvent(
 
   return {
     success: true,
-    message: `Event status successfully updated to ${newStatus}.`,
+    message: `Event status successfully updated to ${statusUpper}.`,
   };
 }
 

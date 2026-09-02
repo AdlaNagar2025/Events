@@ -39,13 +39,19 @@ export default function MyBooking({ user, onStatusChange }) {
 
 
   function update(e) {
+    const hallCancelled =
+      String(e.hall_status || "").toUpperCase() === "CANCELLED";
+
     navigate("/customer/find-vendor", {
       state: {
         Event: e,
-        hallId: e.hall_id || null,
+        // If venue cancelled, don't keep the old hall selected — customer must
+        // pick a new hall OR continue with chefs + city/location.
+        hallId: hallCancelled ? null : e.hall_id || null,
         selectedChiefsId: e.chiefs
           ? e.chiefs.map((c) => c.chief_id || c.id)
           : [],
+        replaceCancelledHall: hallCancelled,
       },
     });
   }
@@ -93,7 +99,9 @@ export default function MyBooking({ user, onStatusChange }) {
       }
     } catch (error) {
       console.error("Error updating event status:", error);
-      toast.error("An error occurred while updating status.");
+      toast.error(
+        error.response?.data?.message || "Failed to update status.",
+      );
     }
   }
 
