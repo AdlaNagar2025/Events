@@ -5,10 +5,11 @@ import toast from "react-hot-toast";
 
 export const useCalendar = (role, user) => {
   const [availableData, setAvailableData] = useState({
-    available_date: "",
-    start_time: "",
-    end_time: "",
-  });
+  available_date: "",
+  available_date_end: "",
+  start_time: "",
+  end_time: "",
+});
   const [loading, setLoading] = useState(false);
   const [worksHour, setWorksHour] = useState([]);
   const [events, setEvents] = useState([]);
@@ -29,11 +30,12 @@ export const useCalendar = (role, user) => {
           const cleanEnd = item.end_time.substring(0, 5);
 
           return {
-            title: "🟢 Available",
+            title: "Available",
             start: `${localDate}T${cleanStart}`,
             end: `${localDate}T${cleanEnd}`,
-            backgroundColor: "#28a745",
-            borderColor: "#68c47e",
+            backgroundColor: "#c9a227",
+            borderColor: "#b8921f",
+            classNames: ["fc-available"],
             allDay: false,
             extendedProps: {
               rawDate: localDate,
@@ -69,8 +71,9 @@ export const useCalendar = (role, user) => {
           title: "Event",
           start: `${localDate}T${cleanStart}`,
           end: `${localDate}T${cleanEnd}`,
-          backgroundColor: "#2889a7",
-          borderColor: "#c4687f",
+          backgroundColor: "#1e3a5f",
+          borderColor: "#2c4a6e",
+          classNames: ["fc-booking"],
           allDay: false,
           extendedProps: { isSlot: false },
         };
@@ -87,29 +90,39 @@ export const useCalendar = (role, user) => {
     fetchApprovedEvents();
   }, []);
 
-  const handleSave = async () => {
-    const { available_date, start_time, end_time } = availableData;
-    if (!available_date || !start_time || !end_time) {
-      toast.error("Please select a valid time slot first.");
-      return;
-    }
-    if (!validateTimes(available_date, start_time, end_time)) return;
+ const handleSave = async () => {
+  const { available_date, available_date_end, start_time, end_time } =
+    availableData;
 
-    setLoading(true);
-    try {
-      const res = await API.post("/provider/fillCalendar", availableData);
-      if (res.data.success) {
-        toast.success("Availability saved successfully! ✨");
-        resetForm();
-        fetchAvailability();
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to save.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!available_date || !start_time || !end_time) {
+    toast.error("Please select a valid time slot first.");
+    return;
+  }
 
+  if (
+    available_date_end &&
+    available_date_end < available_date
+  ) {
+    toast.error("End date must be on or after the start date.");
+    return;
+  }
+
+  if (!validateTimes(available_date, start_time, end_time)) return;
+
+  setLoading(true);
+  try {
+    const res = await API.post("/provider/fillCalendar", availableData);
+    if (res.data.success) {
+      toast.success(res.data.message || "Availability saved successfully! ✨");
+      resetForm();
+      fetchAvailability();
+    }
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Failed to save.");
+  } finally {
+    setLoading(false);
+  }
+};
   const handleDelete = async () => {
     setLoading(true);
     try {
@@ -126,9 +139,13 @@ export const useCalendar = (role, user) => {
     }
   };
 
-  const resetForm = () =>
-    setAvailableData({ available_date: "", start_time: "", end_time: "" });
-
+ const resetForm = () =>
+  setAvailableData({
+    available_date: "",
+    available_date_end: "",
+    start_time: "",
+    end_time: "",
+  });
   const isSlotExisting = worksHour.some((slot) => {
     const slotDate = slot.start.split("T")[0];
     const slotStart = slot.start.split("T")[1].substring(0, 5);

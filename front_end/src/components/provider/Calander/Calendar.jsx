@@ -38,6 +38,7 @@ export default function Calendar({ role, user }) {
 
     setAvailableData({
       available_date: selectedDate,
+      available_date_end: "",
       start_time: startTime,
       end_time: endTime,
     });
@@ -48,6 +49,7 @@ export default function Calendar({ role, user }) {
     if (props.isSlot && isProvider) {
       setAvailableData({
         available_date: props.rawDate,
+        available_date_end: "",
         start_time: props.startTime,
         end_time: props.endTime,
       });
@@ -97,6 +99,14 @@ export default function Calendar({ role, user }) {
               name="available_date"
               onChange={handleChange}
             />
+                 <label>End date (optional): </label>
+<input
+  type="date"
+  min={availableData.available_date || getTodayString()}
+  value={availableData.available_date_end || ""}
+  name="available_date_end"
+  onChange={handleChange}
+/>
             <label>Start: </label>
             <input
               type="time"
@@ -115,6 +125,7 @@ export default function Calendar({ role, user }) {
               name="end_time"
               onChange={handleChange}
             />
+       
           </div>
 
           {availableData.available_date &&
@@ -122,7 +133,14 @@ export default function Calendar({ role, user }) {
             availableData.end_time && (
               <div className={classes.confirmBox}>
                 <h4>Selected Slot Actions:</h4>
-                <p>📅 {availableData.available_date}</p>
+                <p>
+  📅{" "}
+  {availableData.available_date_end &&
+  availableData.available_date_end !==
+    availableData.available_date
+    ? `${availableData.available_date} → ${availableData.available_date_end}`
+    : availableData.available_date}
+</p>
                 <p>
                   ⏰ {availableData.start_time} - {availableData.end_time}
                 </p>

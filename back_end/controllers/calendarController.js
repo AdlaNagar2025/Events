@@ -1,12 +1,24 @@
 const {
   fillCalendar,
+  fillCalendarRange,
   getCalandar,
   updateCalendar,
 } = require("../database/queries/calendar");
 
 const handleFillCalendar = async (req, res) => {
   try {
-    const result = await fillCalendar(req.session.user, req.body);
+    const { available_date, available_date_end } = req.body;
+
+    // إذا في تاريخ نهاية مختلف → نطاق أيام؛ وإلا يوم واحد زي الأول
+    const useRange =
+      available_date_end &&
+      available_date &&
+      available_date_end !== available_date;
+
+    const result = useRange
+      ? await fillCalendarRange(req.session.user, req.body)
+      : await fillCalendar(req.session.user, req.body);
+
     return res.status(result.statusCode).json(result);
   } catch (error) {
     console.error("Calendar Controller Error (fillCalendar):", error);

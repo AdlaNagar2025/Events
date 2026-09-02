@@ -78,15 +78,24 @@
   padding: 2px 4px !important;
   font-size: 0.85rem !important;
   border: none !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
   cursor: pointer;
-  background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
   color: #ffffff !important;
 }
 
 :global(.fc-event-main) {
   padding: 2px;
-  color: var(--navy) !important;
+  color: #ffffff !important;
+}
+
+:global(.fc-event.fc-available) {
+  background: linear-gradient(135deg, #c9a227, #b8921f) !important;
+  border: 1px solid #a6851c !important;
+}
+
+:global(.fc-event.fc-booking) {
+  background: linear-gradient(135deg, #1e3a5f, #2c4a6e) !important;
+  border: 1px solid #1e3a5f !important;
 }
 
 .inputGroup {

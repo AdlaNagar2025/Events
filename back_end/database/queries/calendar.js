@@ -126,6 +126,104 @@ async function fillCalendar(provider, calendarData) {
   }
 }
 
+
+
+/**
+ * حفظ نفس ساعات التوفر على نطاق تواريخ (من–إلى).
+ * كل يوم يستدعي fillCalendar — نفس الـ Smart Merge بدون تغيير منطق اليوم الواحد.
+ */
+async function fillCalendarRange(provider, calendarData) {
+  const { available_date, available_date_end, start_time, end_time } =
+    calendarData;
+
+  if (!available_date || !start_time || !end_time) {
+    return {
+      statusCode: 400,
+      success: false,
+      message: "Missing required fields.",
+    };
+  }
+
+  const endDate = available_date_end || available_date;
+
+  if (endDate < available_date) {
+    return {
+      statusCode: 400,
+      success: false,
+      message: "End date must be on or after start date.",
+    };
+  }
+
+  // حد أقصى عشان ما نعلّق السيرفر (مثلاً ~4 شهور)
+  const MAX_DAYS = 120;
+  const start = new Date(`${available_date}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  const diffDays =
+    Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+  if (diffDays > MAX_DAYS) {
+    return {
+      statusCode: 400,
+      success: false,
+      message: `Date range is too long. Max ${MAX_DAYS} days.`,
+    };
+  }
+
+  let successCount = 0;
+  let skippedPast = 0;
+  let lastError = null;
+
+  const cursor = new Date(start);
+  while (cursor <= end) {
+    const yyyy = cursor.getFullYear();
+    const mm = String(cursor.getMonth() + 1).padStart(2, "0");
+    const dd = String(cursor.getDate()).padStart(2, "0");
+    const dayStr = `${yyyy}-${mm}-${dd}`;
+
+    const result = await fillCalendar(provider, {
+      available_date: dayStr,
+      start_time,
+      end_time,
+    });
+
+    if (result.success) {
+      successCount += 1;
+    } else if (
+      result.message &&
+      result.message.includes("past")
+    ) {
+      skippedPast += 1;
+    } else {
+      lastError = result;
+      // إذا يوم فشل لسبب ثاني — نقدر نكمل أو نوقف؛ هون منكمل
+    }
+
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  if (successCount === 0 && lastError) {
+    return lastError;
+  }
+
+  if (successCount === 0) {
+    return {
+      statusCode: 400,
+      success: false,
+      message: "No availability was saved (all dates may be in the past).",
+    };
+  }
+
+  return {
+    statusCode: 200,
+    success: true,
+    message: `Availability saved for ${successCount} day(s).${
+      skippedPast ? ` Skipped ${skippedPast} past day(s).` : ""
+    }`,
+    successCount,
+    skippedPast,
+  };
+}
+
 /**
  * @function getCalandar
  * @description שליפת כל חלונות הזמן הפנויים שספק הגדיר ביומן שלו.
@@ -323,5 +421,5 @@ async function updateTimeAvail(date, providerId, removeStart, removeEnd) {
   }
 }
 
-module.exports = { fillCalendar, getCalandar, updateCalendar };
+module.exports = {fillCalendarRange , fillCalendar, getCalandar, updateCalendar };
 
