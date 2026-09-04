@@ -3,6 +3,7 @@ const {
   fillCalendarRange,
   getCalandar,
   updateCalendar,
+  updateCalendarRange,
 } = require("../database/queries/calendar");
 
 const handleFillCalendar = async (req, res) => {
@@ -53,7 +54,17 @@ const handleGetCalendar = async (req, res) => {
 
 const handleUpdateCalendar = async (req, res) => {
   try {
-    const result = await updateCalendar(req.session.user, req.body);
+    const { available_date, available_date_end } = req.body;
+
+    const useRange =
+      available_date_end &&
+      available_date &&
+      available_date_end !== available_date;
+
+    const result = useRange
+      ? await updateCalendarRange(req.session.user, req.body)
+      : await updateCalendar(req.session.user, req.body);
+
     return res.status(result.statusCode).json(result);
   } catch (error) {
     console.error("Calendar Controller Error (updateCalendar):", error);

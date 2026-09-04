@@ -2,12 +2,10 @@ import React from "react";
 import API from "../../services/api";
 import { useState, useEffect } from "react";
 import CommentReportModal from "./CommentReportModal";
+import classes from "./CommentsAndReviews.module.css";
 
 export default function CommentsAndReviews({ role, user }) {
   const [selectedReviewForReport, setSelectedReviewForReport] = useState(null);
-  const [data, setData] = useState([
-    { reviews: "", comments: "", Date: "", ClientName: "" },
-  ]);
   const [reviewsList, setReviewsList] = useState([]);
 
   const fetchAllComments = async () => {
@@ -15,8 +13,7 @@ export default function CommentsAndReviews({ role, user }) {
       let url = "/provider/allCommentsAndReviews";
       if (role === "Customer")
         url = `/customer/allCommentsAndReviews/${user?.id}`;
-      if (role === "Admin")
-        url = `/admin/allCommentsAndReviews/${user?.id}`;
+      if (role === "Admin") url = `/admin/allCommentsAndReviews/${user?.id}`;
       const response = await API.get(url);
 
       const rawReviews = response.data.data;
@@ -48,58 +45,53 @@ export default function CommentsAndReviews({ role, user }) {
     fetchAllComments();
   }, []);
 
+  const canReport = role === "Chief" || role === "Hall_Owner";
+
   return (
-    <div>
+    <div className={classes.wrap}>
       <h2>Clients & Reviews</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Client Name</th>
-            <th>Date</th>
-            <th>Rating</th>
-            <th>Comments</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {/* 4. רצים בלולאה על המערך מה-State ומרנדרים שורה לכל ביקורת */}
-          {reviewsList.length > 0 ? (
-            reviewsList.map((review) => (
-              <tr key={review.reviewId}>
-                <td>{review.clientName}</td>
-                <td>{review.date}</td>
-                <td>⭐ {review.rating} / 5</td>
-                <td>{review.comment}</td>
-                <td style={{ padding: "12px" }}>
-                  {role === "Chief" ||
-                    (role === "Hall_Owner" && (
+      <div className={classes.tableWrap}>
+        <table className={classes.table}>
+          <thead>
+            <tr>
+              <th>Client Name</th>
+              <th>Date</th>
+              <th>Rating</th>
+              <th>Comments</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reviewsList.length > 0 ? (
+              reviewsList.map((review) => (
+                <tr key={review.reviewId}>
+                  <td>{review.clientName}</td>
+                  <td>{review.date}</td>
+                  <td>⭐ {review.rating} / 5</td>
+                  <td>{review.comment}</td>
+                  <td>
+                    {canReport && (
                       <button
+                        type="button"
                         onClick={() => setSelectedReviewForReport(review)}
-                        style={{
-                          backgroundColor: "transparent",
-                          border: "1px solid #c0392b",
-                          color: "#c0392b",
-                          padding: "5px 10px",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          fontWeight: "500",
-                        }}
+                        className={classes.reportBtn}
                       >
-                        🚩 Report
+                        Report
                       </button>
-                    ))}
+                    )}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className={classes.emptyCell}>
+                  No reviews found.
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="4" style={{ textAlign: "center" }}>
-                No reviews found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            )}
+          </tbody>
+        </table>
+      </div>
       {selectedReviewForReport && (
         <CommentReportModal
           review={selectedReviewForReport}

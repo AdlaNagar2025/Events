@@ -8,13 +8,14 @@ const { sendEmail } = require("./mail");
 async function hasActiveUpcomingBookings(type, id) {
   let sql;
   if (type === "chiefs") {
-    // לשף בודקים ב-event_providers
+    // event_providers has no requested_date — date lives on events
     sql = `
       SELECT COUNT(*) as count 
-      FROM event_providers 
-      WHERE provider_id = ? 
-        AND requested_date >= CURDATE() 
-        AND status IN ('APPROVED')
+      FROM event_providers ep
+      JOIN events e ON e.event_id = ep.event_id
+      WHERE ep.provider_id = ? 
+        AND e.requested_date >= CURDATE() 
+        AND ep.status IN ('APPROVED')
     `;
   } else {
     // לאולם בודקים ב-events
@@ -47,8 +48,10 @@ async function getAdminDetails() {
  */
 async function getProviderDetails(type, id) {
   const idColumn = type === "chiefs" ? "chief_id" : "hall_id";
+  const businessNameCol =
+    type === "chiefs" ? "t.specialty AS business_name" : "t.hall_name AS business_name";
   const sql = `
-    SELECT u.id, u.email, u.first_name 
+    SELECT u.id, u.email, u.first_name, ${businessNameCol}
     FROM users u
     INNER JOIN ${type} t ON u.id = t.${idColumn}
     WHERE u.id = ?
@@ -134,16 +137,23 @@ async function updateBusinessStatus(user,type, id, newStatus, reason = null) {
     if (statusUpper === "PENDING") {
       const admin = await getAdminDetails();
       if (admin) {
+        const serviceType = normalizedType === "halls" ? "Venue" : "Catering";
+        const businessLabel =
+          provider?.business_name ||
+          provider?.first_name ||
+          "a provider";
+        const ownerName = provider?.first_name || "Provider";
+
         await createNotification({
-          message: `New business profile pending approval for: ${provider?.first_name || "Provider"}`,
+          message: `New ${serviceType} pending approval: ${businessLabel} (${ownerName}). Review it in Services Approvals.`,
           userId: admin.id,
         });
-  
+
         if (admin.email) {
           await sendEmail({
             to: admin.email,
             subject: "New Business Approval Request - EventHub",
-            text: `Hello Admin,\n\nA new business profile from "${provider?.first_name || "Provider"}" is pending your review.`,
+            text: `Hello Admin,\n\nA new ${serviceType} profile "${businessLabel}" from ${ownerName} is pending your review.\nOpen Services Approvals in EventHub to approve or deny it.`,
           });
         }
       }

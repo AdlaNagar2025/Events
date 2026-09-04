@@ -122,6 +122,7 @@
 .link {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   padding: 11px 14px;
   margin-bottom: 4px;
@@ -132,6 +133,38 @@
   border-radius: 10px;
   border-left: 3px solid transparent;
   transition: all 0.2s ease;
+}
+
+.linkText {
+  min-width: 0;
+}
+
+.notifMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.bellIcon {
+  font-size: 0.9rem;
+  color: var(--gold-dark);
+  opacity: 0.85;
+}
+
+.badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .link:hover {

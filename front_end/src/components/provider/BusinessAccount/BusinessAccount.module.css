@@ -1,7 +1,7 @@
 .container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 8px 4px 16px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
   background: transparent;
   border-radius: var(--radius-lg);
   font-family: var(--sans);
@@ -9,15 +9,15 @@
 
 .container h2 {
   color: var(--text-h);
-  font-size: 1.35rem;
-  margin: 0 0 6px;
+  font-size: 1.15rem;
+  margin: 0 0 4px;
   font-weight: 800;
 }
 
 .container > p {
   color: var(--text-muted);
-  margin: 0 0 20px;
-  font-size: 0.92rem;
+  margin: 0 0 12px;
+  font-size: 0.88rem;
 }
 
 .loader {
@@ -30,23 +30,35 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 
 .gridSection {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 14px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 14px;
   background: var(--bg);
-  padding: 20px;
+  padding: 14px 16px;
   border-radius: 12px;
   border: 1px solid var(--border);
 }
 
+.gridSection h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+@media (max-width: 640px) {
+  .gridSection {
+    grid-template-columns: 1fr;
+  }
+}
+
 .textarea {
   width: 100%;
-  min-height: 120px;
-  padding: 14px;
+  min-height: 72px;
+  padding: 10px 12px;
   border: 1.5px solid var(--border);
   border-radius: 10px;
   font-family: inherit;
@@ -68,7 +80,7 @@
 .submitBtn {
   background: linear-gradient(135deg, var(--gold), var(--gold-dark));
   color: #ffffff;
-  padding: 14px;
+  padding: 11px;
   border: none;
   border-radius: 10px;
   font-size: 1rem;

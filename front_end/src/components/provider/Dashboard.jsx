@@ -3,15 +3,15 @@ import API from "../../services/api";
 import classes from "./dashboard.module.css";
 import toast from "react-hot-toast";
 import AppDialog from "../shared/AppDialog";
+import AppModal from "../shared/AppModal";
 
 export default function Dashboard({ user, onStatusChange }) {
   const [rating, setRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
   const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [rejectDialogEvent, setRejectDialogEvent] = useState(null);
-
-  // ✨ תיקון: מחזיק את ה-ID של האירוע הפתוח כרגע (או null אם הכל סגור)
-  const [activeEventId, setActiveEventId] = useState(null);
+  const [detailsEvent, setDetailsEvent] = useState(null);
 
   let rolePath = user?.role?.toLowerCase();
   if (rolePath === "chief" || rolePath === "hall_owner") rolePath = "provider";
@@ -34,9 +34,7 @@ export default function Dashboard({ user, onStatusChange }) {
 
   const fetchDataProfile = async () => {
     try {
-      const response = await API.get(
-        `/provider/MyBusinessStatusAndRating`,
-      );
+      const response = await API.get(`/provider/MyBusinessStatusAndRating`);
       const rawData = response.data;
       setRating(rawData.avgRating || rawData.averageRating || 0);
       setReviewCount(rawData.reviewCount || 0);
@@ -60,7 +58,7 @@ export default function Dashboard({ user, onStatusChange }) {
           cancelledBy: status === "CANCELLED" ? "PROVIDER" : null,
         },
       );
-  
+
       if (response.data.success) {
         toast.success("Status updated successfully!");
         fetchAllPendingEvents();
@@ -75,12 +73,12 @@ export default function Dashboard({ user, onStatusChange }) {
   }
 
   const fetchAllPendingEvents = async () => {
+    setLoading(true);
     try {
       const response = await API.get(
         `/provider/AllEventsAccordingToStatus/PENDING`,
       );
 
-      // ✨ תיקון ה-Reduce: התאמה לשדות האמיתיים של ה-SQL שלך (בלי השדות הפיקטיביים של chiefs)
       const rawData = response.data.data || [];
       const grouped = rawData.reduce((acc, current) => {
         const existingEvent = acc.find(
@@ -88,7 +86,6 @@ export default function Dashboard({ user, onStatusChange }) {
         );
 
         if (!existingEvent) {
-          // מאחר והשאילתה שולפת אירועים ישירות לפי ה-provider_id הלוגין, אין כפילויות של שפים בשורה אחת
           acc.push(current);
         }
         return acc;
@@ -97,6 +94,9 @@ export default function Dashboard({ user, onStatusChange }) {
       setEvents(grouped);
     } catch (error) {
       console.error("Error fetching pending events:", error);
+      setEvents([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -104,118 +104,162 @@ export default function Dashboard({ user, onStatusChange }) {
     if (user) fetchAllPendingEvents();
   }, [user]);
 
-  // פונקציית עזר לפתיחה/סגירה של שורת הפירוט
-  const toggleDetails = (eventId) => {
-    setActiveEventId(activeEventId === eventId ? null : eventId);
-  };
+  const detailsDate = detailsEvent?.requested_date
+    ? detailsEvent.requested_date.split("T")[0]
+    : "";
+  const detailsClient = detailsEvent
+    ? `${detailsEvent.first_name || ""}${detailsEvent.last_name ? ` ${detailsEvent.last_name}` : ""}`.trim()
+    : "";
 
   return (
-    <div>
-      <div>
-        <p>Vendor Status Overview</p>
-        {reviewCount > 0 && (
-          <p>
-            Avg.Rating: {rating}⭐ ({reviewCount} Reviews)
-          </p>
-        )}
-      </div>
-      <div>
-        <p>Bookings Inbox</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Client Name</th>
-              <th>Date</th>
-              <th>View Details</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
+    <div className={classes.page}>
+      <header className={classes.pageHeader}>
+        <div>
+          <h1>Vendor Status Overview</h1>
+          <p>Review and respond to pending booking requests.</p>
+        </div>
+        <div className={classes.stats}>
+          <div className={classes.statChip}>
+            <span className={classes.statLabel}>Pending</span>
+            <strong>{events.length}</strong>
+          </div>
+          {reviewCount > 0 && (
+            <div className={classes.statChip}>
+              <span className={classes.statLabel}>Rating</span>
+              <strong>
+                {Number(rating).toFixed(1)}★ ({reviewCount})
+              </strong>
+            </div>
+          )}
+        </div>
+      </header>
 
-          <tbody>
-            {events.map((e) => {
-              const isFuture = checkIfFuture(e);
-              const status = (e.status || "").toUpperCase();
-              const showActions =
-                rolePath === "provider" && isFuture && status === "PENDING";
+      <section className={classes.inboxCard}>
+        <div className={classes.inboxHeader}>
+          <h2>Bookings Inbox</h2>
+          <span className={classes.inboxHint}>Pending requests only</span>
+        </div>
 
-              const isCurrentOpen = activeEventId === e.event_id;
-              const cleanDisplayDate = e.requested_date
-                ? e.requested_date.split("T")[0]
-                : "";
+        {loading ? (
+          <div className={classes.emptyState}>Loading requests...</div>
+        ) : events.length === 0 ? (
+          <div className={classes.emptyState}>
+            No pending bookings right now.
+          </div>
+        ) : (
+          <div className={classes.tableWrap}>
+            <table className={classes.table}>
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Date</th>
+                  <th>Details</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map((e) => {
+                  const isFuture = checkIfFuture(e);
+                  const status = (e.status || "").toUpperCase();
+                  const showActions =
+                    rolePath === "provider" &&
+                    isFuture &&
+                    status === "PENDING";
+                  const cleanDisplayDate = e.requested_date
+                    ? e.requested_date.split("T")[0]
+                    : "";
 
-              return (
-                <React.Fragment key={e.event_id}>
-                  <tr>
-                    <td>{e.first_name}</td>
-                    <td>{cleanDisplayDate}</td>
-                    <td>
-                      <button onClick={() => toggleDetails(e.event_id)}>
-                        {isCurrentOpen ? "Hide Details" : "View Details"}
-                      </button>
-                    </td>
-                    <td>
-                      {showActions && (
-                        <>
-                          <button
-                            className={classes.approveBtn}
-                            onClick={() =>
-                              handlechangeStatus(e, e.event_id, "APPROVED")
-                            }
-                          >
-                            Approve
-                          </button>
-                          <button
-                            className={classes.rejectBtn}
-                            onClick={() => setRejectDialogEvent(e)}
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-
-                  {isCurrentOpen && (
-                    <tr>
-                      <td colSpan="4">
-                        <div
-                          style={{
-                            padding: "15px",
-                            backgroundColor: "#f9f9f9",
-                            border: "1px solid #ddd",
-                            borderRadius: "4px",
-                            textAlign: "left",
-                          }}
+                  return (
+                    <tr key={e.event_id}>
+                      <td className={classes.clientCell}>
+                        {e.first_name}
+                        {e.last_name ? ` ${e.last_name}` : ""}
+                      </td>
+                      <td>{cleanDisplayDate}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className={classes.detailsBtn}
+                          onClick={() => setDetailsEvent(e)}
                         >
-                          <p>
-                            <strong>Date:</strong> {cleanDisplayDate}
-                          </p>
-                          <p>
-                            <strong>Time:</strong> {e.start_time?.slice(0, 5)} -{" "}
-                            {e.end_time?.slice(0, 5)}
-                          </p>
-                          <p>
-                            <strong>Guest Number:</strong> {e.guest_number}
-                          </p>
-                          {user?.role === "Chief" && (
-                            <p>
-                              <strong>Location:</strong>{" "}
-                              {e.location || "Not specified"}
-                            </p>
-                          )}
-                          <p>
-                            <strong>Notes:</strong> {e.notes || "No notes"}
-                          </p>
-                        </div>
+                          View Details
+                        </button>
+                      </td>
+                      <td>
+                        {showActions ? (
+                          <div className={classes.actionBtns}>
+                            <button
+                              type="button"
+                              className={classes.approveBtn}
+                              onClick={() =>
+                                handlechangeStatus(e, e.event_id, "APPROVED")
+                              }
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              className={classes.rejectBtn}
+                              onClick={() => setRejectDialogEvent(e)}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span className={classes.mutedAction}>—</span>
+                        )}
                       </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <AppModal
+        open={!!detailsEvent}
+        title="Booking details"
+        subtitle={detailsClient || undefined}
+        onClose={() => setDetailsEvent(null)}
+        size="md"
+      >
+        {detailsEvent && (
+          <div className={classes.detailsBox}>
+            <div className={classes.detailItem}>
+              <span>Date</span>
+              <strong>{detailsDate}</strong>
+            </div>
+            <div className={classes.detailItem}>
+              <span>Time</span>
+              <strong>
+                {detailsEvent.start_time?.slice(0, 5)} –{" "}
+                {detailsEvent.end_time?.slice(0, 5)}
+              </strong>
+            </div>
+            <div className={classes.detailItem}>
+              <span>Guests</span>
+              <strong>{detailsEvent.guest_number || "—"}</strong>
+            </div>
+            {user?.role === "Chief" ? (
+              <div className={classes.detailItem}>
+                <span>Location</span>
+                <strong>{detailsEvent.location || "Not specified"}</strong>
+              </div>
+            ) : (
+              <div className={classes.detailItem}>
+                <span>Client</span>
+                <strong>{detailsClient || "—"}</strong>
+              </div>
+            )}
+            <div className={`${classes.detailItem} ${classes.detailNotes}`}>
+              <span>Notes</span>
+              <strong>{detailsEvent.notes || "No notes"}</strong>
+            </div>
+          </div>
+        )}
+      </AppModal>
 
       <AppDialog
         open={!!rejectDialogEvent}

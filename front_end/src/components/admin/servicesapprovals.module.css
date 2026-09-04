@@ -14,7 +14,7 @@
 
 .pageHeader {
   margin-bottom: var(--space-lg, 24px);
-  padding: 22px 26px 26px;
+  padding: 16px 20px 22px;
   background: #ffffff;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);

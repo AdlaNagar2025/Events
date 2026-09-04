@@ -1,4 +1,7 @@
-import { NavLink } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { FaBell } from "react-icons/fa";
+import API from "../../services/api";
 import classes from "./sideBar.module.css";
 
 function getRoleLabel(role) {
@@ -12,7 +15,12 @@ function getRoleLabel(role) {
   }
 }
 
-function NavItem({ to, children }) {
+function getRoleEndpoint(role) {
+  if (role === "Chief" || role === "Hall_Owner") return "provider";
+  return role ? role.toLowerCase() : "";
+}
+
+function NavItem({ to, children, endContent }) {
   return (
     <NavLink
       to={to}
@@ -20,17 +28,60 @@ function NavItem({ to, children }) {
         isActive ? `${classes.link} ${classes.active}` : classes.link
       }
     >
-      {children}
+      <span className={classes.linkText}>{children}</span>
+      {endContent}
     </NavLink>
   );
 }
 
 export default function SideBar({ user }) {
+  const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user?.role) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const endpointRole = getRoleEndpoint(user.role);
+    if (!endpointRole) return;
+
+    let cancelled = false;
+
+    const fetchUnread = async () => {
+      try {
+        const response = await API.get(`/${endpointRole}/MyNotifications`);
+        const list = response.data?.data || [];
+        const count = list.filter((n) => Number(n.isRead) === 0).length;
+        if (!cancelled) setUnreadCount(count);
+      } catch (error) {
+        console.error("Error fetching unread notifications:", error);
+        if (!cancelled) setUnreadCount(0);
+      }
+    };
+
+    fetchUnread();
+    const intervalId = setInterval(fetchUnread, 30000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [user?.role, user?.id, location.pathname]);
+
   if (!user) return null;
 
   const roleLabel = getRoleLabel(user.role);
   const isProvider = user.role === "Chief" || user.role === "Hall_Owner";
   const isApproved = user.status === "APPROVED";
+
+  const notificationsBadge =
+    unreadCount > 0 ? (
+      <span className={classes.badge} aria-label={`${unreadCount} unread`}>
+        {unreadCount > 99 ? "99+" : unreadCount}
+      </span>
+    ) : null;
 
   return (
     <aside className={classes.sideBar}>
@@ -86,7 +137,17 @@ export default function SideBar({ user }) {
 
         <p className={classes.sectionLabel}>Account</p>
         <NavItem to="/account">My Account</NavItem>
-        <NavItem to="/notifications">Notifications</NavItem>
+        <NavItem
+          to="/notifications"
+          endContent={
+            <span className={classes.notifMeta}>
+              <FaBell className={classes.bellIcon} aria-hidden="true" />
+              {notificationsBadge}
+            </span>
+          }
+        >
+          Notifications
+        </NavItem>
 
         {isProvider && !isApproved && (
           <NavItem to="/provider/business">Profile Settings</NavItem>

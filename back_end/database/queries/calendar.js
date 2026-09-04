@@ -383,6 +383,108 @@ async function updateCalendar(provider, calendarData) {
 }
 
 /**
+ * حذف/قص نفس ساعات التوفر على نطاق تواريخ (من–إلى).
+ * كل يوم يستدعي updateCalendar — نفس منطق اليوم الواحد.
+ */
+async function updateCalendarRange(provider, calendarData) {
+  const { available_date, available_date_end, start_time, end_time } =
+    calendarData;
+
+  if (!available_date || !start_time || !end_time) {
+    return {
+      statusCode: 400,
+      success: false,
+      message: "Missing required fields.",
+    };
+  }
+
+  const endDate = available_date_end || available_date;
+
+  if (endDate < available_date) {
+    return {
+      statusCode: 400,
+      success: false,
+      message: "End date must be on or after start date.",
+    };
+  }
+
+  const MAX_DAYS = 120;
+  const start = new Date(`${available_date}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  const diffDays =
+    Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+  if (diffDays > MAX_DAYS) {
+    return {
+      statusCode: 400,
+      success: false,
+      message: `Date range is too long. Max ${MAX_DAYS} days.`,
+    };
+  }
+
+  let successCount = 0;
+  let skippedPast = 0;
+  let skippedBlocked = 0;
+  let lastError = null;
+
+  const cursor = new Date(start);
+  while (cursor <= end) {
+    const yyyy = cursor.getFullYear();
+    const mm = String(cursor.getMonth() + 1).padStart(2, "0");
+    const dd = String(cursor.getDate()).padStart(2, "0");
+    const dayStr = `${yyyy}-${mm}-${dd}`;
+
+    const result = await updateCalendar(provider, {
+      available_date: dayStr,
+      start_time,
+      end_time,
+    });
+
+    if (result.success) {
+      successCount += 1;
+    } else if (result.message && result.message.includes("past")) {
+      skippedPast += 1;
+    } else if (result.statusCode === 409) {
+      skippedBlocked += 1;
+      lastError = result;
+    } else {
+      lastError = result;
+    }
+
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  if (successCount === 0 && lastError) {
+    return lastError;
+  }
+
+  if (successCount === 0) {
+    return {
+      statusCode: 400,
+      success: false,
+      message:
+        "No availability was removed (all dates may be in the past or blocked).",
+    };
+  }
+
+  const extras = [];
+  if (skippedPast) extras.push(`Skipped ${skippedPast} past day(s)`);
+  if (skippedBlocked)
+    extras.push(`Skipped ${skippedBlocked} day(s) with approved events`);
+
+  return {
+    statusCode: 200,
+    success: true,
+    message: `Availability removed for ${successCount} day(s).${
+      extras.length ? ` ${extras.join(". ")}.` : ""
+    }`,
+    successCount,
+    skippedPast,
+    skippedBlocked,
+  };
+}
+
+/**
  * @function updateTimeAvail
  * @description פונקציית עזר לחישוב פיצול הבלוקים שנשארים פנויים.
  */
@@ -421,5 +523,11 @@ async function updateTimeAvail(date, providerId, removeStart, removeEnd) {
   }
 }
 
-module.exports = {fillCalendarRange , fillCalendar, getCalandar, updateCalendar };
+module.exports = {
+  fillCalendarRange,
+  fillCalendar,
+  getCalandar,
+  updateCalendar,
+  updateCalendarRange,
+};
 

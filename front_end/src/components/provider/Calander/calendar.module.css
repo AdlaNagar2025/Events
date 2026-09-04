@@ -1,22 +1,23 @@
 .calendarContainer {
   background: var(--surface);
-  padding: 24px;
+  padding: 16px 18px 20px;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  margin: 0 auto;
+  margin: 0 auto 16px;
   max-width: 1100px;
   font-family: var(--sans);
   border: 1px solid var(--border);
 }
 
 .calendarContainer h2 {
-  margin: 0 0 18px;
+  margin: 0 0 12px;
   color: var(--text-h);
+  font-size: 1.25rem;
   font-weight: 800;
 }
 
 .calendarWrapper {
-  margin-bottom: 24px;
+  margin-bottom: 14px;
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
@@ -24,14 +25,14 @@
 }
 
 :global(.fc-header-toolbar) {
-  padding: 14px 16px;
+  padding: 10px 12px;
   background: #fcfaf5;
   margin-bottom: 0 !important;
   border-bottom: 2px solid var(--gold);
 }
 
 :global(.fc-toolbar-title) {
-  font-size: 1.15rem !important;
+  font-size: 1rem !important;
   font-weight: 700 !important;
   color: var(--text-h) !important;
 }
@@ -44,6 +45,8 @@
   text-transform: capitalize !important;
   box-shadow: none !important;
   transition: all 0.2s ease !important;
+  padding: 4px 10px !important;
+  font-size: 0.8rem !important;
 }
 
 :global(.fc-button-primary:not(:disabled):active),
@@ -59,32 +62,36 @@
 }
 
 :global(.fc-timegrid-slot) {
-  height: 3em !important;
+  height: 1.65em !important;
   border-bottom: 1px solid var(--border-soft) !important;
 }
 
 :global(.fc-timegrid-axis-cushion),
 :global(.fc-timegrid-slot-label-cushion) {
   color: var(--text-muted) !important;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
 }
 
 :global(.fc-col-header-cell) {
   background: var(--bg) !important;
 }
 
+:global(.fc-scrollgrid) {
+  border-color: var(--border) !important;
+}
+
 :global(.fc-event) {
-  border-radius: 6px !important;
-  padding: 2px 4px !important;
-  font-size: 0.85rem !important;
+  border-radius: 5px !important;
+  padding: 1px 3px !important;
+  font-size: 0.72rem !important;
   border: none !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   cursor: pointer;
   color: #ffffff !important;
 }
 
 :global(.fc-event-main) {
-  padding: 2px;
+  padding: 1px;
   color: #ffffff !important;
 }
 
@@ -99,65 +106,82 @@
 }
 
 .inputGroup {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  justify-content: center;
-  margin-top: 20px;
-  padding: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin-top: 4px;
+  padding: 12px 14px;
   background: var(--bg);
   border-radius: 12px;
   border: 1px solid var(--border);
-  flex-wrap: wrap;
 }
 
-.inputGroup label {
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.field label {
   font-weight: 700;
-  color: var(--text-h);
-  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-.inputGroup input {
-  padding: 9px 12px;
+.field input {
+  width: 100%;
+  padding: 8px 10px;
   border: 1.5px solid var(--border);
   border-radius: 9px;
   outline: none;
   background: var(--surface);
   color: var(--text-h);
+  box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.inputGroup input:focus {
+.field input:focus {
   border-color: var(--gold);
   box-shadow: 0 0 0 3px var(--gold-ring);
 }
 
-.confirmBox {
-  margin-top: 18px;
-  padding: 20px;
-  border: 1.5px dashed rgba(201, 162, 39, 0.55);
-  border-radius: 14px;
-  text-align: center;
+.confirmActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.modalFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.modalSummary {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
   background: var(--gold-soft);
-  animation: fadeIn 0.3s ease-in-out;
+  border: 1px solid rgba(201, 162, 39, 0.35);
 }
 
-.confirmBox h4 {
-  margin: 0 0 10px;
+.modalSummary p {
+  margin: 3px 0;
   color: var(--text-h);
-  font-weight: 800;
-}
-
-.confirmBox p {
-  color: var(--text-muted);
-  margin: 4px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .saveBtn {
   background: linear-gradient(135deg, var(--gold), var(--gold-dark));
   color: #ffffff;
   border: none;
-  padding: 10px 22px;
+  padding: 9px 16px;
   border-radius: 9px;
   font-weight: 700;
   cursor: pointer;
@@ -178,7 +202,7 @@
   background: var(--surface);
   color: var(--danger);
   border: 1.5px solid var(--danger-border);
-  padding: 10px 22px;
+  padding: 9px 16px;
   border-radius: 9px;
   font-weight: 700;
   cursor: pointer;
@@ -200,7 +224,7 @@
   background: var(--navy);
   color: #fff;
   border: none;
-  padding: 10px 22px;
+  padding: 9px 16px;
   border-radius: 9px;
   font-weight: 700;
   cursor: pointer;
@@ -224,5 +248,26 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .inputGroup {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .inputGroup,
+  .modalFields {
+    grid-template-columns: 1fr;
+  }
+
+  .confirmActions {
+    width: 100%;
+  }
+
+  .confirmActions button {
+    flex: 1;
   }
 }

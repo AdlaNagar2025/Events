@@ -1,0 +1,71 @@
+.wrap {
+  font-family: var(--sans);
+  color: var(--text);
+}
+
+.wrap h2 {
+  margin: 0 0 14px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-h);
+}
+
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+}
+
+.table th,
+.table td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+
+.table th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  background: var(--bg);
+  white-space: nowrap;
+}
+
+.table td {
+  font-size: 0.9rem;
+  color: var(--text-h);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.emptyCell {
+  text-align: center;
+  color: var(--text-faint);
+  padding: 28px 14px !important;
+  font-size: 0.92rem;
+}
+
+.reportBtn {
+  background: transparent;
+  border: 1px solid var(--danger-border, #e8b4b4);
+  color: var(--danger, #c0392b);
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.reportBtn:hover {
+  background: var(--danger-bg, #fdf2f2);
+}

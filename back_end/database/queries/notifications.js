@@ -1,7 +1,7 @@
 const doQuery = require("../query");
 
 async function getAllNotification(userId) {
-  const sql = `SELECT notification_id , message , isRead FROM notifications WHERE user_id=? ORDER BY sent_at DESC`;
+  const sql = `SELECT notification_id, message, isRead, sent_at FROM notifications WHERE user_id=? ORDER BY sent_at DESC`;
   return await doQuery(sql, [userId]);
 }
 

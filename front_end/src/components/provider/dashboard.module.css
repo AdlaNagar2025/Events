@@ -1,16 +1,190 @@
-/* Provider dashboard — buttons aligned with white/gold theme */
+.page {
+  width: 100%;
+  max-width: var(--page-max, 1200px);
+  margin: 0 auto;
+  font-family: var(--sans);
+  color: var(--text);
+}
+
+.pageHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 16px 20px 22px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.pageHeader::after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 10px;
+  height: 14px;
+  background: var(--wave-gold);
+  background-size: 100% 100%;
+  opacity: 0.55;
+}
+
+.pageHeader h1 {
+  margin: 0 0 6px;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-h);
+}
+
+.pageHeader p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.statChip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 88px;
+  padding: 8px 12px;
+  background: var(--gold-soft);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  border-radius: 10px;
+}
+
+.statLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+
+.statChip strong {
+  font-size: 0.95rem;
+  color: var(--text-h);
+}
+
+.inboxCard {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.inboxHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.inboxHeader h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-h);
+}
+
+.inboxHint {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  font-weight: 600;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-faint);
+  font-size: 0.95rem;
+}
+
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.table th,
+.table td {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+
+.table th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--gold-dark);
+  background: var(--bg);
+  white-space: nowrap;
+}
+
+.table td {
+  font-size: 0.9rem;
+  color: var(--text-h);
+}
+
+.clientCell {
+  font-weight: 700;
+}
+
+.detailsBtn {
+  background: #ffffff;
+  color: var(--gold-dark);
+  border: 1.5px solid rgba(201, 162, 39, 0.55);
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.detailsBtn:hover {
+  background: var(--gold-soft);
+}
+
+.actionBtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
 .approveBtn {
   background: linear-gradient(135deg, var(--gold), var(--gold-dark));
   color: #ffffff;
   border: none;
-  padding: 8px 16px;
+  padding: 8px 14px;
   border-radius: 9px;
   font-size: 0.8rem;
   font-weight: 700;
   font-family: var(--sans);
   cursor: pointer;
-  margin-right: 8px;
   box-shadow: 0 3px 10px rgba(201, 162, 39, 0.3);
   transition: all 0.2s;
 }
@@ -24,7 +198,7 @@
   background: var(--danger-bg);
   color: var(--danger);
   border: 1.5px solid var(--danger-border);
-  padding: 8px 16px;
+  padding: 8px 14px;
   border-radius: 9px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -37,4 +211,52 @@
   background: var(--danger);
   color: #fff;
   border-color: var(--danger);
+}
+
+.mutedAction {
+  color: var(--text-faint);
+}
+
+.detailsBox {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.detailItem span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-faint);
+}
+
+.detailItem strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.detailNotes {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .detailsBox {
+    grid-template-columns: 1fr;
+  }
+
+  .pageHeader {
+    padding: 14px 16px 20px;
+  }
 }

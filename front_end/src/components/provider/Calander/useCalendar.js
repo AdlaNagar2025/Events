@@ -128,7 +128,9 @@ export const useCalendar = (role, user) => {
     try {
       const res = await API.post("/provider/updateCalendar", availableData);
       if (res.data.success) {
-        toast.success("Availability removed successfully! 🗑️");
+        toast.success(
+          res.data.message || "Availability removed successfully! 🗑️",
+        );
         resetForm();
         fetchAvailability();
       }
@@ -139,20 +141,31 @@ export const useCalendar = (role, user) => {
     }
   };
 
- const resetForm = () =>
-  setAvailableData({
-    available_date: "",
-    available_date_end: "",
-    start_time: "",
-    end_time: "",
-  });
+  const resetForm = () =>
+    setAvailableData({
+      available_date: "",
+      available_date_end: "",
+      start_time: "",
+      end_time: "",
+    });
+
+  const rangeStart = availableData.available_date;
+  const rangeEnd =
+    availableData.available_date_end &&
+    availableData.available_date_end !== availableData.available_date
+      ? availableData.available_date_end
+      : availableData.available_date;
+
   const isSlotExisting = worksHour.some((slot) => {
     const slotDate = slot.start.split("T")[0];
     const slotStart = slot.start.split("T")[1].substring(0, 5);
     const slotEnd = slot.end.split("T")[1].substring(0, 5);
 
+    if (!rangeStart || slotDate < rangeStart || slotDate > rangeEnd) {
+      return false;
+    }
+
     return (
-      slotDate === availableData.available_date &&
       slotStart <= availableData.start_time &&
       slotEnd >= availableData.end_time
     );
