@@ -7,7 +7,7 @@ function getDefaultRouteForRole(user) {
   if (!user) return "/";
   switch (user.role) {
     case "Customer":
-      return "/account";
+      return "/customer/find-vendor";
     case "Admin":
       return "/admin/users";
     case "Chief":

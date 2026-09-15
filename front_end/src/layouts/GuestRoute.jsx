@@ -3,7 +3,7 @@ import { Navigate, Outlet } from "react-router-dom";
 function getDefaultRouteForRole(role) {
   switch (role) {
     case "Customer":
-      return "/account";
+      return "/customer/find-vendor";
     case "Admin":
       return "/admin/users";
     case "Chief":

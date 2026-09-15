@@ -15,6 +15,61 @@ export const formatLocalTime = (dateObj) => {
   return `${hours}:${minutes}`;
 };
 
+export const CALENDAR_DAY_START = "08:00";
+export const CALENDAR_DAY_END = "24:00";
+
+export const timeToMinutes = (time) => {
+  const normalized = String(time).slice(0, 5);
+  if (normalized === CALENDAR_DAY_END) return 24 * 60;
+  const [hours, minutes] = normalized.split(":").map(Number);
+  return hours * 60 + minutes;
+};
+
+export const isTimeBefore = (start, end) =>
+  timeToMinutes(start) < timeToMinutes(end);
+
+/** FullCalendar ends midnight selections at next-day 00:00 — map that to 24:00. */
+export const formatCalendarSelectEnd = (start, end) => {
+  const startDate = formatLocalDate(start);
+  const endDate = formatLocalDate(end);
+  const endTime = formatLocalTime(end);
+
+  if (endTime === "00:00" && endDate !== startDate) {
+    const dayDiff =
+      new Date(`${endDate}T00:00:00`).getTime() -
+      new Date(`${startDate}T00:00:00`).getTime();
+    if (dayDiff === 86400000) return CALENDAR_DAY_END;
+  }
+
+  return endTime;
+};
+
+/** FullCalendar event end ISO string (24:00 → next day 00:00 for display). */
+export const calendarEventEndIso = (date, endTime) => {
+  const normalized = String(endTime).slice(0, 5);
+  if (normalized === CALENDAR_DAY_END) {
+    const nextDay = new Date(`${date}T12:00:00`);
+    nextDay.setDate(nextDay.getDate() + 1);
+    return `${formatLocalDate(nextDay)}T00:00:00`;
+  }
+  const withSeconds = normalized.length === 5 ? `${normalized}:00` : normalized;
+  return `${date}T${withSeconds}`;
+};
+
+export const buildCalendarEndTimeOptions = () => {
+  const options = [];
+  for (let hour = 8; hour <= 23; hour++) {
+    for (const minute of [0, 15, 30, 45]) {
+      if (hour === 8 && minute < 15) continue;
+      options.push(
+        `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+      );
+    }
+  }
+  options.push(CALENDAR_DAY_END);
+  return options;
+};
+
 export const getTodayString = () => formatLocalDate(new Date());
 
 // בדיקות תקינות הזמנים
@@ -32,11 +87,14 @@ export const validateTimes = (date, start, end) => {
       return false;
     }
   }
-  if (start < "08:00" || end > "24:00") {
+  if (
+    start < CALENDAR_DAY_START ||
+    timeToMinutes(end) > timeToMinutes(CALENDAR_DAY_END)
+  ) {
     toast.error("Working hours are restricted between 08:00 and 24:00!");
     return false;
   }
-  if (start >= end) {
+  if (!isTimeBefore(start, end)) {
     toast.error("End time must be strictly after the start time.");
     return false;
   }
@@ -64,15 +122,41 @@ export const validateSearchParams = (params) => {
     return "You cannot select a start time that has already passed today!";
   }
 
+  // 2b. הזמנה לפחות 3 שעות לפני שעת ההתחלה
+  if (params.requested_date && params.start_time) {
+    const dateStr = String(params.requested_date).split("T")[0];
+    const timeStr = String(params.start_time).slice(0, 5);
+    const eventStart = new Date(`${dateStr}T${timeStr}`);
+    const hoursUntilStart = (eventStart - new Date()) / (1000 * 60 * 60);
+
+    if (!Number.isNaN(eventStart.getTime()) && hoursUntilStart < 3) {
+      return "Events must be booked at least 3 hours before the start time.";
+    }
+  }
+
   // 3. שעות עבודה מוגדרות (בין 08:00 ל-23:59)
   if (params.start_time && params.start_time < "08:00") {
     return "Start time cannot be earlier than 08:00!";
   }
 
-  // 4. שעת סיום אחרי שעת התחלה
+  // 4. שעת סיום אחרי שעת התחלה + משך מינימלי 30 דקות
   if (params.start_time && params.end_time) {
     if (params.start_time >= params.end_time) {
       return "End time must be strictly after the start time!";
+    }
+
+    const [startH, startM] = String(params.start_time)
+      .slice(0, 5)
+      .split(":")
+      .map(Number);
+    const [endH, endM] = String(params.end_time)
+      .slice(0, 5)
+      .split(":")
+      .map(Number);
+    const durationMinutes = endH * 60 + endM - (startH * 60 + startM);
+
+    if (durationMinutes < 30) {
+      return "Event duration must be at least 30 minutes.";
     }
   }
 

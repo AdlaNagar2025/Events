@@ -81,28 +81,40 @@
 }
 
 :global(.fc-event) {
-  border-radius: 5px !important;
-  padding: 1px 3px !important;
-  font-size: 0.72rem !important;
+  border-radius: 6px !important;
+  padding: 2px 4px !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
   border: none !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  box-shadow: none !important;
   cursor: pointer;
-  color: #ffffff !important;
 }
 
 :global(.fc-event-main) {
-  padding: 1px;
-  color: #ffffff !important;
+  padding: 1px 2px;
 }
 
 :global(.fc-event.fc-available) {
-  background: linear-gradient(135deg, #c9a227, #b8921f) !important;
-  border: 1px solid #a6851c !important;
+  background: rgba(201, 162, 39, 0.18) !important;
+  border: 1px solid rgba(201, 162, 39, 0.55) !important;
+  color: #8a6f14 !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35) !important;
+}
+
+:global(.fc-event.fc-available .fc-event-main) {
+  color: #8a6f14 !important;
 }
 
 :global(.fc-event.fc-booking) {
   background: linear-gradient(135deg, #1e3a5f, #2c4a6e) !important;
-  border: 1px solid #1e3a5f !important;
+  border: 1px solid #152a45 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(30, 58, 95, 0.35) !important;
+  z-index: 5 !important;
+}
+
+:global(.fc-event.fc-booking .fc-event-main) {
+  color: #ffffff !important;
 }
 
 .inputGroup {
@@ -131,7 +143,8 @@
   letter-spacing: 0.3px;
 }
 
-.field input {
+.field input,
+.field select {
   width: 100%;
   padding: 8px 10px;
   border: 1.5px solid var(--border);
@@ -143,7 +156,8 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
   border-color: var(--gold);
   box-shadow: 0 0 0 3px var(--gold-ring);
 }

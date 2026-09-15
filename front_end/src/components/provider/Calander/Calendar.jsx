@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import classes from "./calendar.module.css";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -9,6 +9,8 @@ import { useCalendar } from "./useCalendar";
 import {
   formatLocalDate,
   formatLocalTime,
+  formatCalendarSelectEnd,
+  buildCalendarEndTimeOptions,
   validateTimes,
   getTodayString,
 } from "../../../utils/validation";
@@ -29,6 +31,7 @@ export default function Calendar({ role, user }) {
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const isProvider = role === "Chief" || role === "Hall_Owner";
+  const endTimeOptions = useMemo(() => buildCalendarEndTimeOptions(), []);
 
   const slotReady =
     !!availableData.available_date &&
@@ -44,7 +47,7 @@ export default function Calendar({ role, user }) {
   const handleSelect = (info) => {
     const selectedDate = formatLocalDate(info.start);
     const startTime = formatLocalTime(info.start);
-    const endTime = formatLocalTime(info.end);
+    const endTime = formatCalendarSelectEnd(info.start, info.end);
 
     if (!validateTimes(selectedDate, startTime, endTime)) return;
 
@@ -135,7 +138,7 @@ export default function Calendar({ role, user }) {
               id="cal-start"
               type="time"
               min="08:00"
-              max="23:45"
+              max="23:59"
               value={availableData.start_time}
               name="start_time"
               onChange={handleChange}
@@ -143,15 +146,19 @@ export default function Calendar({ role, user }) {
           </div>
           <div className={classes.field}>
             <label htmlFor="cal-end">End</label>
-            <input
+            <select
               id="cal-end"
-              type="time"
-              min="08:15"
-              max="24:00"
               value={availableData.end_time}
               name="end_time"
               onChange={handleChange}
-            />
+            >
+              <option value="">Select end time</option>
+              {endTimeOptions.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       )}
@@ -192,7 +199,7 @@ export default function Calendar({ role, user }) {
               id="modal-start"
               type="time"
               min="08:00"
-              max="23:45"
+              max="23:59"
               value={availableData.start_time}
               name="start_time"
               onChange={handleChange}
@@ -200,15 +207,19 @@ export default function Calendar({ role, user }) {
           </div>
           <div className={classes.field}>
             <label htmlFor="modal-end">End</label>
-            <input
+            <select
               id="modal-end"
-              type="time"
-              min="08:15"
-              max="24:00"
               value={availableData.end_time}
               name="end_time"
               onChange={handleChange}
-            />
+            >
+              <option value="">Select end time</option>
+              {endTimeOptions.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

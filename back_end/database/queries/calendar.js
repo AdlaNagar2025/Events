@@ -1,4 +1,11 @@
 const doQuery = require("../query");
+
+function timeToMinutes(time) {
+  const normalized = String(time).slice(0, 5);
+  if (normalized === "24:00") return 24 * 60;
+  const [hours, minutes] = normalized.split(":").map(Number);
+  return hours * 60 + minutes;
+}
 /**
  * @function fillCalendar
  * @description שמירת חלונות זמן חדשים של ספק ביומן.
@@ -25,7 +32,7 @@ async function fillCalendar(provider, calendarData) {
   }
 
   // 2. Validation: Ensure logical timeline (End after Start)
-  if (start_time >= end_time) {
+  if (timeToMinutes(start_time) >= timeToMinutes(end_time)) {
     return {
       statusCode: 400,
       success: false,
@@ -34,7 +41,7 @@ async function fillCalendar(provider, calendarData) {
   }
 
   // 3. Validation: Enforce operating hours (08:00 - 24:00)
-  if (start_time < "08:00" || end_time > "24:00") {
+  if (start_time < "08:00" || timeToMinutes(end_time) > 24 * 60) {
     return {
       statusCode: 400,
       success: false,
@@ -55,13 +62,13 @@ async function fillCalendar(provider, calendarData) {
   }
 
   try {
-    // מציאת כל הסלוטים שחופפים לזמן החדש
+    // מציאת סלוטים שחופפים או נוגעים בקצה (08–17:30 + 17:30–20 → מיזוג)
     const findOverlapSql = `
       SELECT * FROM availability 
       WHERE provider_id = ? 
         AND available_date = ? 
-        AND start_time < ? 
-        AND end_time > ?`;
+        AND start_time <= ? 
+        AND end_time >= ?`;
 
     const overlaps = await doQuery(findOverlapSql, [
       provider_id,
@@ -71,20 +78,20 @@ async function fillCalendar(provider, calendarData) {
     ]);
 
     if (overlaps.length > 0) {
-      // Smart Merge: איחוד כל טווחי השעות החופפים לטווח אחד רציף
+      // Smart Merge: איחוד טווחים חופפים/סמוכים לטווח רציף אחד
       const allStarts = overlaps.map((s) => s.start_time).concat(start_time);
       const allEnds = overlaps.map((s) => s.end_time).concat(end_time);
 
       start_time = allStarts.sort()[0];
       end_time = allEnds.sort().reverse()[0];
 
-      // ניקוי הסלוטים הישנים שחפפו
+      // ניקוי הסלוטים הישנים שחופפים או נוגעים
       const deleteSql = `
         DELETE FROM availability 
         WHERE provider_id = ? 
           AND available_date = ? 
-          AND start_time < ? 
-          AND end_time > ?`;
+          AND start_time <= ? 
+          AND end_time >= ?`;
 
       await doQuery(deleteSql, [
         provider_id,
@@ -276,7 +283,7 @@ async function updateCalendar(provider, calendarData) {
   }
 
   // 2. Validation: Ensure logical timeline
-  if (start_time >= end_time) {
+  if (timeToMinutes(start_time) >= timeToMinutes(end_time)) {
     return {
       statusCode: 400,
       success: false,
@@ -285,7 +292,7 @@ async function updateCalendar(provider, calendarData) {
   }
 
   // 3. Validation: Enforce operating hours
-  if (start_time < "08:00" || end_time > "24:00") {
+  if (start_time < "08:00" || timeToMinutes(end_time) > 24 * 60) {
     return {
       statusCode: 400,
       success: false,

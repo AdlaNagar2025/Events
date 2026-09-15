@@ -1,6 +1,7 @@
 import React from "react";
 import BookEvent from "../BOOKEVENT/BookEvent";
 import { useNavigate, useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function EventSummaryBar({
   eventData = null,
@@ -27,7 +28,7 @@ export default function EventSummaryBar({
     }
 
     const diffInHours = (endInMinutes - startInMinutes) / 60;
-    return diffInHours > 0 ? diffInHours : 1;
+    return diffInHours > 0 ? Math.round(diffInHours * 100) / 100 : 1;
   };
 
   const totalEventHours = calculateHours(
@@ -56,18 +57,53 @@ export default function EventSummaryBar({
     return sum + hourlyRate * totalEventHours;
   }, 0);
 
-  const totalPrice = hallPrice + chiefsPrice;
+  const totalPrice = Math.round((hallPrice + chiefsPrice) * 100) / 100;
   const hasSelections = selectedHall || selectedChiefs.length > 0;
 
-  // EventSummaryBar.js
-
   const handleBookingClick = () => {
+    const eventId = searchParams?.event_id || eventData?.event_id || null;
+    const startTime = String(searchParams?.start_time || "").slice(0, 5);
+    const endTime = String(searchParams?.end_time || "").slice(0, 5);
+
+    if (startTime && endTime) {
+      const [startH, startM] = startTime.split(":").map(Number);
+      const [endH, endM] = endTime.split(":").map(Number);
+      let durationMinutes = endH * 60 + endM - (startH * 60 + startM);
+      if (durationMinutes <= 0) durationMinutes += 24 * 60;
+
+      if (durationMinutes < 30) {
+        toast.error("Event duration must be at least 30 minutes.");
+        return;
+      }
+    }
+
+    // New bookings only: must be at least 3 hours before start (same rule as BookEvent)
+    if (!eventId) {
+      const dateStr = String(searchParams?.requested_date || "").split("T")[0];
+      const timeStr = startTime;
+
+      if (!dateStr || !timeStr) {
+        toast.error("Please select event date and start time first.");
+        return;
+      }
+
+      const eventStart = new Date(`${dateStr}T${timeStr}`);
+      const hoursUntilStart = (eventStart - new Date()) / (1000 * 60 * 60);
+
+      if (Number.isNaN(eventStart.getTime()) || hoursUntilStart < 3) {
+        toast.error(
+          "Events must be booked at least 3 hours before the start time.",
+        );
+        return;
+      }
+    }
+
     navigate("/customer/book-event", {
       state: {
-        dataToEvent: searchParams, // כולל כעת את event_id במידה וזה עדכון
+        dataToEvent: searchParams,
         hallId: selectedHallId,
         selectedChiefsId: selectedChiefIds,
-        eventId: searchParams?.event_id || eventData?.event_id || null, // 👈 מזהה האירוע המעודכן
+        eventId,
       },
     });
   };
@@ -158,7 +194,7 @@ export default function EventSummaryBar({
                 color: "#1976d2",
               }}
             >
-              {totalPrice} ₪
+              {totalPrice.toFixed(2)} ₪
             </div>
           </div>
         )}
