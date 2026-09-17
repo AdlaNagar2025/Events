@@ -95,14 +95,14 @@ export default function BookEvent({ user }) {
     try {
       let response;
       if (!eventId) {
-        // إنشاء فقط: فحص 3 ساعات
+        // Create only: at least 6 hours before start
         const dateStr = String(dataToEvent.requested_date).split("T")[0];
         const timeStr = String(dataToEvent.start_time).slice(0, 5);
         const eventStart = new Date(`${dateStr}T${timeStr}`);
         const hoursUntilStart = (eventStart - new Date()) / (1000 * 60 * 60);
-        if (Number.isNaN(eventStart.getTime()) || hoursUntilStart < 3) {
+        if (Number.isNaN(eventStart.getTime()) || hoursUntilStart < 6) {
           toast.error(
-            "Events must be booked at least 3 hours before the start time.",
+            "Events must be booked at least 6 hours before the start time.",
           );
           return;
         }
@@ -115,9 +115,10 @@ export default function BookEvent({ user }) {
       }
       if (response.data.success) {
         toast.success(
-          eventId
-            ? "Event Updated Successfully!"
-            : "Event Booked Successfully!",
+          response.data.message ||
+            (eventId
+              ? "Event Updated Successfully!"
+              : "Event Booked Successfully!"),
         );
         navigate("/customer/my-booking");
       } else {
@@ -137,7 +138,13 @@ export default function BookEvent({ user }) {
   if (loading)
     return <div className={classes.loader}>Loading Event Details...</div>;
 
-  const shouldShowButton = hallId ? !!hallData : !!eventLocation;
+  const needsChefLocation =
+    !hallId &&
+    (selectedChiefsId.length > 0 || chiefsData.length > 0);
+  const hasChefLocation = Boolean(String(eventLocation || "").trim());
+  const providersReady = hallId ? Boolean(hallData) : chiefsData.length > 0;
+  const canSubmit =
+    providersReady && (!needsChefLocation || hasChefLocation) && !isSubmitting;
 
   const handleBack = () => {
     navigate("/customer/find-vendor", {
@@ -172,18 +179,30 @@ export default function BookEvent({ user }) {
         handleChefNoteChange={handleChefNoteChange}
       />
 
-      {shouldShowButton && (
-        <button
-          className={classes.confirmBtn}
-          onClick={saveData}
-          disabled={isSubmitting}
-        >
-          {isSubmitting
-            ? "Saving..."
-            : eventId
-              ? "Update Event Now"
-              : "Confirm & Book Now"}
-        </button>
+      {providersReady && (
+        <div className={classes.submitWrap}>
+          {needsChefLocation && !hasChefLocation && (
+            <p className={classes.locationHint}>
+              Please select an event location before updating.
+            </p>
+          )}
+          <button
+            className={classes.confirmBtn}
+            onClick={saveData}
+            disabled={!canSubmit}
+            title={
+              needsChefLocation && !hasChefLocation
+                ? "Select a city/location first"
+                : ""
+            }
+          >
+            {isSubmitting
+              ? "Saving..."
+              : eventId
+                ? "Update Event Now"
+                : "Confirm & Book Now"}
+          </button>
+        </div>
       )}
     </div>
   );

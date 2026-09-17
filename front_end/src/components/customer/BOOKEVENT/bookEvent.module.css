@@ -196,9 +196,28 @@
   transition: all 0.25s ease;
 }
 
-.confirmBtn:hover {
+.confirmBtn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 12px 36px rgba(201, 162, 39, 0.5);
+}
+
+.confirmBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.submitWrap {
+  margin-top: 8px;
+}
+
+.locationHint {
+  text-align: center;
+  margin: 20px 0 0;
+  color: #b45309;
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .loader {

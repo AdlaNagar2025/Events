@@ -2,6 +2,14 @@ const doQuery = require("../query");
 const { getRole, getStatusEvent, AvailToEvent } = require("./helpingFunc");
 const { createNotification } = require("./notifications");
 const { sendEmail } = require("./mail");
+const {
+  BOOKING_POLICY,
+  hoursUntilEvent,
+  hasCriticalFieldChanges,
+  hasProviderRosterChanges,
+  normalizeDate,
+  normalizeTime,
+} = require("./bookingPolicy");
 
 function validateDataToSearch(dataToSearch) {
   const today = new Date().toISOString().split("T")[0];
@@ -266,12 +274,13 @@ async function getAllEventsData(customerId) {
 async function createEventData(Data, customerId) {
   const {
     dataToEvent,
-    hallId,
-    selectedChiefsId,
     location,
     notesToHall,
     noteToChef,
   } = Data;
+
+  let hallId = Data.hallId;
+  let selectedChiefsId = Data.selectedChiefsId;
 
   if (
     !dataToEvent ||
@@ -297,18 +306,57 @@ async function createEventData(Data, customerId) {
     };
   }
 
-  const dateStr = String(dataToEvent.requested_date).split("T")[0];
-const timeStr = String(dataToEvent.start_time).slice(0, 5);
-const eventStart = new Date(`${dateStr}T${timeStr}`);
-const hoursUntilStart = (eventStart - new Date()) / (1000 * 60 * 60);
-if (Number.isNaN(eventStart.getTime()) || hoursUntilStart < 3) {
-  return {
-    success: false,
-    message:
-      "Events must be booked at least 3 hours before the start time.",
-  };
-}
-if (hasHall) {
+  const hoursUntilStart = hoursUntilEvent(
+    dataToEvent.requested_date,
+    dataToEvent.start_time,
+  );
+  if (
+    Number.isNaN(hoursUntilStart) ||
+    hoursUntilStart < BOOKING_POLICY.CREATE_MIN_HOURS
+  ) {
+    return {
+      success: false,
+      message: `Events must be booked at least ${BOOKING_POLICY.CREATE_MIN_HOURS} hours before the start time.`,
+    };
+  }
+
+  const pruned = await pruneProvidersByCapacity(
+    dataToEvent.guest_number,
+    hasHall ? hallId : null,
+    hasChiefs ? selectedChiefsId : [],
+  );
+
+  if (pruned.removed.length > 0) {
+    const names = pruned.removed.map((p) => p.name).join(", ");
+    return {
+      success: false,
+      message: `These providers cannot serve ${dataToEvent.guest_number} guests: ${names}. Please choose other providers.`,
+    };
+  }
+
+  if (!pruned.hallId && pruned.chefIds.length === 0) {
+    return {
+      success: false,
+      message: "Event must include at least a hall or one chef.",
+    };
+  }
+
+  if (!pruned.hallId && pruned.chefIds.length > 0) {
+    const loc = String(location || "").trim();
+    if (!loc) {
+      return {
+        success: false,
+        message: "Please select a location for the chefs.",
+      };
+    }
+  }
+
+  hallId = pruned.hallId;
+  selectedChiefsId = pruned.chefIds;
+  const hasHallAfterPrune = Boolean(hallId);
+  const hasChiefsAfterPrune = selectedChiefsId.length > 0;
+
+if (hasHallAfterPrune) {
   const hallOk = await AvailToEvent(
     null, // إنشاء جديد — ما في eventId نستثنيه
     dataToEvent.requested_date,
@@ -323,7 +371,7 @@ if (hasHall) {
     };
   }
 }
-if (hasChiefs) {
+if (hasChiefsAfterPrune) {
   for (const chefId of selectedChiefsId) {
     const chefOk = await AvailToEvent(
       null,
@@ -357,7 +405,7 @@ if (hasChiefs) {
     ]);
     const newEventId = result.insertId;
 
-    if (hasChiefs) {
+    if (hasChiefsAfterPrune) {
       const sqlProvider = `INSERT INTO event_providers (event_id, provider_id, noteToChef, location) VALUES (?, ?, ?, ?)`;
       for (const chefId of selectedChiefsId) {
         await doQuery(sqlProvider, [
@@ -442,28 +490,259 @@ if (hasChiefs) {
   }
 }
 
-// פונקציית עזר לבדיקת חלון 48 השעות
-async function validateUpdateDeadline(currentEvent, updatingData) {
-  // 1. בדיקת זמנים של האירוע המקורי
-  const origDateStr = new Date(currentEvent.requested_date)
-    .toISOString()
-    .split("T")[0];
-  const eventDateTimeStr = `${origDateStr}T${currentEvent.start_time}`;
-  const eventDate = new Date(eventDateTimeStr);
-  const now = new Date();
+// Edit policy:
+// - date / time / guests → 48h
+// - add / remove hall or chefs → 6h
+// - notes-only → allowed until event starts
+async function validateUpdateDeadline(currentEvent, updatingData, eventId) {
+  const hoursLeft = hoursUntilEvent(
+    currentEvent.requested_date,
+    currentEvent.start_time,
+  );
 
-  const hoursDifference = (eventDate - now) / (1000 * 60 * 60);
+  if (Number.isNaN(hoursLeft)) {
+    throw new Error("Invalid event date/time for update policy check.");
+  }
 
-  if (hoursDifference < 48) {
+  const critical = hasCriticalFieldChanges(currentEvent, updatingData);
+  const providerChange = await hasProviderRosterChanges(
+    doQuery,
+    currentEvent,
+    updatingData,
+    eventId,
+  );
+
+  if (critical && hoursLeft < BOOKING_POLICY.CRITICAL_EDIT_HOURS) {
     throw new Error(
-      "Events cannot be updated less than 48 hours before the scheduled time.",
+      `Date, time, and guest count cannot be changed less than ${BOOKING_POLICY.CRITICAL_EDIT_HOURS} hours before the event.`,
     );
   }
 
-  // 2. בדיקה שהתאריך החדש (אם נשלח) אינו בעבר
+  if (providerChange && hoursLeft < BOOKING_POLICY.PROVIDER_CHANGE_HOURS) {
+    throw new Error(
+      `Providers cannot be added or removed less than ${BOOKING_POLICY.PROVIDER_CHANGE_HOURS} hours before the event.`,
+    );
+  }
+
+  if (!critical && !providerChange && hoursLeft < 0) {
+    throw new Error("Cannot update an event that has already started.");
+  }
+
   const newDate = updatingData.dataToEvent?.requested_date;
   if (newDate && new Date(newDate) < new Date().setHours(0, 0, 0, 0)) {
     throw new Error("Cannot set event date to a past date.");
+  }
+}
+
+async function pruneProvidersByCapacity(guestNumber, hallId, chefIds) {
+  const guests = Number(guestNumber);
+  const removed = [];
+  let nextHallId =
+    hallId === undefined || hallId === null || hallId === ""
+      ? null
+      : Number(hallId);
+  let nextChefIds = Array.isArray(chefIds)
+    ? chefIds.filter((id) => id !== null && id !== undefined).map(Number)
+    : [];
+
+  if (!Number.isFinite(guests) || guests <= 0) {
+    return { hallId: nextHallId, chefIds: nextChefIds, removed };
+  }
+
+  if (nextHallId) {
+    const rows = await doQuery(
+      `SELECT capacity, hall_name FROM halls WHERE hall_id = ?`,
+      [nextHallId],
+    );
+    if (rows[0] && Number(rows[0].capacity) < guests) {
+      removed.push({
+        id: nextHallId,
+        name: rows[0].hall_name || "Hall",
+        type: "hall",
+        capacity: Number(rows[0].capacity),
+      });
+      nextHallId = null;
+    }
+  }
+
+  if (nextChefIds.length > 0) {
+    const placeholders = nextChefIds.map(() => "?").join(",");
+    const rows = await doQuery(
+      `
+      SELECT c.chief_id, c.capacity, u.first_name
+      FROM chiefs c
+      JOIN users u ON u.id = c.chief_id
+      WHERE c.chief_id IN (${placeholders})
+      `,
+      nextChefIds,
+    );
+    const byId = new Map(
+      (Array.isArray(rows) ? rows : []).map((row) => [
+        Number(row.chief_id),
+        row,
+      ]),
+    );
+    const kept = [];
+    for (const id of nextChefIds) {
+      const row = byId.get(Number(id));
+      if (row && Number(row.capacity) >= guests) {
+        kept.push(Number(id));
+      } else {
+        removed.push({
+          id,
+          name: row?.first_name || "Chef",
+          type: "chef",
+          capacity: row ? Number(row.capacity) : null,
+        });
+      }
+    }
+    nextChefIds = kept;
+  }
+
+  return { hallId: nextHallId, chefIds: nextChefIds, removed };
+}
+
+async function pruneProvidersByAvailability(
+  eventId,
+  dateValue,
+  startValue,
+  endValue,
+  hallId,
+  chefIds,
+) {
+  const dateStr = normalizeDate(dateValue);
+  const startStr = normalizeTime(startValue);
+  const endStr = normalizeTime(endValue);
+  const removed = [];
+  let nextHallId =
+    hallId === undefined || hallId === null || hallId === ""
+      ? null
+      : Number(hallId);
+  let nextChefIds = Array.isArray(chefIds)
+    ? chefIds.filter((id) => id !== null && id !== undefined).map(Number)
+    : [];
+
+  if (!dateStr || !startStr || !endStr) {
+    return { hallId: nextHallId, chefIds: nextChefIds, removed };
+  }
+
+  if (nextHallId) {
+    const ok = await AvailToEvent(
+      eventId,
+      dateStr,
+      nextHallId,
+      startStr,
+      endStr,
+    );
+    if (!ok) {
+      const rows = await doQuery(
+        `SELECT hall_name FROM halls WHERE hall_id = ?`,
+        [nextHallId],
+      );
+      removed.push({
+        id: nextHallId,
+        name: rows[0]?.hall_name || "Hall",
+        type: "hall",
+        reason: "availability",
+      });
+      nextHallId = null;
+    }
+  }
+
+  const keptChefs = [];
+  for (const chefId of nextChefIds) {
+    const ok = await AvailToEvent(
+      eventId,
+      dateStr,
+      chefId,
+      startStr,
+      endStr,
+    );
+    if (ok) {
+      keptChefs.push(chefId);
+    } else {
+      const rows = await doQuery(
+        `SELECT first_name FROM users WHERE id = ?`,
+        [chefId],
+      );
+      removed.push({
+        id: chefId,
+        name: rows[0]?.first_name || "Chef",
+        type: "chef",
+        reason: "availability",
+      });
+    }
+  }
+
+  return { hallId: nextHallId, chefIds: keptChefs, removed };
+}
+
+async function notifyAvailabilityRemovals(removed, eventDate, startTime, endTime) {
+  const timeLabel = `${normalizeTime(startTime)}–${normalizeTime(endTime)}`;
+  for (const provider of removed) {
+    try {
+      await createNotification({
+        message: `You were removed from the event on ${eventDate} (${timeLabel}) because you are not available at the updated time.`,
+        userId: provider.id,
+      });
+
+      const userRows = await doQuery(
+        `SELECT email, first_name FROM users WHERE id = ?`,
+        [provider.id],
+      );
+      const user = userRows[0];
+      if (user?.email) {
+        await sendEmail({
+          to: user.email,
+          subject: "Removed from an event booking (availability)",
+          html: `
+            <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+              <h2>Hello ${user.first_name},</h2>
+              <p>You were removed from the event on <strong>${eventDate}</strong> (${timeLabel}).</p>
+              <p>You are not marked as available for this updated time slot.</p>
+              <br/>
+              <p>Best regards,<br/><strong>EventHub Team</strong></p>
+            </div>
+          `,
+        });
+      }
+    } catch (notifErr) {
+      console.error("Availability-removal notification failed:", notifErr);
+    }
+  }
+}
+
+async function notifyCapacityRemovals(removed, guestNumber, eventDate) {
+  for (const provider of removed) {
+    try {
+      await createNotification({
+        message: `You were removed from the event on ${eventDate} because your capacity (${provider.capacity ?? "N/A"}) is below the updated guest count (${guestNumber}).`,
+        userId: provider.id,
+      });
+
+      const userRows = await doQuery(
+        `SELECT email, first_name FROM users WHERE id = ?`,
+        [provider.id],
+      );
+      const user = userRows[0];
+      if (user?.email) {
+        await sendEmail({
+          to: user.email,
+          subject: "Removed from an event booking (capacity)",
+          html: `
+            <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+              <h2>Hello ${user.first_name},</h2>
+              <p>You were removed from the event on <strong>${eventDate}</strong>.</p>
+              <p>Your capacity (${provider.capacity ?? "N/A"}) is below the updated guest count (${guestNumber}).</p>
+              <br/>
+              <p>Best regards,<br/><strong>EventHub Team</strong></p>
+            </div>
+          `,
+        });
+      }
+    } catch (notifErr) {
+      console.error("Capacity-removal notification failed:", notifErr);
+    }
   }
 }
 
@@ -482,8 +761,123 @@ async function updateEventData(updatingData, customerId, eventId) {
     // 1. בדיקת הרשאות ושליפת האירוע
     const currentEvent = await validateAndGetEvent(customerId, eventId);
 
-    // 2. בדיקת מדיניות 48 שעות
-    await validateUpdateDeadline(currentEvent, updatingData);
+    // 2. Edit policy (48h critical / 6h providers)
+    await validateUpdateDeadline(currentEvent, updatingData, eventId);
+
+    const guestNumber =
+      updatingData.dataToEvent?.guest_number ?? currentEvent.guest_number;
+
+    let nextHallId =
+      updatingData.hallId !== undefined
+        ? updatingData.hallId
+        : currentEvent.hall_id;
+    let nextChefIds = updatingData.selectedChiefsId;
+
+    if (nextChefIds === undefined) {
+      const currentChiefs = await doQuery(
+        `SELECT provider_id FROM event_providers WHERE event_id = ?`,
+        [eventId],
+      );
+      nextChefIds = currentChiefs.map((row) => row.provider_id);
+    }
+
+    const capacityPruned = await pruneProvidersByCapacity(
+      guestNumber,
+      nextHallId,
+      nextChefIds,
+    );
+
+    if (!capacityPruned.hallId && capacityPruned.chefIds.length === 0) {
+      throw new Error(
+        "No selected providers can serve this guest count. Please choose suitable providers.",
+      );
+    }
+
+    const nextDate =
+      updatingData.dataToEvent?.requested_date ?? currentEvent.requested_date;
+    const nextStart =
+      updatingData.dataToEvent?.start_time ?? currentEvent.start_time;
+    const nextEnd =
+      updatingData.dataToEvent?.end_time ?? currentEvent.end_time;
+
+    // Drop providers who are not free at the updated date/time
+    const availPruned = await pruneProvidersByAvailability(
+      eventId,
+      nextDate,
+      nextStart,
+      nextEnd,
+      capacityPruned.hallId,
+      capacityPruned.chefIds,
+    );
+
+    if (!availPruned.hallId && availPruned.chefIds.length === 0) {
+      throw new Error(
+        "No selected providers are available for the updated date/time. Please choose other providers.",
+      );
+    }
+
+    // No hall + chefs → location is required
+    if (!availPruned.hallId && availPruned.chefIds.length > 0) {
+      const loc = String(updatingData.location || "").trim();
+      if (!loc) {
+        throw new Error("Please select a location for the chefs.");
+      }
+    }
+
+    updatingData.hallId = availPruned.hallId;
+    updatingData.selectedChiefsId = availPruned.chefIds;
+    const capacityRemovedIds = capacityPruned.removed.map((p) => Number(p.id));
+    const availabilityRemovedIds = availPruned.removed.map((p) => Number(p.id));
+    const autoRemovedIds = [
+      ...capacityRemovedIds,
+      ...availabilityRemovedIds,
+    ];
+
+    const prevHallId =
+      currentEvent.hall_id == null || currentEvent.hall_id === ""
+        ? null
+        : Number(currentEvent.hall_id);
+    const hallRemovedOrCleared =
+      Boolean(prevHallId) && !availPruned.hallId;
+
+    // Did chef event location change vs what was stored?
+    let locationChanged = false;
+    if (
+      availPruned.chefIds.length > 0 &&
+      updatingData.location !== undefined &&
+      updatingData.location !== null
+    ) {
+      const placeholders = availPruned.chefIds.map(() => "?").join(",");
+      const locRows = await doQuery(
+        `SELECT provider_id, location FROM event_providers
+         WHERE event_id = ? AND provider_id IN (${placeholders})`,
+        [eventId, ...availPruned.chefIds],
+      );
+      const newLoc = String(updatingData.location || "").trim();
+      locationChanged = (Array.isArray(locRows) ? locRows : []).some(
+        (row) => String(row.location || "").trim() !== newLoc,
+      );
+    }
+
+    const eventDateForNotif = normalizeDate(nextDate) || nextDate;
+
+    // Auto-removals: notify with specific reason (handlers skip these IDs)
+    if (capacityPruned.removed.length > 0) {
+      await notifyCapacityRemovals(
+        capacityPruned.removed,
+        guestNumber,
+        eventDateForNotif,
+      );
+    }
+    if (availPruned.removed.length > 0) {
+      await notifyAvailabilityRemovals(
+        availPruned.removed,
+        eventDateForNotif,
+        nextStart,
+        nextEnd,
+      );
+    }
+
     // 3. עדכון פרטי אירוע בסיסיים (מחזיר true אם התאריך/שעה/אורחים השתנו)
     const isCritical = await handleEventBasicUpdate(
       updatingData,
@@ -492,55 +886,120 @@ async function updateEventData(updatingData, customerId, eventId) {
     );
     console.log("knhlhbdBHD", updatingData);
 
+    const forceChefReapprove =
+      isCritical || hallRemovedOrCleared || locationChanged;
+
     // 4. עדכון שפים
     await handleChiefsUpdate(
-      updatingData.selectedChiefsId ,
+      updatingData.selectedChiefsId,
       eventId,
       currentEvent,
       isCritical,
       updatingData.noteToChef,
       updatingData.location,
+      autoRemovedIds,
+      forceChefReapprove,
     );
 
-    // 5. עדכון אולם
+    // 5. עדכון אולם (כולל הסרה אם הקיבולת/זמינות לא מספיקה)
     await handleHallUpdate(
       updatingData.hallId,
       currentEvent.hall_id,
       eventId,
       currentEvent,
+      autoRemovedIds,
     );
 
-    // 6. התראות לשינוי קריטי בזמנים (לכל הספקים הנוכחיים)
-    if (isCritical) {
-      const eventDate =
-        updatingData.dataToEvent?.requested_date ||
-        currentEvent.requested_date;
+    // 6. Notify remaining providers when they must re-approve
+    if (forceChefReapprove || isCritical) {
+      const eventDate = eventDateForNotif;
+      const removedIds = new Set(autoRemovedIds);
 
-      // שליפת השפים הנוכחיים
+      let reapproveMessage =
+        "The details for the event on " +
+        eventDate +
+        " have been updated. Please re-approve your availability.";
+      if (hallRemovedOrCleared && !isCritical) {
+        reapproveMessage = `The venue was removed from the event on ${eventDate}. Please re-approve for the new location.`;
+      } else if (locationChanged && !isCritical) {
+        reapproveMessage = `The event location for ${eventDate} was updated. Please re-approve your availability.`;
+      }
+
+      if (
+        isCritical &&
+        updatingData.hallId &&
+        !removedIds.has(Number(updatingData.hallId))
+      ) {
+        await createNotification({
+          message: reapproveMessage,
+          userId: updatingData.hallId,
+        });
+      }
+
       const currentChiefs = await doQuery(
         `SELECT provider_id FROM event_providers WHERE event_id = ?`,
         [eventId],
       );
 
-      // התראה לאולם (אם קיים)
-      if (currentEvent.hall_id) {
-        await createNotification({
-          message: `The details for the event on ${eventDate} have been updated. Please re-approve your availability.`,
-          userId: currentEvent.hall_id,
-        });
-      }
-
-      // התראה לשפים
       for (const chef of currentChiefs) {
+        if (removedIds.has(Number(chef.provider_id))) continue;
         await createNotification({
-          message: `The details for the event on ${eventDate} have been updated. Please re-approve your availability.`,
+          message: reapproveMessage,
           userId: chef.provider_id,
         });
+
+        try {
+          const chefUser = await doQuery(
+            `SELECT email, first_name FROM users WHERE id = ?`,
+            [chef.provider_id],
+          );
+          if (chefUser[0]?.email) {
+            await sendEmail({
+              to: chefUser[0].email,
+              subject: "Event update — please re-approve",
+              html: `
+                <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                  <h2>Hello ${chefUser[0].first_name},</h2>
+                  <p>${reapproveMessage}</p>
+                  <p>Please log in to your dashboard to respond.</p>
+                  <br/>
+                  <p>Best regards,<br/><strong>EventHub Team</strong></p>
+                </div>
+              `,
+            });
+          }
+        } catch (mailErr) {
+          console.error("Re-approve email failed:", mailErr);
+        }
       }
     }
 
     await doQuery("COMMIT");
-    return { success: true };
+
+    const allAutoRemoved = [
+      ...capacityPruned.removed,
+      ...availPruned.removed,
+    ];
+    const removedNames = allAutoRemoved.map((p) => p.name).join(", ");
+    let message = "Event updated successfully.";
+    if (allAutoRemoved.length > 0) {
+      const capacityNames = capacityPruned.removed.map((p) => p.name);
+      const availNames = availPruned.removed.map((p) => p.name);
+      const parts = [];
+      if (capacityNames.length) {
+        parts.push(`removed (capacity): ${capacityNames.join(", ")}`);
+      }
+      if (availNames.length) {
+        parts.push(`removed (not available): ${availNames.join(", ")}`);
+      }
+      message = `Event updated. ${parts.join("; ")}.`;
+    }
+
+    return {
+      success: true,
+      removedProviders: allAutoRemoved,
+      message,
+    };
   } catch (error) {
     await doQuery("ROLLBACK");
     throw error;
@@ -602,6 +1061,61 @@ async function handleEventBasicUpdate(updatingData, currentEvent, eventId) {
   return isCritical;
 }
 
+/** Notify chefs/halls removed from an event (in-app + email) before DB delete/clear. */
+async function notifyProvidersRemovedFromEvent(
+  providerIds,
+  currentEvent,
+  skipNotifyIds = [],
+) {
+  const skip = new Set(
+    (Array.isArray(skipNotifyIds) ? skipNotifyIds : []).map(Number),
+  );
+  const ids = [
+    ...new Set(
+      (Array.isArray(providerIds) ? providerIds : [])
+        .filter((id) => id !== null && id !== undefined)
+        .map(Number)
+        .filter((id) => !skip.has(id)),
+    ),
+  ];
+
+  if (ids.length === 0) return;
+
+  const eventDate = currentEvent.requested_date;
+  const placeholders = ids.map(() => "?").join(",");
+  const users = await doQuery(
+    `SELECT id, email, first_name FROM users WHERE id IN (${placeholders})`,
+    ids,
+  );
+
+  for (const user of Array.isArray(users) ? users : []) {
+    try {
+      await createNotification({
+        message: `You were removed from the event on ${eventDate} by the customer.`,
+        userId: user.id,
+      });
+
+      if (user.email) {
+        await sendEmail({
+          to: user.email,
+          subject: "Removed from an event booking",
+          html: `
+            <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+              <h2>Hello ${user.first_name},</h2>
+              <p>The customer has removed you from the event scheduled for <strong>${eventDate}</strong>.</p>
+              <p>You no longer need to prepare for this booking.</p>
+              <br/>
+              <p>Best regards,<br/><strong>EventHub Team</strong></p>
+            </div>
+          `,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to notify removed provider:", user.id, err);
+    }
+  }
+}
+
 async function handleChiefsUpdate(
   newChiefsIds,
   eventId,
@@ -609,51 +1123,74 @@ async function handleChiefsUpdate(
   isCritical,
   noteToChef = {},
   location = null,
+  skipNotifyIds = [],
+  forcePending = false,
 ) {
   console.log("HANDLECHEFS", newChiefsIds, currentEvent);
   const validIds = Array.isArray(newChiefsIds)
     ? newChiefsIds.filter((id) => id !== null && id !== undefined)
     : [];
 
-  // 1. אם רשימת השפים החדשה ריקה - מוחקים את כל השפים מהאירוע
+  // Current chefs on this event (before any delete)
+  const currentChefRows = await doQuery(
+    `SELECT provider_id FROM event_providers WHERE event_id = ?`,
+    [eventId],
+  );
+  const currentChefIds = (
+    Array.isArray(currentChefRows) ? currentChefRows : []
+  ).map((row) => Number(row.provider_id));
+  const keepSet = new Set(validIds.map(Number));
+  const removedChefIds = currentChefIds.filter((id) => !keepSet.has(id));
+
+  // Notify removed chefs BEFORE deleting their rows
+  if (removedChefIds.length > 0) {
+    await notifyProvidersRemovedFromEvent(
+      removedChefIds,
+      currentEvent,
+      skipNotifyIds,
+    );
+  }
+
+  // 1. If new chef list is empty — delete all chefs from the event
   if (validIds.length === 0) {
     await doQuery(`DELETE FROM event_providers WHERE event_id = ?`, [eventId]);
     return;
   }
 
-  // 2. 🧹 מחיקת שפים שהוסרו מהאירוע (מבוצע בבטחה בתחילת התהליך)
+  // 2. Delete chefs that were removed from the event
   const placeholders = validIds.map(() => "?").join(",");
   const deleteSql = `DELETE FROM event_providers WHERE event_id = ? AND provider_id NOT IN (${placeholders})`;
-  await doQuery(deleteSql, [eventId, ...validIds]); // 👈 העברת הפרמטרים בסדר המדויק!
+  await doQuery(deleteSql, [eventId, ...validIds]);
 
-  // 3. שליפת השפים שנותרו במערכת לאחר המחיקה
+  // 3. Chefs remaining after delete
   const rows = await doQuery(
     `SELECT provider_id FROM event_providers WHERE event_id = ?`,
     [eventId],
   );
-  const existingIds = rows.map((r) => r.provider_id);
+  const existingIds = rows.map((r) => Number(r.provider_id));
+  const shouldResetPending = Boolean(isCritical || forcePending);
 
-  // 4. הוספה/עדכון של השפים שנבחרו
+  // 4. Add / update selected chefs
   for (const id of validIds) {
-    const chefNote = noteToChef?.[id] || "";
+    const chefId = Number(id);
+    const chefNote = noteToChef?.[id] || noteToChef?.[chefId] || "";
 
-    if (!existingIds.includes(id)) {
-      // הכנסת שף חדש
+    if (!existingIds.includes(chefId)) {
       await doQuery(
         `INSERT INTO event_providers (event_id, provider_id, status, noteToChef, location) VALUES (?, ?, 'PENDING', ?, ?)`,
-        [eventId, id, chefNote, location],
+        [eventId, chefId, chefNote, location],
       );
 
-      // שליחת התראה ומייל לשף החדש בלבד
-      if (!isCritical) {
+      // Welcome mail only when this is a soft add (not part of a re-approve wave)
+      if (!shouldResetPending) {
         await createNotification({
           message: `You have been assigned to a new event booking on ${currentEvent.requested_date}.`,
-          userId: id,
+          userId: chefId,
         });
 
         const chefUser = await doQuery(
           `SELECT email, first_name FROM users WHERE id = ?`,
-          [id],
+          [chefId],
         );
         if (chefUser.length > 0) {
           await sendEmail({
@@ -663,11 +1200,15 @@ async function handleChiefsUpdate(
           });
         }
       }
+    } else if (shouldResetPending) {
+      await doQuery(
+        `UPDATE event_providers SET noteToChef = ?, location = ?, status = 'PENDING' WHERE event_id = ? AND provider_id = ?`,
+        [chefNote, location, eventId, chefId],
+      );
     } else {
-      // עדכון הערות ומיקום לשף קיים
       await doQuery(
         `UPDATE event_providers SET noteToChef = ?, location = ? WHERE event_id = ? AND provider_id = ?`,
-        [chefNote, location, eventId, id],
+        [chefNote, location, eventId, chefId],
       );
     }
   }
@@ -678,25 +1219,60 @@ async function handleHallUpdate(
   currentHallId,
   eventId,
   currentEvent,
+  skipNotifyIds = [],
 ) {
-  // רק אם הוחלף אולם
-  if (updatingHallId && updatingHallId !== currentHallId) {
-    const sqlHall = `UPDATE events SET hall_id = ?, status = 'PENDING' WHERE event_id = ?`;
-    await doQuery(sqlHall, [updatingHallId, eventId]);
+  const nextHallId =
+    updatingHallId === undefined ||
+    updatingHallId === null ||
+    updatingHallId === ""
+      ? null
+      : Number(updatingHallId);
+  const prevHallId =
+    currentHallId === undefined ||
+    currentHallId === null ||
+    currentHallId === ""
+      ? null
+      : Number(currentHallId);
 
-    // שליחת התראה במערכת לאולם החדש
+  // Removed hall (capacity too low, or customer cleared venue)
+  if (!nextHallId && prevHallId) {
+    await notifyProvidersRemovedFromEvent(
+      [prevHallId],
+      currentEvent,
+      skipNotifyIds,
+    );
+    await doQuery(
+      `UPDATE events SET hall_id = NULL, status = 'PENDING' WHERE event_id = ?`,
+      [eventId],
+    );
+    return;
+  }
+
+  // Replaced / newly assigned hall
+  if (nextHallId && nextHallId !== prevHallId) {
+    // Old hall was replaced — notify them before losing the booking
+    if (prevHallId) {
+      await notifyProvidersRemovedFromEvent(
+        [prevHallId],
+        currentEvent,
+        skipNotifyIds,
+      );
+    }
+
+    const sqlHall = `UPDATE events SET hall_id = ?, status = 'PENDING' WHERE event_id = ?`;
+    await doQuery(sqlHall, [nextHallId, eventId]);
+
     await createNotification({
       message: `You received a new booking request for ${currentEvent.requested_date}.`,
-      userId: updatingHallId,
+      userId: nextHallId,
     });
 
-    // שליפת פרטי המשתמש של האולם החדש לשליחת מייל
     const hallQuery = `
       SELECT u.email, u.first_name 
       FROM users u 
       JOIN halls h ON u.id = h.hall_id 
       WHERE h.hall_id = ?`;
-    const hallUser = await doQuery(hallQuery, [updatingHallId]);
+    const hallUser = await doQuery(hallQuery, [nextHallId]);
 
     if (hallUser.length > 0) {
       await sendEmail({
@@ -725,15 +1301,17 @@ async function handleHallUpdate(
 async function cancelEvent(eventId, customerId) {
   const currentEvent = await validateAndGetEvent(customerId, eventId);
 
-  const origDateStr = new Date(currentEvent.requested_date)
-    .toISOString()
-    .split("T")[0];
-  const eventDateTime = new Date(`${origDateStr}T${currentEvent.start_time}`);
-  const hoursDifference = (eventDateTime - new Date()) / (1000 * 60 * 60);
+  const hoursDifference = hoursUntilEvent(
+    currentEvent.requested_date,
+    currentEvent.start_time,
+  );
 
-  if (hoursDifference < 48) {
+  if (
+    Number.isNaN(hoursDifference) ||
+    hoursDifference < BOOKING_POLICY.CANCEL_HOURS
+  ) {
     throw new Error(
-      "Events cannot be cancelled less than 48 hours before the scheduled time.",
+      `Events cannot be cancelled less than ${BOOKING_POLICY.CANCEL_HOURS} hours before the scheduled time.`,
     );
   }
 
@@ -778,15 +1356,17 @@ async function disCancelEvent(eventId, customerId) {
 
   const currentEvent = await validateAndGetEvent(customerId, eventId);
 
-  const origDateStr = new Date(currentEvent.requested_date)
-    .toISOString()
-    .split("T")[0];
-  const eventDateTime = new Date(`${origDateStr}T${currentEvent.start_time}`);
-  const hoursDifference = (eventDateTime - new Date()) / (1000 * 60 * 60);
+  const hoursDifference = hoursUntilEvent(
+    currentEvent.requested_date,
+    currentEvent.start_time,
+  );
 
-  if (hoursDifference < 48) {
+  if (
+    Number.isNaN(hoursDifference) ||
+    hoursDifference < BOOKING_POLICY.CANCEL_HOURS
+  ) {
     throw new Error(
-      "Cancelled events cannot be reinstated less than 48 hours before the scheduled time.",
+      `Cancelled events cannot be reinstated less than ${BOOKING_POLICY.CANCEL_HOURS} hours before the scheduled time.`,
     );
   }
 
@@ -918,4 +1498,4 @@ module.exports = {
   ReviewProvider,
   disCancelEvent,
   ReviewAndComment,
-};
+}

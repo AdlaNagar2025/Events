@@ -24,6 +24,16 @@ export default function CitySelect({ onCityChange, selectedCity }) {
     fetchCities();
   }, []);
 
+  // Clear invalid leftover location (e.g. old hall name) so UI matches state
+  useEffect(() => {
+    if (loading || cities.length === 0) return;
+    if (!selectedCity) return;
+    const exists = cities.some((c) => c.value === selectedCity);
+    if (!exists) {
+      onCityChange("");
+    }
+  }, [loading, cities, selectedCity]);
+
   if (loading) return <p>Loading cities...</p>;
 
   const handleSelectChange = (selectedOption) => {

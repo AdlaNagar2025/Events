@@ -77,7 +77,7 @@ export default function EventSummaryBar({
       }
     }
 
-    // New bookings only: must be at least 3 hours before start (same rule as BookEvent)
+    // New bookings: 6h before start. Updates: provider changes need 6h left.
     if (!eventId) {
       const dateStr = String(searchParams?.requested_date || "").split("T")[0];
       const timeStr = startTime;
@@ -90,9 +90,25 @@ export default function EventSummaryBar({
       const eventStart = new Date(`${dateStr}T${timeStr}`);
       const hoursUntilStart = (eventStart - new Date()) / (1000 * 60 * 60);
 
-      if (Number.isNaN(eventStart.getTime()) || hoursUntilStart < 3) {
+      if (Number.isNaN(eventStart.getTime()) || hoursUntilStart < 6) {
         toast.error(
-          "Events must be booked at least 3 hours before the start time.",
+          "Events must be booked at least 6 hours before the start time.",
+        );
+        return;
+      }
+    } else {
+      const dateStr = String(
+        eventData?.requested_date || searchParams?.requested_date || "",
+      ).split("T")[0];
+      const timeStr = String(
+        eventData?.start_time || searchParams?.start_time || "",
+      ).slice(0, 5);
+      const eventStart = new Date(`${dateStr}T${timeStr}`);
+      const hoursUntilStart = (eventStart - new Date()) / (1000 * 60 * 60);
+
+      if (Number.isNaN(eventStart.getTime()) || hoursUntilStart < 6) {
+        toast.error(
+          "Providers cannot be added or removed less than 6 hours before the event.",
         );
         return;
       }

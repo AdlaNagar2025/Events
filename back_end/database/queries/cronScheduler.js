@@ -2,12 +2,14 @@ const node_cron = require("node-cron");
 const { sendEmail } = require("./mail");
 const doQuery = require("../query");
 const { getStatusEvent } = require("./helpingFunc");
+const { createNotification } = require("./notifications");
+const { BOOKING_POLICY } = require("./bookingPolicy");
 
 /**
- * EventHub daily emails (runs at 08:00):
+ * EventHub scheduled jobs:
  *
- * 1) APPROVED reminder — event is tomorrow AND final status is APPROVED
- * 2) PENDING warning — event is tomorrow AND final status is still PENDING
+ * 1) Daily 08:00 — APPROVED reminder / PENDING warning for tomorrow's events
+ * 2) Every 15 min — auto-reject PENDING provider responses within 4h of start
  */
 
 function formatDate(value) {
@@ -244,5 +246,90 @@ node_cron.schedule("0 8 * * *", async () => {
     await sendEventEmails();
   } catch (error) {
     console.error("Error running Cron:", error);
+  }
+});
+
+const AUTO_REJECT_REASON =
+  "Auto-rejected: No response received within the required time before the event.";
+
+async function autoRejectExpiredPending() {
+  const hours = BOOKING_POLICY.PROVIDER_RESPONSE_HOURS;
+
+  const pendingHalls = await doQuery(
+    `
+    SELECT e.event_id, e.user_id, e.hall_id, e.requested_date, e.start_time
+    FROM events e
+    WHERE e.status = 'PENDING'
+      AND e.hall_id IS NOT NULL
+      AND TIMESTAMP(e.requested_date, e.start_time) <= DATE_ADD(NOW(), INTERVAL ? HOUR)
+    `,
+    [hours],
+  );
+
+  for (const row of Array.isArray(pendingHalls) ? pendingHalls : []) {
+    await doQuery(
+      `
+      UPDATE events
+      SET status = 'REJECTED', rejection_reason = ?, cancelled_by = 'SYSTEM'
+      WHERE event_id = ? AND status = 'PENDING'
+      `,
+      [AUTO_REJECT_REASON, row.event_id],
+    );
+
+    try {
+      await createNotification({
+        message: `Your booking request for ${row.requested_date} was auto-rejected because the venue did not respond in time.`,
+        userId: row.user_id,
+      });
+      await createNotification({
+        message: `A pending booking for ${row.requested_date} was auto-rejected (no response before the deadline).`,
+        userId: row.hall_id,
+      });
+    } catch (notifErr) {
+      console.error("Auto-reject hall notification failed:", notifErr);
+    }
+  }
+
+  const pendingChefs = await doQuery(
+    `
+    SELECT ep.event_id, ep.provider_id, e.user_id, e.requested_date, e.start_time
+    FROM event_providers ep
+    JOIN events e ON e.event_id = ep.event_id
+    WHERE ep.status = 'PENDING'
+      AND TIMESTAMP(e.requested_date, e.start_time) <= DATE_ADD(NOW(), INTERVAL ? HOUR)
+    `,
+    [hours],
+  );
+
+  for (const row of Array.isArray(pendingChefs) ? pendingChefs : []) {
+    await doQuery(
+      `
+      UPDATE event_providers
+      SET status = 'REJECTED', rejection_reason = ?, cancelled_by = 'SYSTEM'
+      WHERE event_id = ? AND provider_id = ? AND status = 'PENDING'
+      `,
+      [AUTO_REJECT_REASON, row.event_id, row.provider_id],
+    );
+
+    try {
+      await createNotification({
+        message: `Your chef request for ${row.requested_date} was auto-rejected because the chef did not respond in time.`,
+        userId: row.user_id,
+      });
+      await createNotification({
+        message: `A pending catering request for ${row.requested_date} was auto-rejected (no response before the deadline).`,
+        userId: row.provider_id,
+      });
+    } catch (notifErr) {
+      console.error("Auto-reject chef notification failed:", notifErr);
+    }
+  }
+}
+
+node_cron.schedule("*/15 * * * *", async () => {
+  try {
+    await autoRejectExpiredPending();
+  } catch (error) {
+    console.error("Error running auto-reject cron:", error);
   }
 });

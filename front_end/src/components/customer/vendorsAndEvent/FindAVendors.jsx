@@ -3,8 +3,13 @@ import EventSummaryBar from "./EventSummaryBar";
 import SearchFilters from "./SearchFilters";
 import ServiceCard from "../../shared/ServiceCard/ServiceCard";
 import API from "../../../services/api";
-import { validateSearchParams } from "../../../utils/validation"; // 👈 ייבוא פונקציית הולדיציה
+import {
+  BOOKING_POLICY,
+  meetsBookingHours,
+  validateSearchParams,
+} from "../../../utils/validation";
 import { useNavigate, useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function FindAVendors({ user }) {
   const navigate = useNavigate();
@@ -23,6 +28,7 @@ export default function FindAVendors({ user }) {
   const [selectedChiefIds, setSelectedChiefIds] = useState([]);
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchSettled, setSearchSettled] = useState(false);
   const [validationError, setValidationError] = useState("");
   const [providersFavorite, setProvidersFavorite] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -39,18 +45,19 @@ export default function FindAVendors({ user }) {
   );
 
   const handleSearch = async () => {
-    // 🔍 בדיקת תקינות הקלטים לפני פנייה לשרת
     const errorMessage = validateSearchParams(searchParams);
     if (errorMessage) {
-      setValidationError(errorMessage); // מציגים את השגיאה במסך
-      setProviders([]); // 🛑 מרוקנים את רשימת הספקים כדי לא להציג תוצאות שגויות!
-      return; // עוצרים ולא פונים לשרת!
+      setValidationError(errorMessage);
+      setProviders([]);
+      setSearchSettled(false);
+      return;
     }
 
-    setValidationError(""); // מנקים שגיאות קודמות אם הכל תקין
+    setValidationError("");
 
     try {
       setLoading(true);
+      setSearchSettled(false);
       let response;
       if (hasSearchParams) {
         response = await API.post("/customer/Searching", searchParams);
@@ -59,18 +66,59 @@ export default function FindAVendors({ user }) {
       }
 
       if (response.data.success) {
-        setProviders(response.data.data);
+        const data = response.data.data || [];
+        setProviders(data);
+        // Real empty result — clear top selection
+        if (data.length === 0) {
+          setSelectedHallId(null);
+          setSelectedChiefIds([]);
+        }
       }
     } catch (error) {
       console.error("Error fetching providers:", error);
     } finally {
       setLoading(false);
+      setSearchSettled(true);
     }
   };
 
   useEffect(() => {
     handleSearch();
   }, [searchParams]);
+
+  // Keep matching selections (e.g. ward); drop only IDs missing from results.
+  // Skip empty providers list so a loading/transition wipe cannot clear ward.
+  useEffect(() => {
+    if (loading || !searchSettled) return;
+    if (providers.length === 0) return;
+
+    const visibleIds = new Set(providers.map((p) => Number(p.id)));
+    let dropped = false;
+
+    setSelectedHallId((prevHall) => {
+      if (prevHall == null) return prevHall;
+      if (visibleIds.has(Number(prevHall))) return prevHall;
+      dropped = true;
+      return null;
+    });
+
+    setSelectedChiefIds((prevChiefs) => {
+      if (!prevChiefs.length) return prevChiefs;
+      const kept = prevChiefs.filter((id) => visibleIds.has(Number(id)));
+      if (kept.length !== prevChiefs.length) {
+        dropped = true;
+        return kept;
+      }
+      return prevChiefs;
+    });
+
+    if (dropped) {
+      toast(
+        "Some selected providers were removed because they no longer match your search (capacity, date, or time).",
+        { icon: "⚠️" },
+      );
+    }
+  }, [providers, loading, searchSettled]);
 
   async function handleFavorite(provider) {
     const providerId = provider.id;
@@ -138,8 +186,21 @@ export default function FindAVendors({ user }) {
 
       setIsUpdating(true);
       setSelectedHallId(location.state?.hallId || null);
-      setSelectedChiefIds(location.state?.selectedChiefsId || location.state?.ChiefIds || []);    }
+      setSelectedChiefIds(
+        location.state?.selectedChiefsId || location.state?.ChiefIds || [],
+      );
+    }
   }, [eventToUpdate]);
+
+  const lockCriticalFields =
+    isUpdating &&
+    Boolean(eventToUpdate?.requested_date && eventToUpdate?.start_time) &&
+    !meetsBookingHours(
+      eventToUpdate.requested_date,
+      eventToUpdate.start_time,
+      BOOKING_POLICY.CRITICAL_EDIT_HOURS,
+    );
+
   return (
     <div>
       <h1>Find Your Vendors</h1>
@@ -155,6 +216,7 @@ export default function FindAVendors({ user }) {
       <SearchFilters
         searchParams={searchParams}
         setSearchParams={setSearchParams}
+        lockCriticalFields={lockCriticalFields}
       />
 
       {/* ⚠️ הצגת הודעת שגיאה אם הולדיציה נכשלה */}

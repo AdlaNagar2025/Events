@@ -12,6 +12,23 @@
   font-size: 1.45rem;
 }
 
+.lockNote {
+  margin: -8px 0 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  background: rgba(201, 162, 39, 0.12);
+  color: var(--navy);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.inputGroup input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background: #f0eeea;
+}
+
 .search {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));

@@ -1,6 +1,7 @@
 const doQuery = require("../query");
 const { getRole } = require("./helpingFunc");
 const { createNotification } = require("./notifications");
+const { BOOKING_POLICY, hoursUntilEvent } = require("./bookingPolicy");
 
 async function getAllEvents(providerId) {
   let sql = "";
@@ -235,31 +236,33 @@ async function changeStatusEvent(
     };
   }
 
-  // 48h rule for provider cancel only
-  if (statusUpper === "CANCELLED") {
-    const dateStr = eventData?.requested_date
-      ? String(eventData.requested_date).split("T")[0]
-      : null;
-    const timeStr = eventData?.start_time
-      ? String(eventData.start_time).slice(0, 8)
-      : null;
+  // Approve/Reject only until 4h before start; Cancel APPROVED only until 48h
+  const hoursLeft = hoursUntilEvent(
+    eventData?.requested_date,
+    eventData?.start_time,
+  );
 
-    if (!dateStr || !timeStr) {
+  if (statusUpper === "APPROVED" || statusUpper === "REJECTED") {
+    if (
+      Number.isNaN(hoursLeft) ||
+      hoursLeft < BOOKING_POLICY.PROVIDER_RESPONSE_HOURS
+    ) {
       return {
         success: false,
-        message: "Missing event date/time for cancel policy check.",
+        message: `Response deadline passed. Approve or reject at least ${BOOKING_POLICY.PROVIDER_RESPONSE_HOURS} hours before the event.`,
       };
     }
+  }
 
-    const eventDateTime = new Date(`${dateStr}T${timeStr}`);
-    const hoursDifference =
-      (eventDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
-
-    if (Number.isNaN(hoursDifference) || hoursDifference < 48) {
+  // 48h rule for provider cancel only
+  if (statusUpper === "CANCELLED") {
+    if (
+      Number.isNaN(hoursLeft) ||
+      hoursLeft < BOOKING_POLICY.CANCEL_HOURS
+    ) {
       return {
         success: false,
-        message:
-          "Cannot cancel less than 48 hours before the event.",
+        message: `Cannot cancel less than ${BOOKING_POLICY.CANCEL_HOURS} hours before the event.`,
       };
     }
   }

@@ -4,6 +4,10 @@ import classes from "./dashboard.module.css";
 import toast from "react-hot-toast";
 import AppDialog from "../shared/AppDialog";
 import AppModal from "../shared/AppModal";
+import {
+  BOOKING_POLICY,
+  meetsBookingHours,
+} from "../../utils/validation";
 
 export default function Dashboard({ user, onStatusChange }) {
   const [rating, setRating] = useState(0);
@@ -161,10 +165,16 @@ export default function Dashboard({ user, onStatusChange }) {
                 {events.map((e) => {
                   const isFuture = checkIfFuture(e);
                   const status = (e.status || "").toUpperCase();
+                  const canRespond = meetsBookingHours(
+                    e.requested_date,
+                    e.start_time,
+                    BOOKING_POLICY.PROVIDER_RESPONSE_HOURS,
+                  );
                   const showActions =
                     rolePath === "provider" &&
                     isFuture &&
-                    status === "PENDING";
+                    status === "PENDING" &&
+                    canRespond;
                   const cleanDisplayDate = e.requested_date
                     ? e.requested_date.split("T")[0]
                     : "";
@@ -205,6 +215,10 @@ export default function Dashboard({ user, onStatusChange }) {
                               Reject
                             </button>
                           </div>
+                        ) : status === "PENDING" && isFuture && !canRespond ? (
+                          <span className={classes.mutedAction}>
+                            Locked ({BOOKING_POLICY.PROVIDER_RESPONSE_HOURS}h)
+                          </span>
                         ) : (
                           <span className={classes.mutedAction}>—</span>
                         )}

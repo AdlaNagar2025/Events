@@ -6,6 +6,10 @@ import { useState } from "react";
 import AppDialog from "../shared/AppDialog";
 import AppModal from "../shared/AppModal";
 import toast from "react-hot-toast";
+import {
+  BOOKING_POLICY,
+  meetsBookingHours,
+} from "../../utils/validation";
 
 function getStatusClass(status) {
   const s = (status || "").toUpperCase();
@@ -70,14 +74,22 @@ export default function EventRow({
     onChangeStatus(event, event.event_id, actionStatus, cleanReason);
   };
 
-  const canModifyByPolicy = (() => {
-    if (!event.requested_date || !event.start_time) return false;
-    const dateStr = String(event.requested_date).split("T")[0];
-    const timeStr = String(event.start_time).slice(0, 5);
-    const eventDate = new Date(`${dateStr}T${timeStr}`);
-    const hoursLeft = (eventDate - new Date()) / (1000 * 60 * 60);
-    return hoursLeft >= 48;
-  })();
+  const canCancelByPolicy = meetsBookingHours(
+    event.requested_date,
+    event.start_time,
+    BOOKING_POLICY.CANCEL_HOURS,
+  );
+  // Soft updates (add/remove providers) until 6h; critical fields still locked at 48h on backend
+  const canUpdateByPolicy = meetsBookingHours(
+    event.requested_date,
+    event.start_time,
+    BOOKING_POLICY.PROVIDER_CHANGE_HOURS,
+  );
+  const canProviderRespond = meetsBookingHours(
+    event.requested_date,
+    event.start_time,
+    BOOKING_POLICY.PROVIDER_RESPONSE_HOURS,
+  );
 
   // Hall cancelled → customer must pick a new hall OR keep chefs with a city/location
   const hallNeedsPlace =
@@ -183,13 +195,13 @@ export default function EventRow({
 
                   <button
                     className={classes.updateBtn}
-                    disabled={!canModifyByPolicy}
+                    disabled={!canUpdateByPolicy}
                     title={
-                      !canModifyByPolicy
-                        ? "Locked within 48 hours of the event."
+                      !canUpdateByPolicy
+                        ? `Locked within ${BOOKING_POLICY.PROVIDER_CHANGE_HOURS} hours of the event.`
                         : hallNeedsPlace
                           ? "Pick a new hall, or chefs with a city/location"
-                          : ""
+                          : `Date/time/guests lock at ${BOOKING_POLICY.CRITICAL_EDIT_HOURS}h; providers until ${BOOKING_POLICY.PROVIDER_CHANGE_HOURS}h.`
                     }
                     onClick={() => onUpdate(event)}
                   >
@@ -199,10 +211,10 @@ export default function EventRow({
                   {event.finalStatus !== "CANCELLED" ? (
                     <button
                       className={classes.rejectBtn}
-                      disabled={!canModifyByPolicy}
+                      disabled={!canCancelByPolicy}
                       title={
-                        !canModifyByPolicy
-                          ? "Locked within 48 hours of the event."
+                        !canCancelByPolicy
+                          ? `Locked within ${BOOKING_POLICY.CANCEL_HOURS} hours of the event.`
                           : ""
                       }
                       onClick={() => onCancel(event)}
@@ -212,19 +224,27 @@ export default function EventRow({
                   ) : (
                     <button
                       className={classes.rejectBtn}
-                      disabled={!canModifyByPolicy}
+                      disabled={!canCancelByPolicy}
                       onClick={() => onDisCancel(event)}
                     >
                       DisCancel
                     </button>
                   )}
 
-                  {!canModifyByPolicy && (
+                  {!canUpdateByPolicy && (
                     <span
                       className={classes.policyNote}
-                      title="Changes are locked within 48 hours of the event. Contact your providers."
+                      title={`Updates locked within ${BOOKING_POLICY.PROVIDER_CHANGE_HOURS} hours. Cancel locks at ${BOOKING_POLICY.CANCEL_HOURS} hours.`}
                     >
-                      Locked (48h)
+                      Locked ({BOOKING_POLICY.PROVIDER_CHANGE_HOURS}h)
+                    </span>
+                  )}
+                  {canUpdateByPolicy && !canCancelByPolicy && (
+                    <span
+                      className={classes.policyNote}
+                      title={`Cancel locked within ${BOOKING_POLICY.CANCEL_HOURS} hours. Date/time/guests also locked.`}
+                    >
+                      Cancel locked ({BOOKING_POLICY.CANCEL_HOURS}h)
                     </span>
                   )}
                 </>
@@ -310,7 +330,7 @@ export default function EventRow({
           <td>
             {canProviderAction && (
               <div className={classes.actions}>
-                {providerStatus === "PENDING" && (
+                {providerStatus === "PENDING" && canProviderRespond && (
                   <>
                     <button
                       className={classes.approveBtn}
@@ -327,13 +347,22 @@ export default function EventRow({
                   </>
                 )}
 
+                {providerStatus === "PENDING" && !canProviderRespond && (
+                  <span
+                    className={classes.policyNote}
+                    title={`Response deadline is ${BOOKING_POLICY.PROVIDER_RESPONSE_HOURS} hours before the event. Unanswered requests are auto-rejected.`}
+                  >
+                    Response locked ({BOOKING_POLICY.PROVIDER_RESPONSE_HOURS}h)
+                  </span>
+                )}
+
                 {providerStatus === "APPROVED" && (
                   <button
                     className={classes.rejectBtn}
-                    disabled={!canModifyByPolicy}
+                    disabled={!canCancelByPolicy}
                     title={
-                      !canModifyByPolicy
-                        ? "Cannot cancel less than 48 hours before the event."
+                      !canCancelByPolicy
+                        ? `Cannot cancel less than ${BOOKING_POLICY.CANCEL_HOURS} hours before the event.`
                         : ""
                     }
                     onClick={() => openReasonDialog("CANCELLED")}
@@ -342,12 +371,12 @@ export default function EventRow({
                   </button>
                 )}
 
-                {providerStatus === "APPROVED" && !canModifyByPolicy && (
+                {providerStatus === "APPROVED" && !canCancelByPolicy && (
                   <span
                     className={classes.policyNote}
-                    title="Cannot cancel less than 48 hours before the event."
+                    title={`Cannot cancel less than ${BOOKING_POLICY.CANCEL_HOURS} hours before the event.`}
                   >
-                    Locked (48h)
+                    Locked ({BOOKING_POLICY.CANCEL_HOURS}h)
                   </span>
                 )}
               </div>

@@ -121,7 +121,7 @@ router.put("/updateEventData/:id", async (req, res) => {
       req.session.user.id,
       eventId,
     );
-    return res.json({ success: true });
+    return res.json(result);
   } catch (error) {
     console.error("Error:", error);
     res.status(400).json({

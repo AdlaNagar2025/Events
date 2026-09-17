@@ -18,6 +18,29 @@ export const formatLocalTime = (dateObj) => {
 export const CALENDAR_DAY_START = "08:00";
 export const CALENDAR_DAY_END = "24:00";
 
+/** Booking deadlines (hours before event start) — keep in sync with backend bookingPolicy.js */
+export const BOOKING_POLICY = {
+  CREATE_MIN_HOURS: 6,
+  PROVIDER_RESPONSE_HOURS: 4,
+  CRITICAL_EDIT_HOURS: 48,
+  PROVIDER_CHANGE_HOURS: 6,
+  CANCEL_HOURS: 48,
+};
+
+export const hoursUntilEvent = (dateValue, timeValue) => {
+  const dateStr = String(dateValue || "").split("T")[0];
+  const timeStr = String(timeValue || "").slice(0, 5);
+  if (!dateStr || !timeStr) return Number.NaN;
+  const eventStart = new Date(`${dateStr}T${timeStr}`);
+  if (Number.isNaN(eventStart.getTime())) return Number.NaN;
+  return (eventStart.getTime() - Date.now()) / (1000 * 60 * 60);
+};
+
+export const meetsBookingHours = (dateValue, timeValue, minHours) => {
+  const hoursLeft = hoursUntilEvent(dateValue, timeValue);
+  return !Number.isNaN(hoursLeft) && hoursLeft >= minHours;
+};
+
 export const timeToMinutes = (time) => {
   const normalized = String(time).slice(0, 5);
   if (normalized === CALENDAR_DAY_END) return 24 * 60;
@@ -122,15 +145,18 @@ export const validateSearchParams = (params) => {
     return "You cannot select a start time that has already passed today!";
   }
 
-  // 2b. הזמנה לפחות 3 שעות לפני שעת ההתחלה
+  // 2b. הזמנה לפחות 6 שעות לפני שעת ההתחלה
   if (params.requested_date && params.start_time) {
-    const dateStr = String(params.requested_date).split("T")[0];
-    const timeStr = String(params.start_time).slice(0, 5);
-    const eventStart = new Date(`${dateStr}T${timeStr}`);
-    const hoursUntilStart = (eventStart - new Date()) / (1000 * 60 * 60);
+    const hoursUntilStart = hoursUntilEvent(
+      params.requested_date,
+      params.start_time,
+    );
 
-    if (!Number.isNaN(eventStart.getTime()) && hoursUntilStart < 3) {
-      return "Events must be booked at least 3 hours before the start time.";
+    if (
+      !Number.isNaN(hoursUntilStart) &&
+      hoursUntilStart < BOOKING_POLICY.CREATE_MIN_HOURS
+    ) {
+      return `Events must be booked at least ${BOOKING_POLICY.CREATE_MIN_HOURS} hours before the start time.`;
     }
   }
 
